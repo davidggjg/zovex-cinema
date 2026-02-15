@@ -1,8 +1,6 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
 import CyberStyles from "../components/cyber/CyberStyles";
 import CyberBackground from "../components/cyber/CyberBackground";
@@ -72,24 +70,6 @@ export default function Home() {
         <CyberBackground />
 
         <div className="relative z-[2] max-w-[1200px] mx-auto px-4 pb-16">
-          {/* Admin Button */}
-          <div className="flex justify-end pt-4 pb-2">
-            <Link
-              to={createPageUrl("Admin")}
-              className="no-underline px-4 py-2 rounded transition-all duration-200"
-              style={{
-                background: "rgba(0,210,255,0.08)",
-                border: "1px solid rgba(0,210,255,0.25)",
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: 10,
-                color: "var(--cyber-neon)",
-                letterSpacing: "0.1em",
-              }}
-            >
-              ⚙ פאנל ניהול
-            </Link>
-          </div>
-
           <HeroHeader
             movieCount={movies.length}
             categoryCount={categories.length}
