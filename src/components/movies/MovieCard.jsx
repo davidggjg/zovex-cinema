@@ -116,7 +116,7 @@ export default function MovieCard({ movie, index, onClick }) {
       {/* Card info */}
       <div className="p-3 pb-3.5">
         <div
-          className="mb-2 transition-colors duration-200"
+          className="mb-1 transition-colors duration-200"
           style={{
             fontFamily: "'Rajdhani',sans-serif",
             fontWeight: 700,
@@ -132,6 +132,25 @@ export default function MovieCard({ movie, index, onClick }) {
         >
           {movie.title}
         </div>
+        {movie.description && (
+          <div
+            className="mb-2"
+            style={{
+              fontFamily: "'Share Tech Mono',monospace",
+              fontSize: 10,
+              color: "var(--cyber-text-dim)",
+              opacity: 0.6,
+              lineHeight: 1.4,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {movie.description}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <span
             className="rounded px-2.5 py-0.5"

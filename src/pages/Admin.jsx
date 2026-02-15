@@ -28,6 +28,7 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [error, setError] = useState("");
@@ -47,6 +48,7 @@ export default function Admin() {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       setUrl("");
       setTitle("");
+      setDescription("");
       setCategory("");
       setNewCategory("");
       setError("");
@@ -78,6 +80,7 @@ export default function Admin() {
 
     createMutation.mutate({
       title: finalTitle,
+      description: description.trim() || undefined,
       video_id: parsed.video_id,
       type: parsed.type,
       category: finalCategory,
@@ -183,6 +186,27 @@ export default function Admin() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="הכנס שם..."
                   style={inputStyle}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                  }
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                  }
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>תיאור (אופציונלי)</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="הוסף תיאור לסרט..."
+                  rows={3}
+                  style={{
+                    ...inputStyle,
+                    resize: "vertical",
+                    minHeight: 80,
+                  }}
                   onFocus={(e) =>
                     (e.target.style.borderColor = "rgba(0,210,255,0.5)")
                   }
@@ -338,6 +362,19 @@ export default function Admin() {
                       >
                         {movie.title}
                       </div>
+                      {movie.description && (
+                        <div
+                          className="truncate mt-1"
+                          style={{
+                            fontFamily: "'Share Tech Mono',monospace",
+                            fontSize: 11,
+                            color: "var(--cyber-text-dim)",
+                            opacity: 0.7,
+                          }}
+                        >
+                          {movie.description}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mt-1">
                         <span
                           className="rounded px-2 py-0.5"

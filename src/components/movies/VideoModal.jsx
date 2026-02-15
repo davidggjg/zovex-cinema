@@ -75,6 +75,19 @@ export default function VideoModal({ movie, onClose }) {
                 {movie.type === "youtube" ? "▶ YOUTUBE" : "☁ DRIVE"}
               </span>
             </div>
+            {movie.description && (
+              <div
+                className="mt-2 max-w-md"
+                style={{
+                  fontFamily: "'Share Tech Mono',monospace",
+                  fontSize: 11,
+                  color: "var(--cyber-text-dim)",
+                  lineHeight: 1.6,
+                }}
+              >
+                {movie.description}
+              </div>
+            )}
           </div>
 
           <button
