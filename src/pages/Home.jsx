@@ -11,10 +11,17 @@ import MovieCard from "../components/movies/MovieCard";
 import VideoModal from "../components/movies/VideoModal";
 import EmptyState from "../components/movies/EmptyState";
 
+const SECRET_CODE = "ZOVEX_ADMIN_2026";
+const ADMIN_PASSWORD = "cyber2026";
+
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("הכל");
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAdminAccess, setShowAdminAccess] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -37,8 +44,17 @@ export default function Home() {
     return counts;
   }, [movies]);
 
+  // Check for secret code
+  const isSecretCode = searchQuery.trim() === SECRET_CODE;
+  if (isSecretCode && !showAdminAccess) {
+    setShowAdminAccess(true);
+  } else if (!isSecretCode && showAdminAccess) {
+    setShowAdminAccess(false);
+  }
+
   // Filtering
   const filtered = useMemo(() => {
+    if (isSecretCode) return [];
     return movies.filter((m) => {
       const matchCat =
         activeCategory === "הכל" || m.category === activeCategory;
@@ -49,7 +65,7 @@ export default function Home() {
         m.category.toLowerCase().includes(q);
       return matchCat && matchSearch;
     });
-  }, [movies, activeCategory, searchQuery]);
+  }, [movies, activeCategory, searchQuery, isSecretCode]);
 
   // Grouped for "הכל" view
   const grouped = useMemo(() => {
@@ -76,6 +92,44 @@ export default function Home() {
           />
 
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
+
+          {/* Admin Access Button */}
+          {showAdminAccess && (
+            <div
+              className="max-w-[480px] mx-auto mb-7 text-center"
+              style={{ animation: "fadeUp 0.3s ease" }}
+            >
+              <button
+                onClick={() => {
+                  setShowPasswordDialog(true);
+                  setPassword("");
+                  setPasswordError("");
+                }}
+                className="cursor-pointer transition-all duration-200 px-6 py-3 rounded"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(0,210,255,0.2), rgba(0,128,255,0.15))",
+                  border: "1px solid rgba(0,210,255,0.6)",
+                  fontFamily: "'Orbitron',sans-serif",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--cyber-neon)",
+                  letterSpacing: "0.12em",
+                  boxShadow: "0 0 20px rgba(0,210,255,0.3)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 0 30px rgba(0,210,255,0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 0 20px rgba(0,210,255,0.3)";
+                }}
+              >
+                🔐 גישה לפאנל ניהול
+              </button>
+            </div>
+          )}
 
           <CategoryFilters
             categories={categories}
@@ -226,6 +280,136 @@ export default function Home() {
           movie={selectedMovie}
           onClose={() => setSelectedMovie(null)}
         />
+      )}
+
+      {/* Password Dialog */}
+      {showPasswordDialog && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPasswordDialog(false);
+              setPassword("");
+              setPasswordError("");
+            }
+          }}
+          className="fixed inset-0 z-[1001] flex items-center justify-center p-4"
+          style={{
+            background: "rgba(0,0,0,0.92)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div
+            className="w-full max-w-[400px] rounded-lg p-6"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(0,210,255,0.08) 0%, rgba(0,128,255,0.04) 100%)",
+              border: "1px solid rgba(0,210,255,0.25)",
+              backdropFilter: "blur(12px)",
+              boxShadow:
+                "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(0,210,255,0.06)",
+              animation: "modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+            }}
+          >
+            <div
+              className="mb-5 text-center"
+              style={{
+                fontFamily: "'Orbitron',sans-serif",
+                fontSize: 16,
+                fontWeight: 700,
+                color: "var(--cyber-neon)",
+                letterSpacing: "0.12em",
+              }}
+            >
+              🔐 הזן סיסמה
+            </div>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (password === ADMIN_PASSWORD) {
+                    window.location.href = "/Admin";
+                  } else {
+                    setPasswordError("סיסמה שגויה");
+                  }
+                }
+              }}
+              placeholder="הכנס סיסמה..."
+              className="w-full mb-3 outline-none"
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                border: "1px solid rgba(0,210,255,0.15)",
+                borderRadius: 4,
+                color: "var(--cyber-text)",
+                fontFamily: "'Share Tech Mono',monospace",
+                fontSize: 13,
+                padding: "10px 14px",
+                direction: "rtl",
+              }}
+            />
+
+            {passwordError && (
+              <div
+                className="mb-3 text-center"
+                style={{
+                  fontFamily: "'Share Tech Mono',monospace",
+                  fontSize: 11,
+                  color: "#ff4466",
+                }}
+              >
+                {passwordError}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setPassword("");
+                  setPasswordError("");
+                }}
+                className="flex-1 cursor-pointer transition-all duration-200 py-2.5 rounded"
+                style={{
+                  background: "rgba(255,0,60,0.08)",
+                  border: "1px solid rgba(255,0,60,0.35)",
+                  fontFamily: "'Orbitron',sans-serif",
+                  fontSize: 11,
+                  color: "#ff4466",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                ביטול
+              </button>
+              <button
+                onClick={() => {
+                  if (password === ADMIN_PASSWORD) {
+                    window.location.href = "/Admin";
+                  } else {
+                    setPasswordError("סיסמה שגויה");
+                  }
+                }}
+                className="flex-1 cursor-pointer transition-all duration-200 py-2.5 rounded"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(0,210,255,0.2), rgba(0,128,255,0.15))",
+                  border: "1px solid rgba(0,210,255,0.5)",
+                  fontFamily: "'Orbitron',sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--cyber-neon)",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                כניסה
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
