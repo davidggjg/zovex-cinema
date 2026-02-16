@@ -235,6 +235,7 @@ export default function Home() {
                       movie={movie}
                       index={i}
                       onClick={setSelectedMovie}
+                      theme={theme}
                     />
                   ))}
                 </div>
@@ -292,6 +293,7 @@ export default function Home() {
                           movie={movie}
                           index={i}
                           onClick={setSelectedMovie}
+                          theme={theme}
                         />
                       ))}
                     </div>
