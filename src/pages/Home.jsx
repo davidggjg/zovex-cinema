@@ -697,7 +697,7 @@ const CSS = `
   .vid-ov { 
     position: fixed; 
     inset: 0; 
-    background: black; 
+    background: #000; 
     z-index: 3000; 
   }
   .vid-container { 
@@ -712,26 +712,25 @@ const CSS = `
   }
   .vid-close { 
     position: absolute; 
-    top: 20px; 
-    right: 20px; 
-    background: rgba(0,0,0,0.9);
-    border: 2px solid rgba(255,255,255,0.3);
+    top: 24px; 
+    right: 24px; 
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.3);
     color: white;
-    padding: 12px; 
-    border-radius: 50%; 
+    padding: 10px; 
+    border-radius: 8px; 
     cursor: pointer; 
     z-index: 10; 
     font-size: 24px; 
-    width: 55px; 
-    height: 55px;
+    width: 48px; 
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s;
+    transition: all 0.2s;
   }
   .vid-close:hover {
     background: rgba(255,255,255,0.2);
-    transform: scale(1.1);
   }
   
   @media (max-width: 600px) {
