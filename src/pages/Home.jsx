@@ -339,22 +339,36 @@ export default function Home() {
 
 // CSS
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
   
   :root {
-    --bg: #0f172a;
-    --text: #f8fafc;
-    --card: #1e293b;
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --card: #f8fafc;
     --accent: #e50914;
-    --glass: rgba(15, 23, 42, 0.9);
+    --glass: rgba(255, 255, 255, 0.95);
+    --border: #e5e7eb;
+    --text-secondary: #6b7280;
   }
 
   .light {
     --bg: #ffffff;
     --text: #1a1a1a;
-    --card: #f3f4f6;
-    --accent: #2563eb;
-    --glass: rgba(255, 255, 255, 0.9);
+    --card: #f8fafc;
+    --accent: #e50914;
+    --glass: rgba(255, 255, 255, 0.95);
+    --border: #e5e7eb;
+    --text-secondary: #6b7280;
+  }
+
+  .dark {
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --card: #f8fafc;
+    --accent: #e50914;
+    --glass: rgba(255, 255, 255, 0.95);
+    --border: #e5e7eb;
+    --text-secondary: #6b7280;
   }
 
   * { box-sizing: border-box; }
