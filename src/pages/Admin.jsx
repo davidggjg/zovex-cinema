@@ -62,8 +62,10 @@ export default function Admin() {
   const [selectedCategoryToDelete, setSelectedCategoryToDelete] = useState("");
   const [uploadedThumbnail, setUploadedThumbnail] = useState("");
   const [seriesName, setSeriesName] = useState("");
+  const [seasonNumber, setSeasonNumber] = useState("");
   const [episodeNumber, setEpisodeNumber] = useState("");
   const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
+  const [editingMovie, setEditingMovie] = useState(null);
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -86,14 +88,35 @@ export default function Admin() {
       setError("");
       setUploadedThumbnail("");
       setSeriesName("");
+      setSeasonNumber("");
       setEpisodeNumber("");
       setCloudinaryCloudName("");
+      setEditingMovie(null);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Movie.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movies"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Movie.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+      setUrl("");
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      setNewCategory("");
+      setError("");
+      setUploadedThumbnail("");
+      setSeriesName("");
+      setSeasonNumber("");
+      setEpisodeNumber("");
+      setCloudinaryCloudName("");
+      setEditingMovie(null);
+    },
   });
 
   const handleDeleteCategory = async () => {
@@ -155,12 +178,33 @@ export default function Admin() {
       if (seriesName.trim()) {
         movieData.series_name = seriesName.trim();
       }
+      if (seasonNumber && !isNaN(seasonNumber)) {
+        movieData.season_number = parseInt(seasonNumber);
+      }
       if (episodeNumber && !isNaN(episodeNumber)) {
         movieData.episode_number = parseInt(episodeNumber);
       }
     }
 
-    createMutation.mutate(movieData);
+    if (editingMovie) {
+      updateMutation.mutate({ id: editingMovie.id, data: movieData });
+    } else {
+      createMutation.mutate(movieData);
+    }
+  };
+
+  const handleEdit = (movie) => {
+    setEditingMovie(movie);
+    setUrl(`https://youtube.com/watch?v=${movie.video_id}`);
+    setTitle(movie.title);
+    setDescription(movie.description || "");
+    setCategory(movie.category);
+    setUploadedThumbnail(movie.thumbnail_url || "");
+    setSeriesName(movie.series_name || "");
+    setSeasonNumber(movie.season_number ? String(movie.season_number) : "");
+    setEpisodeNumber(movie.episode_number ? String(movie.episode_number) : "");
+    setCloudinaryCloudName(movie.cloudinary_cloud_name || "");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const inputStyle = {
@@ -330,8 +374,35 @@ export default function Admin() {
                 letterSpacing: "0.1em",
               }}
             >
-              הוסף סרט חדש
+              {editingMovie ? "ערוך סרט" : "הוסף סרט חדש"}
             </div>
+            
+            {editingMovie && (
+              <button
+                onClick={() => {
+                  setEditingMovie(null);
+                  setUrl("");
+                  setTitle("");
+                  setDescription("");
+                  setCategory("");
+                  setNewCategory("");
+                  setUploadedThumbnail("");
+                  setSeriesName("");
+                  setSeasonNumber("");
+                  setEpisodeNumber("");
+                  setCloudinaryCloudName("");
+                }}
+                className="mb-4 cursor-pointer transition-all duration-200 px-3 py-1.5 rounded text-xs"
+                style={{
+                  background: "rgba(255,0,60,0.1)",
+                  border: "1px solid rgba(255,0,60,0.3)",
+                  color: "#ff4466",
+                  fontFamily: "'Orbitron',sans-serif",
+                }}
+              >
+                ✕ בטל עריכה
+              </button>
+            )}
 
             <div className="flex flex-col gap-4">
               <div>
@@ -511,6 +582,23 @@ export default function Admin() {
                   </div>
 
                   <div>
+                    <label style={labelStyle}>מספר העונה (אופציונלי)</label>
+                    <input
+                      type="number"
+                      value={seasonNumber}
+                      onChange={(e) => setSeasonNumber(e.target.value)}
+                      placeholder="1, 2, 3..."
+                      style={inputStyle}
+                      onFocus={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                      }
+                      onBlur={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                      }
+                    />
+                  </div>
+
+                  <div>
                     <label style={labelStyle}>מספר הפרק (אופציונלי)</label>
                     <input
                       type="number"
@@ -567,7 +655,9 @@ export default function Admin() {
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {createMutation.isPending ? "מוסיף..." : "➕ הוסף סרט"}
+                {editingMovie 
+                  ? (updateMutation.isPending ? "מעדכן..." : "💾 עדכן סרט")
+                  : (createMutation.isPending ? "מוסיף..." : "➕ הוסף סרט")}
               </button>
             </div>
           </GlassPanel>
@@ -680,33 +770,54 @@ export default function Admin() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`למחוק את "${movie.title}"?`))
-                          deleteMutation.mutate(movie.id);
-                      }}
-                      className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
-                      style={{
-                        background: "rgba(255,0,60,0.08)",
-                        border: "1px solid rgba(255,0,60,0.25)",
-                        color: "#ff4466",
-                        fontFamily: "'Orbitron',sans-serif",
-                        fontSize: 12,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(255,0,60,0.2)";
-                        e.currentTarget.style.boxShadow =
-                          "0 0 12px rgba(255,0,60,0.3)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(255,0,60,0.08)";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
-                      ✕
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(movie)}
+                        className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
+                        style={{
+                          background: "rgba(0,210,255,0.08)",
+                          border: "1px solid rgba(0,210,255,0.25)",
+                          color: "var(--cyber-neon)",
+                          fontFamily: "'Orbitron',sans-serif",
+                          fontSize: 12,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(0,210,255,0.2)";
+                          e.currentTarget.style.boxShadow = "0 0 12px rgba(0,210,255,0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(0,210,255,0.08)";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        ✎
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`למחוק את "${movie.title}"?`))
+                            deleteMutation.mutate(movie.id);
+                        }}
+                        className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
+                        style={{
+                          background: "rgba(255,0,60,0.08)",
+                          border: "1px solid rgba(255,0,60,0.25)",
+                          color: "#ff4466",
+                          fontFamily: "'Orbitron',sans-serif",
+                          fontSize: 12,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(255,0,60,0.2)";
+                          e.currentTarget.style.boxShadow = "0 0 12px rgba(255,0,60,0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(255,0,60,0.08)";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

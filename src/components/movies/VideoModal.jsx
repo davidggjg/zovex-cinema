@@ -41,9 +41,14 @@ export default function VideoModal({ movie, onClose }) {
   // Fetch episodes if this is a series
   const { data: episodes = [] } = useQuery({
     queryKey: ['episodes', movie.series_name],
-    queryFn: () => base44.entities.Movie.filter({ series_name: movie.series_name }, 'episode_number'),
+    queryFn: () => base44.entities.Movie.filter({ series_name: movie.series_name }, 'season_number,episode_number'),
     enabled: !!movie.series_name,
   });
+
+  // Group episodes by season
+  const [selectedSeason, setSelectedSeason] = useState(movie.season_number || 1);
+  const seasons = [...new Set(episodes.map(ep => ep.season_number || 1))].sort((a, b) => a - b);
+  const seasonEpisodes = episodes.filter(ep => (ep.season_number || 1) === selectedSeason);
 
   return (
     <div
@@ -130,7 +135,7 @@ export default function VideoModal({ movie, onClose }) {
                   color: "#888",
                 }}
               >
-                {movie.series_name} • פרק {movie.episode_number}
+                {movie.series_name} • עונה {movie.season_number || 1} • פרק {movie.episode_number}
               </span>
             )}
           </div>
@@ -165,8 +170,30 @@ export default function VideoModal({ movie, onClose }) {
               פרקים
             </h2>
 
+            {/* Season Selector */}
+            {seasons.length > 1 && (
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                {seasons.map((season) => (
+                  <button
+                    key={season}
+                    onClick={() => setSelectedSeason(season)}
+                    className="cursor-pointer transition-all duration-200 px-4 py-2 rounded whitespace-nowrap"
+                    style={{
+                      background: selectedSeason === season ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.05)",
+                      border: `1px solid ${selectedSeason === season ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.1)"}`,
+                      fontFamily: "'Orbitron',sans-serif",
+                      fontSize: 13,
+                      color: "white",
+                    }}
+                  >
+                    עונה {season}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-3">
-              {episodes.map((ep) => (
+              {seasonEpisodes.map((ep) => (
                 <button
                   key={ep.id}
                   onClick={() => {
