@@ -79,15 +79,7 @@ export default function Home() {
   const [view, setView] = useState('home');
   const [current, setCurrent] = useState(null);
   const [videoData, setVideoData] = useState(null);
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('zovex-theme');
-    return saved ? JSON.parse(saved) : true;
-  });
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    localStorage.setItem('zovex-theme', JSON.stringify(isDark));
-  }, [isDark]);
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
