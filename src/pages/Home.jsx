@@ -11,6 +11,11 @@ const extractYouTubeId = (url) => {
   return m ? m[1] : null;
 };
 
+const extractRumbleId = (url) => {
+  const m = url.match(/v([a-z0-9]+)(?:-|\.html|$|\/)/);
+  return m ? m[1] : null;
+};
+
 const getEmbedUrl = (videoId, type) => {
   if (!videoId) return "";
   
@@ -28,7 +33,7 @@ const getEmbedUrl = (videoId, type) => {
     case "archive":
       return `https://archive.org/embed/${videoId}`;
     case "rumble":
-      return `https://rumble.com/embed/${videoId}/`;
+      return `https://rumble.com/embed/v${videoId}/`;
     default:
       return "";
   }
