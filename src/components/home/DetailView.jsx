@@ -128,7 +128,7 @@ export default function DetailView({ item, onBack, onPlay }) {
             {item.description}
           </p>
           
-          <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
             <button 
               onClick={handlePlayClick}
               className="btn" 
@@ -162,9 +162,21 @@ export default function DetailView({ item, onBack, onPlay }) {
                 gap: '10px' 
               }}
             >
-              <Info size={24} /> עוד מידע
+              <Download size={24} /> הורדה
             </button>
           </div>
+
+          {/* Series Description - shown once */}
+          {item.type === 'series' && item.description && (
+            <p style={{ 
+              fontSize: '16px', 
+              lineHeight: '1.6', 
+              marginBottom: '20px',
+              color: '#fff',
+            }}>
+              {item.description}
+            </p>
+          )}
         </div>
       </div>
 
@@ -266,16 +278,6 @@ export default function DetailView({ item, onBack, onPlay }) {
                       51 דק'
                     </span>
                   </div>
-                  {ep.description && (
-                    <p style={{ 
-                      margin: 0, 
-                      fontSize: '14px', 
-                      opacity: 0.6,
-                      lineHeight: '1.4',
-                    }}>
-                      {ep.description}
-                    </p>
-                  )}
                 </div>
 
                 <div style={{ 
