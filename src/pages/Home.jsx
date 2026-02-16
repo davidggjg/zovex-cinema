@@ -153,7 +153,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`app ${isDark ? 'dark' : 'light'}`}>
+    <div className="app light">
       <style>{CSS}</style>
 
       {/* Navbar */}
