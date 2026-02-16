@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Play } from "lucide-react";
+import { Play, Download } from "lucide-react";
 
 export default function VideoModal({ movie, onClose }) {
   const [currentMovie, setCurrentMovie] = useState(movie);
   const [selectedSeason, setSelectedSeason] = useState(movie.season_number || 1);
   const [activeTab, setActiveTab] = useState("episodes");
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -83,23 +84,47 @@ export default function VideoModal({ movie, onClose }) {
         ✕
       </button>
 
-      {/* Player */}
-      <div 
-        className="w-full"
-        style={{
-          aspectRatio: "16/9",
-          background: "#000",
-        }}
-      >
-        <iframe
-          key={currentMovie.id}
-          src={embedSrc}
-          className="w-full h-full border-none"
-          allowFullScreen
-          allow="autoplay; encrypted-media"
-          title={currentMovie.title}
-        />
-      </div>
+      {/* Player / Hero Image */}
+      {showVideo ? (
+        <div 
+          className="w-full"
+          style={{
+            aspectRatio: "16/9",
+            background: "#000",
+          }}
+        >
+          <iframe
+            key={currentMovie.id}
+            src={embedSrc}
+            className="w-full h-full border-none"
+            allowFullScreen
+            allow="autoplay; encrypted-media"
+            title={currentMovie.title}
+          />
+        </div>
+      ) : (
+        <div 
+          className="relative w-full"
+          style={{
+            aspectRatio: "16/9",
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(20,20,20,0.8) 80%, #141414 100%)",
+          }}
+        >
+          <img
+            src={currentMovie.thumbnail_url || `https://img.youtube.com/vi/${currentMovie.video_id}/maxresdefault.jpg`}
+            alt={currentMovie.title}
+            className="w-full h-full object-cover"
+            style={{ position: "absolute", top: 0, left: 0, zIndex: 0 }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(20,20,20,0.8) 70%, #141414 100%)",
+              zIndex: 1,
+            }}
+          />
+        </div>
+      )}
 
       {/* Content */}
       <div 
@@ -131,27 +156,52 @@ export default function VideoModal({ movie, onClose }) {
               </span>
             </div>
 
-            {/* Play Button */}
-            <button
-              onClick={() => setCurrentMovie(allEpisodes[0])}
-              className="w-full mb-3 flex items-center justify-center gap-2 py-3 rounded cursor-pointer transition-all duration-200"
-              style={{
-                background: "white",
-                color: "black",
-                fontFamily: "'Rajdhani',sans-serif",
-                fontSize: 18,
-                fontWeight: 700,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.8)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "white";
-              }}
-            >
-              <Play size={24} fill="black" />
-              <span>הפעל</span>
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3 mb-5">
+              <button
+                onClick={() => {
+                  setCurrentMovie(allEpisodes[0]);
+                  setShowVideo(true);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded cursor-pointer transition-all duration-200"
+                style={{
+                  background: "white",
+                  color: "black",
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 18,
+                  fontWeight: 700,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.8)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "white";
+                }}
+              >
+                <Play size={24} fill="black" />
+                <span>הפעל</span>
+              </button>
+
+              <button
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded cursor-pointer transition-all duration-200"
+                style={{
+                  background: "rgba(109,109,110,0.7)",
+                  color: "white",
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 18,
+                  fontWeight: 700,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(109,109,110,0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(109,109,110,0.7)";
+                }}
+              >
+                <Download size={24} />
+                <span>הורדה</span>
+              </button>
+            </div>
 
             {/* Description */}
             {movie.description && (
@@ -231,7 +281,20 @@ export default function VideoModal({ movie, onClose }) {
                   borderBottom: activeTab === "episodes" ? "3px solid #e50914" : "3px solid transparent",
                 }}
               >
-                EPISODES
+                פרקים
+              </button>
+              <button
+                onClick={() => setActiveTab("more")}
+                className="pb-2 cursor-pointer transition-all duration-200"
+                style={{
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: activeTab === "more" ? "white" : "#888",
+                  borderBottom: activeTab === "more" ? "3px solid #e50914" : "3px solid transparent",
+                }}
+              >
+                עוד כמו זה
               </button>
             </div>
 
@@ -266,103 +329,143 @@ export default function VideoModal({ movie, onClose }) {
             )}
 
             {/* Episodes List */}
-            <div className="flex flex-col gap-3">
-              {episodes.map((ep, index) => (
-                <div
-                  key={ep.id}
-                  className="flex gap-4 rounded-lg transition-all duration-200 cursor-pointer overflow-hidden"
-                  onClick={() => setCurrentMovie(ep)}
-                  style={{
-                    background: ep.id === currentMovie.id ? "#2a2a2a" : "#181818",
-                    border: ep.id === currentMovie.id ? "2px solid #e50914" : "2px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (ep.id !== currentMovie.id) {
-                      e.currentTarget.style.background = "#2a2a2a";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (ep.id !== currentMovie.id) {
-                      e.currentTarget.style.background = "#181818";
-                    }
-                  }}
-                >
-                  {/* Thumbnail with Play Button */}
-                  <div className="relative shrink-0 group" style={{ width: 150, height: 85 }}>
-                    <img
-                      src={ep.thumbnail_url || `https://img.youtube.com/vi/${ep.video_id}/mqdefault.jpg`}
-                      alt={ep.title}
-                      className="w-full h-full object-cover"
-                      style={{ background: "#2a2a2a" }}
-                    />
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200"
-                    >
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        style={{
-                          background: "rgba(255,255,255,0.95)",
-                          border: "3px solid white",
-                        }}
+            {activeTab === "episodes" && (
+              <div className="flex flex-col gap-3">
+                {episodes.map((ep, index) => (
+                  <div
+                    key={ep.id}
+                    className="flex gap-4 rounded-lg transition-all duration-200 cursor-pointer overflow-hidden"
+                    onClick={() => {
+                      setCurrentMovie(ep);
+                      setShowVideo(true);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    style={{
+                      background: ep.id === currentMovie.id ? "#2a2a2a" : "#181818",
+                      border: ep.id === currentMovie.id ? "2px solid #e50914" : "2px solid transparent",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (ep.id !== currentMovie.id) {
+                        e.currentTarget.style.background = "#2a2a2a";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (ep.id !== currentMovie.id) {
+                        e.currentTarget.style.background = "#181818";
+                      }
+                    }}
+                  >
+                    {/* Thumbnail with Play Button */}
+                    <div className="relative shrink-0 group" style={{ width: 150, height: 85 }}>
+                      <img
+                        src={ep.thumbnail_url || `https://img.youtube.com/vi/${ep.video_id}/mqdefault.jpg`}
+                        alt={ep.title}
+                        className="w-full h-full object-cover"
+                        style={{ background: "#2a2a2a" }}
+                      />
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200"
                       >
-                        <Play size={20} fill="black" style={{ marginRight: -2 }} />
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          style={{
+                            background: "rgba(255,255,255,0.95)",
+                            border: "3px solid white",
+                          }}
+                        >
+                          <Play size={20} fill="black" style={{ marginRight: -2 }} />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Episode Info */}
-                  <div className="flex-1 min-w-0 py-2 pr-3">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <h3
-                        className="font-semibold"
+                    {/* Episode Info */}
+                    <div className="flex-1 min-w-0 py-2 pr-3">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <h3
+                          className="font-semibold"
+                          style={{
+                            fontFamily: "'Rajdhani',sans-serif",
+                            fontSize: 15,
+                            color: "white",
+                            fontWeight: 700,
+                          }}
+                        >
+                          פרק {ep.episode_number || index + 1}
+                        </h3>
+                        <span
+                          className="shrink-0"
+                          style={{
+                            fontFamily: "'Rajdhani',sans-serif",
+                            fontSize: 13,
+                            color: "#888",
+                          }}
+                        >
+                          51 דק׳
+                        </span>
+                      </div>
+                      <h4
+                        className="mb-2"
                         style={{
                           fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 15,
+                          fontSize: 16,
                           color: "white",
-                          fontWeight: 700,
+                          fontWeight: 600,
                         }}
                       >
-                        פרק {ep.episode_number || index + 1}
-                      </h3>
-                      <span
-                        className="shrink-0"
+                        {ep.title}
+                      </h4>
+                      {ep.description && (
+                        <p
+                          className="line-clamp-2"
+                          style={{
+                            fontFamily: "'Rajdhani',sans-serif",
+                            fontSize: 13,
+                            color: "#d0d0d0",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {ep.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Download Button */}
+                    <div className="flex items-center pr-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
                         style={{
-                          fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 13,
+                          background: "transparent",
+                          border: "2px solid #888",
                           color: "#888",
                         }}
-                      >
-                        51 דק׳
-                      </span>
-                    </div>
-                    <h4
-                      className="mb-2"
-                      style={{
-                        fontFamily: "'Rajdhani',sans-serif",
-                        fontSize: 16,
-                        color: "white",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {ep.title}
-                    </h4>
-                    {ep.description && (
-                      <p
-                        className="line-clamp-2"
-                        style={{
-                          fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 13,
-                          color: "#d0d0d0",
-                          lineHeight: 1.4,
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = "white";
+                          e.currentTarget.style.color = "white";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "#888";
+                          e.currentTarget.style.color = "#888";
                         }}
                       >
-                        {ep.description}
-                      </p>
-                    )}
+                        <Download size={18} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {/* More Like This Tab */}
+            {activeTab === "more" && (
+              <div className="text-center py-12" style={{ color: "#888" }}>
+                <p style={{ fontFamily: "'Rajdhani',sans-serif", fontSize: 16 }}>
+                  תוכן דומה יתווסף בקרוב
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
