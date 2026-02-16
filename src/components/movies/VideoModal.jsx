@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function VideoModal({ movie, onClose }) {
-  const [showPlayer, setShowPlayer] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(true);
 
   useEffect(() => {
     const handler = (e) => {
@@ -17,182 +19,199 @@ export default function VideoModal({ movie, onClose }) {
 
   const embedSrc =
     movie.type === "youtube"
-      ? `https://www.youtube.com/embed/${movie.video_id}?autoplay=1&rel=0`
+      ? `https://www.youtube.com/embed/${movie.video_id}?autoplay=1&rel=0&cc_load_policy=0`
       : `https://drive.google.com/file/d/${movie.video_id}/preview`;
+
+  // Fetch episodes if this is a series
+  const { data: episodes = [] } = useQuery({
+    queryKey: ['episodes', movie.series_name],
+    queryFn: () => base44.entities.Movie.filter({ series_name: movie.series_name }, 'episode_number'),
+    enabled: !!movie.series_name,
+  });
 
   return (
     <div
       className="fixed inset-0 z-[1000] flex flex-col"
       style={{
-        background: "#000",
+        background: "#141414",
       }}
     >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-6 py-4"
+      {/* Close Button - Top Right */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-[1001] flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200"
         style={{
-          background: "rgba(0,0,0,0.9)",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(20,20,20,0.7)",
+          border: "1px solid rgba(255,255,255,0.2)",
+          color: "white",
+          fontSize: 20,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.2)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(20,20,20,0.7)";
         }}
       >
-        <div className="flex items-center gap-4">
-          {!showPlayer && (
-            <button
-              onClick={() => setShowPlayer(true)}
-              className="cursor-pointer transition-all duration-200 px-5 py-2.5 rounded-lg flex items-center gap-2"
-              style={{
-                background: "linear-gradient(135deg, #ff0050 0%, #ff4080 100%)",
-                border: "none",
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: 13,
-                fontWeight: 700,
-                color: "white",
-                letterSpacing: "0.1em",
-                boxShadow: "0 4px 20px rgba(255,0,80,0.4)",
-              }}
-            >
-              ▶ PLAY
-            </button>
-          )}
-          <div>
-            <div
-              style={{
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: 16,
-                fontWeight: 700,
-                color: "white",
-                letterSpacing: "0.05em",
-                marginBottom: 4,
-              }}
-            >
-              {movie.title}
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="rounded px-2 py-0.5"
-                style={{
-                  background: "rgba(0,210,255,0.15)",
-                  border: "1px solid rgba(0,210,255,0.3)",
-                  fontFamily: "'Orbitron',sans-serif",
-                  fontSize: 9,
-                  color: "#00d2ff",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                {movie.category}
-              </span>
-              <span
-                style={{
-                  fontFamily: "'Orbitron',sans-serif",
-                  fontSize: 9,
-                  color: movie.type === "youtube" ? "#ff4444" : "#4285f4",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                {movie.type === "youtube" ? "▶ YOUTUBE" : "☁ DRIVE"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-200"
-          style={{
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            color: "white",
-            fontFamily: "'Orbitron',sans-serif",
-            fontSize: 18,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255,0,60,0.2)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-          }}
-        >
-          ✕
-        </button>
-      </div>
+        ✕
+      </button>
 
       {/* Player */}
-      <div className="flex-1 relative">
-        {showPlayer ? (
-          <iframe
-            src={embedSrc}
-            className="absolute inset-0 w-full h-full border-none"
-            allowFullScreen
-            allow="autoplay; encrypted-media"
-            title={movie.title}
-          />
-        ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
+      <div 
+        className="w-full"
+        style={{
+          aspectRatio: "16/9",
+          background: "#000",
+        }}
+      >
+        <iframe
+          src={embedSrc}
+          className="w-full h-full border-none"
+          allowFullScreen
+          allow="autoplay; encrypted-media"
+          title={movie.title}
+        />
+      </div>
+
+      {/* Content */}
+      <div 
+        className="flex-1 overflow-y-auto px-8 py-6"
+        style={{
+          background: "#141414",
+        }}
+      >
+        {/* Title and Info */}
+        <div className="mb-6">
+          <h1
+            className="mb-3"
             style={{
-              background: "#0a0a0a",
+              fontFamily: "'Orbitron',sans-serif",
+              fontSize: 28,
+              fontWeight: 700,
+              color: "white",
             }}
           >
-            <div className="text-center">
-              <div
-                className="mb-4"
+            {movie.title}
+          </h1>
+
+          <div className="flex items-center gap-3 mb-4">
+            <span
+              className="rounded px-2 py-1"
+              style={{
+                background: "rgba(255,255,255,0.1)",
+                fontFamily: "'Rajdhani',sans-serif",
+                fontSize: 12,
+                color: "#ffffff",
+              }}
+            >
+              {movie.category}
+            </span>
+            {movie.series_name && (
+              <span
                 style={{
-                  fontSize: 80,
-                  opacity: 0.3,
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 12,
+                  color: "#888",
                 }}
               >
-                ▶
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Share Tech Mono',monospace",
-                  fontSize: 14,
-                  color: "rgba(255,255,255,0.4)",
-                }}
-              >
-                לחץ על PLAY כדי להתחיל
-              </div>
+                {movie.series_name} • פרק {movie.episode_number}
+              </span>
+            )}
+          </div>
+
+          {movie.description && (
+            <p
+              style={{
+                fontFamily: "'Rajdhani',sans-serif",
+                fontSize: 15,
+                color: "#ffffff",
+                lineHeight: 1.6,
+                maxWidth: 800,
+              }}
+            >
+              {movie.description}
+            </p>
+          )}
+        </div>
+
+        {/* Episodes Section */}
+        {episodes.length > 0 && (
+          <div>
+            <h2
+              className="mb-4"
+              style={{
+                fontFamily: "'Orbitron',sans-serif",
+                fontSize: 20,
+                fontWeight: 700,
+                color: "white",
+              }}
+            >
+              פרקים
+            </h2>
+
+            <div className="grid grid-cols-1 gap-3">
+              {episodes.map((ep) => (
+                <button
+                  key={ep.id}
+                  onClick={() => {
+                    window.location.reload();
+                    setTimeout(() => {
+                      const event = new CustomEvent('playMovie', { detail: ep });
+                      window.dispatchEvent(event);
+                    }, 100);
+                  }}
+                  className="flex gap-4 p-3 rounded transition-all duration-200 cursor-pointer text-right"
+                  style={{
+                    background: ep.id === movie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
+                    border: ep.id === movie.id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = ep.id === movie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)";
+                  }}
+                >
+                  {ep.thumbnail_url && (
+                    <img
+                      src={ep.thumbnail_url}
+                      alt={ep.title}
+                      className="w-32 h-18 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className="flex items-center gap-2 mb-1"
+                      style={{
+                        fontFamily: "'Orbitron',sans-serif",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "white",
+                      }}
+                    >
+                      <span>{ep.episode_number}.</span>
+                      <span className="truncate">{ep.title}</span>
+                    </div>
+                    {ep.description && (
+                      <p
+                        className="line-clamp-2"
+                        style={{
+                          fontFamily: "'Rajdhani',sans-serif",
+                          fontSize: 13,
+                          color: "#aaa",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {ep.description}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         )}
       </div>
-
-      {/* Description */}
-      {movie.description && (
-        <div
-          className="px-6 py-5"
-          style={{
-            background: "rgba(0,0,0,0.9)",
-            borderTop: "1px solid rgba(255,255,255,0.1)",
-            maxHeight: "25vh",
-            overflowY: "auto",
-          }}
-        >
-          <div
-            className="mb-2"
-            style={{
-              fontFamily: "'Orbitron',sans-serif",
-              fontSize: 11,
-              fontWeight: 700,
-              color: "#00d2ff",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-            }}
-          >
-            תיאור
-          </div>
-          <div
-            style={{
-              fontFamily: "'Share Tech Mono',monospace",
-              fontSize: 13,
-              color: "rgba(255,255,255,0.8)",
-              lineHeight: 1.8,
-            }}
-          >
-            {movie.description}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

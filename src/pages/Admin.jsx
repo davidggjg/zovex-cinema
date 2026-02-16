@@ -35,6 +35,8 @@ export default function Admin() {
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [selectedCategoryToDelete, setSelectedCategoryToDelete] = useState("");
   const [uploadedThumbnail, setUploadedThumbnail] = useState("");
+  const [seriesName, setSeriesName] = useState("");
+  const [episodeNumber, setEpisodeNumber] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -56,6 +58,8 @@ export default function Admin() {
       setNewCategory("");
       setError("");
       setUploadedThumbnail("");
+      setSeriesName("");
+      setEpisodeNumber("");
     },
   });
 
@@ -97,14 +101,26 @@ export default function Admin() {
       return;
     }
 
-    createMutation.mutate({
+    const movieData = {
       title: finalTitle,
       description: description.trim() || undefined,
       video_id: parsed.video_id,
       type: parsed.type,
       category: finalCategory,
       thumbnail_url: uploadedThumbnail || undefined,
-    });
+    };
+
+    // Add series fields if category is "סדרות"
+    if (finalCategory.toLowerCase().includes("סדר")) {
+      if (seriesName.trim()) {
+        movieData.series_name = seriesName.trim();
+      }
+      if (episodeNumber && !isNaN(episodeNumber)) {
+        movieData.episode_number = parseInt(episodeNumber);
+      }
+    }
+
+    createMutation.mutate(movieData);
   };
 
   const inputStyle = {
@@ -414,6 +430,45 @@ export default function Admin() {
                   }
                 />
               </div>
+
+              {/* Series Fields - Show only if category contains "סדר" */}
+              {((category && category.toLowerCase().includes("סדר")) || 
+                (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
+                <>
+                  <div>
+                    <label style={labelStyle}>שם הסדרה (אופציונלי)</label>
+                    <input
+                      value={seriesName}
+                      onChange={(e) => setSeriesName(e.target.value)}
+                      placeholder="למשל: Breaking Bad"
+                      style={inputStyle}
+                      onFocus={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                      }
+                      onBlur={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>מספר הפרק (אופציונלי)</label>
+                    <input
+                      type="number"
+                      value={episodeNumber}
+                      onChange={(e) => setEpisodeNumber(e.target.value)}
+                      placeholder="1, 2, 3..."
+                      style={inputStyle}
+                      onFocus={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                      }
+                      onBlur={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                      }
+                    />
+                  </div>
+                </>
+              )}
 
               {error && (
                 <div
