@@ -256,7 +256,7 @@ export default function Home() {
                 <p style={{ margin: 0, color: 'var(--text)', lineHeight: 1.6, fontSize: '16px' }}>{current.description}</p>
               </div>
             )}
-            <div className="episode-list">
+            <div className="episode-list" style={{ minHeight: 'auto', overflowY: 'visible' }}>
               <h3>פרקים / צפייה</h3>
               {current.type === 'series' ? (
                 current.episodes.map((ep, i) => (
