@@ -24,8 +24,8 @@ export default function CyberStyles() {
       }
 
       .light-page {
-        background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
-        color: #e0e6ed;
+        background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+        color: #c8d0e0;
         font-family: 'Rajdhani', sans-serif;
         min-height: 100vh;
         direction: rtl;
