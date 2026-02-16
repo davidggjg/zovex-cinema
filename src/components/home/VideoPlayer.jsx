@@ -15,18 +15,28 @@ export default function VideoPlayer({ src, onClose }) {
           top: '20px',
           right: '20px',
           zIndex: 201,
-          background: 'rgba(0,0,0,0.7)', 
-          border: 'none', 
+          background: 'rgba(0,0,0,0.9)', 
+          border: '2px solid rgba(255,255,255,0.3)', 
           color: '#fff', 
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: '50%',
-          padding: '10px',
+          padding: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+          transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(0,0,0,0.9)';
+          e.currentTarget.style.transform = 'scale(1)';
         }}
       >
-        <X size={32} />
+        <X size={36} />
       </button>
       
       <iframe 
