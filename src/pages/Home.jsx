@@ -445,32 +445,38 @@ const CSS = `
   .container { padding-top: 70px; }
 
   .hero {
-    height: 70vh; 
+    height: 60vh; 
     background-size: cover; 
     background-position: center;
     position: relative; 
     display: flex; 
     align-items: flex-end; 
     padding: 60px;
+    margin: 20px;
+    border-radius: 16px;
+    overflow: hidden;
   }
 
   .hero-overlay { 
     position: absolute; 
     inset: 0; 
-    background: linear-gradient(to top, var(--bg) 0%, transparent 100%); 
+    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%); 
   }
 
   .hero-content { position: relative; z-index: 10; max-width: 600px; }
   .hero-content h1 { 
-    font-size: 3.5rem; 
+    font-size: 3.2rem; 
     margin: 0 0 15px 0;
-    font-weight: 900;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    font-weight: 800;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+    color: #fff;
   }
   .hero-content p {
-    font-size: 18px;
+    font-size: 16px;
     margin-bottom: 25px;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    color: #f3f4f6;
+    line-height: 1.6;
   }
   .hero-btns { display: flex; gap: 12px; margin-top: 20px; }
 
