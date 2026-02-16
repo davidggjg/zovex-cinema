@@ -175,6 +175,35 @@ export default function Home() {
       <main className="container">
         {view === 'home' ? (
           <>
+            {searchQuery && (
+              <div style={{ padding: '20px 60px' }}>
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontFamily: "'Assistant', sans-serif",
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#f3f4f6';
+                    e.target.style.borderColor = 'var(--accent)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'var(--card)';
+                    e.target.style.borderColor = 'var(--border)';
+                  }}
+                >
+                  ← חזרה
+                </button>
+              </div>
+            )}
             {!searchQuery && (
               <>
                 {/* Categories Section */}
