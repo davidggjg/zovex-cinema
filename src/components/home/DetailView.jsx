@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Info, Download, ChevronLeft } from "lucide-react";
+import { Play, ChevronLeft } from "lucide-react";
 
 const getEmbedSrc = (movie) => {
   switch (movie.type) {
@@ -128,43 +128,25 @@ export default function DetailView({ item, onBack, onPlay }) {
             {item.description}
           </p>
           
-          <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-            <button 
-              onClick={handlePlayClick}
-              className="btn" 
-              style={{ 
-                padding: '12px 35px', 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                borderRadius: '4px', 
-                background: '#fff', 
-                color: '#000', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '10px' 
-              }}
-            >
-              <Play fill="black" size={24} /> נגן
-            </button>
-            <button 
-              className="btn" 
-              style={{ 
-                padding: '12px 35px', 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                border: 'none', 
-                borderRadius: '4px', 
-                background: 'rgba(109, 109, 110, 0.7)', 
-                color: '#fff', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '10px' 
-              }}
-            >
-              <Download size={24} /> הורדה
-            </button>
-          </div>
+          <button 
+            onClick={handlePlayClick}
+            className="btn" 
+            style={{ 
+              padding: '12px 35px', 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              border: 'none', 
+              borderRadius: '4px', 
+              background: '#fff', 
+              color: '#000', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              marginBottom: '20px',
+            }}
+          >
+            <Play fill="black" size={24} /> נגן
+          </button>
 
           {/* Series Description - shown once */}
           {item.type === 'series' && item.description && (
@@ -280,31 +262,7 @@ export default function DetailView({ item, onBack, onPlay }) {
                   </div>
                 </div>
 
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  paddingLeft: '10px',
-                }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    style={{
-                      background: 'transparent',
-                      border: '2px solid #888',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: '#888',
-                    }}
-                  >
-                    <Download size={18} />
-                  </button>
-                </div>
+
               </div>
             ))}
           </div>
