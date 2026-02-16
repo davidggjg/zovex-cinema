@@ -48,7 +48,7 @@ function extractVideoId(url) {
   
   // Rumble
   const rumbleMatch = url.match(
-    /rumble\.com\/(?:embed\/|v)?([a-zA-Z0-9]+)/
+    /rumble\.com\/v?([a-zA-Z0-9]+)(?:-|\/|$)/
   );
   if (rumbleMatch) return { type: "rumble", video_id: rumbleMatch[1] };
   
