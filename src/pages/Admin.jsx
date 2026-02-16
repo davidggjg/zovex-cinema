@@ -57,6 +57,7 @@ export default function Admin() {
   const [uploadedThumbnail, setUploadedThumbnail] = useState("");
   const [seriesName, setSeriesName] = useState("");
   const [episodeNumber, setEpisodeNumber] = useState("");
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -80,6 +81,7 @@ export default function Admin() {
       setUploadedThumbnail("");
       setSeriesName("");
       setEpisodeNumber("");
+      setCloudinaryCloudName("");
     },
   });
 
@@ -129,6 +131,18 @@ export default function Admin() {
       category: finalCategory,
       thumbnail_url: uploadedThumbnail || undefined,
     };
+
+    // Add Cloudinary cloud name if needed
+    if (parsed.type === "cloudinary") {
+      if (parsed.cloudinary_cloud_name) {
+        movieData.cloudinary_cloud_name = parsed.cloudinary_cloud_name;
+      } else if (cloudinaryCloudName.trim()) {
+        movieData.cloudinary_cloud_name = cloudinaryCloudName.trim();
+      } else {
+        setError("חובה להזין שם Cloud של Cloudinary");
+        return;
+      }
+    }
 
     // Add series fields if category is "סדרות"
     if (finalCategory.toLowerCase().includes("סדר")) {
@@ -451,6 +465,25 @@ export default function Admin() {
                 />
               </div>
 
+              {/* Cloudinary Cloud Name - Show only if URL contains cloudinary */}
+              {url.includes("cloudinary") && !extractVideoId(url)?.cloudinary_cloud_name && (
+                <div>
+                  <label style={labelStyle}>Cloudinary Cloud Name</label>
+                  <input
+                    value={cloudinaryCloudName}
+                    onChange={(e) => setCloudinaryCloudName(e.target.value)}
+                    placeholder="demo"
+                    style={inputStyle}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                    }
+                  />
+                </div>
+              )}
+
               {/* Series Fields - Show only if category contains "סדר" */}
               {((category && category.toLowerCase().includes("סדר")) || 
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
@@ -630,11 +663,13 @@ export default function Admin() {
                             color:
                               movie.type === "youtube"
                                 ? "#ff6666"
-                                : "#4da3ff",
+                                : movie.type === "cloudinary"
+                                  ? "#34d399"
+                                  : "#4da3ff",
                             letterSpacing: "0.1em",
                           }}
                         >
-                          {movie.type === "youtube" ? "▶ YT" : "☁ DRIVE"}
+                          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : "☁ DRIVE"}
                         </span>
                       </div>
                     </div>
