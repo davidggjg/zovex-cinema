@@ -28,7 +28,7 @@ const getEmbedUrl = (videoId, type) => {
     case "archive":
       return `https://archive.org/embed/${videoId}`;
     case "rumble":
-      return `https://rumble.com/embed/${videoId}`;
+      return `https://rumble.com/embed/${videoId}/`;
     default:
       return "";
   }
