@@ -134,11 +134,12 @@ export default function Home() {
 
   const handleSearch = (e) => {
     const val = e.target.value;
-    setSearchQuery(val);
-    if (val.toLowerCase() === "admin") {
+    if (val === "ZOVEX_ADMIN_2026") {
       setShowAdminPrompt(true);
       setAdminPassword("");
       setSearchQuery("");
+    } else {
+      setSearchQuery(val);
     }
   };
 
