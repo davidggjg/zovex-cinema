@@ -53,10 +53,36 @@ export default function Home() {
     setShowAdminAccess(false);
   }
 
+  // Group series into single cards
+  const processedMovies = useMemo(() => {
+    const seriesMap = new Map();
+    const standaloneMovies = [];
+
+    movies.forEach((movie) => {
+      if (movie.series_name) {
+        if (!seriesMap.has(movie.series_name)) {
+          seriesMap.set(movie.series_name, {
+            ...movie,
+            id: `series_${movie.series_name}`,
+            title: movie.series_name,
+            is_series: true,
+            episode_count: 1,
+          });
+        } else {
+          seriesMap.get(movie.series_name).episode_count++;
+        }
+      } else {
+        standaloneMovies.push(movie);
+      }
+    });
+
+    return [...standaloneMovies, ...Array.from(seriesMap.values())];
+  }, [movies]);
+
   // Filtering
   const filtered = useMemo(() => {
     if (isSecretCode) return [];
-    return movies.filter((m) => {
+    return processedMovies.filter((m) => {
       const matchCat =
         activeCategory === "הכל" || m.category === activeCategory;
       const q = searchQuery.trim().toLowerCase();
@@ -66,18 +92,18 @@ export default function Home() {
         m.category.toLowerCase().includes(q);
       return matchCat && matchSearch;
     });
-  }, [movies, activeCategory, searchQuery, isSecretCode]);
+  }, [processedMovies, activeCategory, searchQuery, isSecretCode]);
 
   // Grouped for "הכל" view
   const grouped = useMemo(() => {
     if (activeCategory !== "הכל" || searchQuery) return null;
     const g = {};
     categories.forEach((cat) => {
-      const items = movies.filter((m) => m.category === cat);
+      const items = processedMovies.filter((m) => m.category === cat);
       if (items.length) g[cat] = items;
     });
     return g;
-  }, [movies, categories, activeCategory, searchQuery]);
+  }, [processedMovies, categories, activeCategory, searchQuery]);
 
   return (
     <>
@@ -307,7 +333,10 @@ export default function Home() {
       {/* Video Modal */}
       {selectedMovie && (
         <VideoModal
-          movie={selectedMovie}
+          movie={selectedMovie.is_series 
+            ? movies.find(m => m.series_name === selectedMovie.title && m.episode_number === 1) || movies.find(m => m.series_name === selectedMovie.title)
+            : selectedMovie
+          }
           onClose={() => setSelectedMovie(null)}
         />
       )}

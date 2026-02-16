@@ -6,6 +6,7 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
 
   const getThumb = () => {
     if (movie.thumbnail_url) return movie.thumbnail_url;
+    if (movie.is_series) return null;
     if (movie.type === "youtube") {
       return `https://img.youtube.com/vi/${movie.video_id}/mqdefault.jpg`;
     }
@@ -63,10 +64,14 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
           <div
             className="absolute inset-0 flex flex-col items-center justify-center gap-1.5"
             style={{
-              background: "linear-gradient(135deg, #0d1520, #060c14)",
+              background: movie.is_series 
+                ? "linear-gradient(135deg, #1a0a2e, #0f0520)"
+                : "linear-gradient(135deg, #0d1520, #060c14)",
             }}
           >
-            <div className="text-[32px] opacity-40">☁</div>
+            <div className="text-[32px] opacity-40">
+              {movie.is_series ? "📺" : "☁"}
+            </div>
             <div
               style={{
                 fontFamily: "'Orbitron',sans-serif",
@@ -75,7 +80,7 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
                 letterSpacing: "0.15em",
               }}
             >
-              GOOGLE DRIVE
+              {movie.is_series ? "TV SERIES" : "GOOGLE DRIVE"}
             </div>
           </div>
         )}
@@ -113,34 +118,52 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
         </div>
 
         {/* Type badge */}
-        <div
-          className="absolute top-2 left-2 rounded px-2 py-0.5"
-          style={{
-            background:
-              movie.type === "youtube"
-                ? "rgba(255,0,0,0.2)"
-                : movie.type === "cloudinary"
-                  ? "rgba(52,211,153,0.2)"
-                  : movie.type === "vimeo"
-                    ? "rgba(26,183,234,0.2)"
-                    : "rgba(66,133,244,0.2)",
-            border: `1px solid ${
-              movie.type === "youtube" 
-                ? "rgba(255,68,68,0.5)" 
-                : movie.type === "cloudinary"
-                  ? "rgba(52,211,153,0.5)"
-                  : movie.type === "vimeo"
-                    ? "rgba(26,183,234,0.5)"
-                    : "rgba(66,133,244,0.5)"
-            }`,
-            fontFamily: "'Orbitron',sans-serif",
-            fontSize: 8,
-            color: movie.type === "youtube" ? "#ff6666" : movie.type === "cloudinary" ? "#34d399" : movie.type === "vimeo" ? "#1ab7ea" : "#4da3ff",
-            letterSpacing: "0.12em",
-          }}
-        >
-          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CL" : movie.type === "vimeo" ? "▶ VM" : movie.type === "dailymotion" ? "▶ DM" : movie.type === "streamable" ? "▶ ST" : movie.type === "archive" ? "📚 AR" : "☁ DR"}
-        </div>
+        {!movie.is_series && (
+          <div
+            className="absolute top-2 left-2 rounded px-2 py-0.5"
+            style={{
+              background:
+                movie.type === "youtube"
+                  ? "rgba(255,0,0,0.2)"
+                  : movie.type === "cloudinary"
+                    ? "rgba(52,211,153,0.2)"
+                    : movie.type === "vimeo"
+                      ? "rgba(26,183,234,0.2)"
+                      : "rgba(66,133,244,0.2)",
+              border: `1px solid ${
+                movie.type === "youtube" 
+                  ? "rgba(255,68,68,0.5)" 
+                  : movie.type === "cloudinary"
+                    ? "rgba(52,211,153,0.5)"
+                    : movie.type === "vimeo"
+                      ? "rgba(26,183,234,0.5)"
+                      : "rgba(66,133,244,0.5)"
+              }`,
+              fontFamily: "'Orbitron',sans-serif",
+              fontSize: 8,
+              color: movie.type === "youtube" ? "#ff6666" : movie.type === "cloudinary" ? "#34d399" : movie.type === "vimeo" ? "#1ab7ea" : "#4da3ff",
+              letterSpacing: "0.12em",
+            }}
+          >
+            {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CL" : movie.type === "vimeo" ? "▶ VM" : movie.type === "dailymotion" ? "▶ DM" : movie.type === "streamable" ? "▶ ST" : movie.type === "archive" ? "📚 AR" : "☁ DR"}
+          </div>
+        )}
+        
+        {movie.is_series && (
+          <div
+            className="absolute top-2 left-2 rounded px-2 py-0.5"
+            style={{
+              background: "rgba(138,43,226,0.2)",
+              border: "1px solid rgba(138,43,226,0.5)",
+              fontFamily: "'Orbitron',sans-serif",
+              fontSize: 8,
+              color: "#b57edc",
+              letterSpacing: "0.12em",
+            }}
+          >
+            📺 {movie.episode_count} פרקים
+          </div>
+        )}
       </div>
 
       {/* Card info */}
