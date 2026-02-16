@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { Play } from "lucide-react";
 
 export default function VideoModal({ movie, onClose }) {
   const [currentMovie, setCurrentMovie] = useState(movie);
   const [selectedSeason, setSelectedSeason] = useState(movie.season_number || 1);
+  const [activeTab, setActiveTab] = useState("episodes");
 
   useEffect(() => {
     const handler = (e) => {
@@ -99,165 +101,257 @@ export default function VideoModal({ movie, onClose }) {
 
       {/* Content */}
       <div 
-        className="flex-1 overflow-y-auto px-8 py-6"
+        className="flex-1 overflow-y-auto px-4 sm:px-8 py-6"
         style={{
           background: "#141414",
         }}
       >
-        {/* Title and Info */}
-        <div className="mb-6">
-          <h1
-            className="mb-3"
-            style={{
-              fontFamily: "'Orbitron',sans-serif",
-              fontSize: 28,
-              fontWeight: 700,
-              color: "white",
-            }}
-          >
-            {currentMovie.title}
-          </h1>
-
-          <div className="flex items-center gap-3 mb-4">
-            <span
-              className="rounded px-2 py-1"
-              style={{
-                background: "rgba(255,255,255,0.1)",
-                fontFamily: "'Rajdhani',sans-serif",
-                fontSize: 12,
-                color: "#ffffff",
-              }}
-            >
-              {currentMovie.category}
-            </span>
-            {currentMovie.series_name && (
-              <span
-                style={{
-                  fontFamily: "'Rajdhani',sans-serif",
-                  fontSize: 12,
-                  color: "#888",
-                }}
-              >
-                {currentMovie.series_name}
-                {currentMovie.season_number && ` • עונה ${currentMovie.season_number}`}
-                {currentMovie.episode_number && ` • פרק ${currentMovie.episode_number}`}
-              </span>
-            )}
-          </div>
-
-          {currentMovie.description && (
-            <p
-              style={{
-                fontFamily: "'Rajdhani',sans-serif",
-                fontSize: 15,
-                color: "#ffffff",
-                lineHeight: 1.6,
-                maxWidth: 800,
-              }}
-            >
-              {currentMovie.description}
-            </p>
-          )}
-        </div>
-
-        {/* Series Section */}
-        {movie.series_name && allEpisodes.length > 0 && (
-          <div>
-            {/* Season Selector */}
-            {seasons.length > 1 && (
-              <div className="mb-4">
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {seasons.map((season) => (
-                    <button
-                      key={season}
-                      onClick={() => setSelectedSeason(season)}
-                      className="shrink-0 px-4 py-2 rounded transition-all duration-200 cursor-pointer"
-                      style={{
-                        background: selectedSeason === season 
-                          ? "rgba(255,255,255,0.2)" 
-                          : "rgba(255,255,255,0.05)",
-                        border: selectedSeason === season 
-                          ? "1px solid rgba(255,255,255,0.4)" 
-                          : "1px solid rgba(255,255,255,0.1)",
-                        fontFamily: "'Orbitron',sans-serif",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "white",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (selectedSeason !== season) {
-                          e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedSeason !== season) {
-                          e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                        }
-                      }}
-                    >
-                      עונה {season}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Episodes List */}
-            <h2
-              className="mb-4"
+        {/* Series Info Header */}
+        {movie.series_name && (
+          <div className="mb-8">
+            <h1
+              className="mb-3"
               style={{
                 fontFamily: "'Orbitron',sans-serif",
-                fontSize: 20,
+                fontSize: 32,
                 fontWeight: 700,
                 color: "white",
               }}
             >
-              {seasons.length > 1 ? `עונה ${selectedSeason}` : "פרקים"}
-            </h2>
+              {movie.series_name}
+            </h1>
+            
+            <div className="flex items-center gap-3 mb-5">
+              <span style={{ color: "#46d369", fontWeight: 600 }}>2023</span>
+              <span className="px-2 py-0.5 border border-gray-500 text-gray-400 text-xs">+16</span>
+              <span style={{ color: "#fff", fontWeight: 500 }}>
+                {allEpisodes.length} פרקים
+              </span>
+            </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              {episodes.map((ep) => (
-                <button
-                  key={ep.id}
-                  onClick={() => setCurrentMovie(ep)}
-                  className="flex gap-4 p-3 rounded transition-all duration-200 cursor-pointer text-right"
+            {/* Play Button */}
+            <button
+              onClick={() => setCurrentMovie(allEpisodes[0])}
+              className="w-full mb-3 flex items-center justify-center gap-2 py-3 rounded cursor-pointer transition-all duration-200"
+              style={{
+                background: "white",
+                color: "black",
+                fontFamily: "'Rajdhani',sans-serif",
+                fontSize: 18,
+                fontWeight: 700,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.8)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "white";
+              }}
+            >
+              <Play size={24} fill="black" />
+              <span>הפעל</span>
+            </button>
+
+            {/* Description */}
+            {movie.description && (
+              <p
+                className="mb-5"
+                style={{
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 15,
+                  color: "#fff",
+                  lineHeight: 1.5,
+                }}
+              >
+                {movie.description}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Non-series content */}
+        {!movie.series_name && (
+          <div className="mb-6">
+            <h1
+              className="mb-3"
+              style={{
+                fontFamily: "'Orbitron',sans-serif",
+                fontSize: 28,
+                fontWeight: 700,
+                color: "white",
+              }}
+            >
+              {currentMovie.title}
+            </h1>
+
+            <div className="flex items-center gap-3 mb-4">
+              <span
+                className="rounded px-2 py-1"
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 12,
+                  color: "#ffffff",
+                }}
+              >
+                {currentMovie.category}
+              </span>
+            </div>
+
+            {currentMovie.description && (
+              <p
+                style={{
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 15,
+                  color: "#ffffff",
+                  lineHeight: 1.6,
+                  maxWidth: 800,
+                }}
+              >
+                {currentMovie.description}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Series Section */}
+        {movie.series_name && allEpisodes.length > 0 && (
+          <div>
+            {/* Tabs */}
+            <div className="flex gap-8 mb-6 border-b border-gray-800">
+              <button
+                onClick={() => setActiveTab("episodes")}
+                className="pb-2 cursor-pointer transition-all duration-200"
+                style={{
+                  fontFamily: "'Rajdhani',sans-serif",
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: activeTab === "episodes" ? "white" : "#888",
+                  borderBottom: activeTab === "episodes" ? "3px solid #e50914" : "3px solid transparent",
+                }}
+              >
+                EPISODES
+              </button>
+            </div>
+
+            {/* Season Selector */}
+            {seasons.length > 1 && (
+              <div className="mb-6">
+                <select
+                  value={selectedSeason}
+                  onChange={(e) => setSelectedSeason(Number(e.target.value))}
+                  className="cursor-pointer outline-none"
                   style={{
-                    background: ep.id === currentMovie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
-                    border: ep.id === currentMovie.id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.12)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = ep.id === currentMovie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)";
+                    background: "#2a2a2a",
+                    border: "1px solid #555",
+                    borderRadius: 4,
+                    color: "white",
+                    fontFamily: "'Rajdhani',sans-serif",
+                    fontSize: 16,
+                    padding: "8px 36px 8px 12px",
+                    appearance: "none",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 12px center",
                   }}
                 >
-                  {ep.thumbnail_url && (
+                  {seasons.map((season) => (
+                    <option key={season} value={season}>
+                      עונה {season}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Episodes List */}
+            <div className="flex flex-col gap-4">
+              {episodes.map((ep, index) => (
+                <div
+                  key={ep.id}
+                  className="flex gap-3 rounded transition-all duration-200 cursor-pointer"
+                  onClick={() => setCurrentMovie(ep)}
+                  style={{
+                    background: ep.id === currentMovie.id ? "#2a2a2a" : "transparent",
+                    padding: "8px",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (ep.id !== currentMovie.id) {
+                      e.currentTarget.style.background = "#1a1a1a";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (ep.id !== currentMovie.id) {
+                      e.currentTarget.style.background = "transparent";
+                    }
+                  }}
+                >
+                  {/* Episode Number */}
+                  <div
+                    className="flex items-center justify-center shrink-0"
+                    style={{
+                      width: 32,
+                      fontFamily: "'Rajdhani',sans-serif",
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: "#888",
+                    }}
+                  >
+                    {index + 1}
+                  </div>
+
+                  {/* Thumbnail with Play Button */}
+                  <div className="relative shrink-0 group" style={{ width: 140, height: 80 }}>
                     <img
-                      src={ep.thumbnail_url}
+                      src={ep.thumbnail_url || `https://img.youtube.com/vi/${ep.video_id}/mqdefault.jpg`}
                       alt={ep.title}
-                      className="w-32 h-18 object-cover rounded"
+                      className="w-full h-full object-cover rounded"
+                      style={{ background: "#2a2a2a" }}
                     />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className="flex items-center gap-2 mb-1"
-                      style={{
-                        fontFamily: "'Orbitron',sans-serif",
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "white",
-                      }}
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded"
                     >
-                      <span>{ep.episode_number}.</span>
-                      <span className="truncate">{ep.title}</span>
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        style={{
+                          background: "rgba(255,255,255,0.9)",
+                          border: "2px solid white",
+                        }}
+                      >
+                        <Play size={16} fill="black" style={{ marginRight: -2 }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Episode Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h3
+                        className="font-semibold"
+                        style={{
+                          fontFamily: "'Rajdhani',sans-serif",
+                          fontSize: 16,
+                          color: "white",
+                        }}
+                      >
+                        {ep.title}
+                      </h3>
+                      <span
+                        className="shrink-0"
+                        style={{
+                          fontFamily: "'Rajdhani',sans-serif",
+                          fontSize: 14,
+                          color: "#888",
+                        }}
+                      >
+                        51m
+                      </span>
                     </div>
                     {ep.description && (
                       <p
                         className="line-clamp-2"
                         style={{
                           fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 13,
+                          fontSize: 14,
                           color: "#aaa",
                           lineHeight: 1.4,
                         }}
@@ -266,7 +360,7 @@ export default function VideoModal({ movie, onClose }) {
                       </p>
                     )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>
