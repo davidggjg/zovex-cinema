@@ -129,11 +129,26 @@ export default function Home() {
     });
   }, [processedItems, searchQuery]);
 
+  const [adminPassword, setAdminPassword] = useState("");
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
+
   const handleSearch = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
     if (val.toLowerCase() === "admin") {
+      setShowAdminPrompt(true);
+      setAdminPassword("");
+      setSearchQuery("");
+    }
+  };
+
+  const handleAdminSubmit = () => {
+    if (adminPassword === "ZOVEX_ADMIN_2026") {
+      setShowAdminPrompt(false);
       window.location.href = "/Admin";
+    } else {
+      alert("סיסמה שגויה");
+      setAdminPassword("");
     }
   };
 
