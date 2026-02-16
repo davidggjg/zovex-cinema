@@ -264,95 +264,93 @@ export default function VideoModal({ movie, onClose }) {
             )}
 
             {/* Episodes List */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {episodes.map((ep, index) => (
                 <div
                   key={ep.id}
-                  className="flex gap-3 rounded transition-all duration-200 cursor-pointer"
+                  className="flex gap-4 rounded-lg transition-all duration-200 cursor-pointer overflow-hidden"
                   onClick={() => setCurrentMovie(ep)}
                   style={{
-                    background: ep.id === currentMovie.id ? "#2a2a2a" : "transparent",
-                    padding: "8px",
+                    background: ep.id === currentMovie.id ? "#2a2a2a" : "#181818",
+                    border: ep.id === currentMovie.id ? "2px solid #e50914" : "2px solid transparent",
                   }}
                   onMouseEnter={(e) => {
                     if (ep.id !== currentMovie.id) {
-                      e.currentTarget.style.background = "#1a1a1a";
+                      e.currentTarget.style.background = "#2a2a2a";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (ep.id !== currentMovie.id) {
-                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.background = "#181818";
                     }
                   }}
                 >
-                  {/* Episode Number */}
-                  <div
-                    className="flex items-center justify-center shrink-0"
-                    style={{
-                      width: 32,
-                      fontFamily: "'Rajdhani',sans-serif",
-                      fontSize: 24,
-                      fontWeight: 700,
-                      color: "#888",
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-
                   {/* Thumbnail with Play Button */}
-                  <div className="relative shrink-0 group" style={{ width: 140, height: 80 }}>
+                  <div className="relative shrink-0 group" style={{ width: 150, height: 85 }}>
                     <img
                       src={ep.thumbnail_url || `https://img.youtube.com/vi/${ep.video_id}/mqdefault.jpg`}
                       alt={ep.title}
-                      className="w-full h-full object-cover rounded"
+                      className="w-full h-full object-cover"
                       style={{ background: "#2a2a2a" }}
                     />
                     <div 
-                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded"
+                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200"
                     >
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                         style={{
-                          background: "rgba(255,255,255,0.9)",
-                          border: "2px solid white",
+                          background: "rgba(255,255,255,0.95)",
+                          border: "3px solid white",
                         }}
                       >
-                        <Play size={16} fill="black" style={{ marginRight: -2 }} />
+                        <Play size={20} fill="black" style={{ marginRight: -2 }} />
                       </div>
                     </div>
                   </div>
 
                   {/* Episode Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex-1 min-w-0 py-2 pr-3">
+                    <div className="flex items-center justify-between gap-2 mb-2">
                       <h3
                         className="font-semibold"
                         style={{
                           fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 16,
+                          fontSize: 15,
                           color: "white",
+                          fontWeight: 700,
                         }}
                       >
-                        {ep.title}
+                        פרק {ep.episode_number || index + 1}
                       </h3>
                       <span
                         className="shrink-0"
                         style={{
                           fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 14,
+                          fontSize: 13,
                           color: "#888",
                         }}
                       >
-                        51m
+                        51 דק׳
                       </span>
                     </div>
+                    <h4
+                      className="mb-2"
+                      style={{
+                        fontFamily: "'Rajdhani',sans-serif",
+                        fontSize: 16,
+                        color: "white",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {ep.title}
+                    </h4>
                     {ep.description && (
                       <p
                         className="line-clamp-2"
                         style={{
                           fontFamily: "'Rajdhani',sans-serif",
-                          fontSize: 14,
-                          color: "#aaa",
+                          fontSize: 13,
+                          color: "#d0d0d0",
                           lineHeight: 1.4,
                         }}
                       >
