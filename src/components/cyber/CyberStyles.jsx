@@ -1,7 +1,7 @@
 export default function CyberStyles() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Assistant:wght@300;400;500;600;700;800&display=swap');
 
       :root {
         --cyber-bg: #040608;
@@ -24,33 +24,17 @@ export default function CyberStyles() {
       }
 
       .light-page {
-        background: #ffffff;
-        color: #1a202c;
-        font-family: 'Rajdhani', sans-serif;
+        background: #FFFFFF;
+        color: #1a1a1a;
+        font-family: 'Assistant', -apple-system, BlinkMacSystemFont, sans-serif;
         min-height: 100vh;
         direction: rtl;
-        position: relative;
       }
 
-      .light-page::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: url('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6992542871bb3f3ba9500a34/505bf6a49_1771178941220.png');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        opacity: 0.15;
-        z-index: 0;
-        pointer-events: none;
-      }
-
-      .light-page ::-webkit-scrollbar { width: 4px; }
-      .light-page ::-webkit-scrollbar-track { background: #f7fafc; }
-      .light-page ::-webkit-scrollbar-thumb { background: #4299e1; border-radius: 2px; }
+      .light-page ::-webkit-scrollbar { width: 6px; }
+      .light-page ::-webkit-scrollbar-track { background: #F8FAFC; }
+      .light-page ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+      .light-page ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
       .cyber-page ::-webkit-scrollbar { width: 4px; }
       .cyber-page ::-webkit-scrollbar-track { background: var(--cyber-bg2); }

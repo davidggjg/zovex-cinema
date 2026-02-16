@@ -4,9 +4,9 @@ export default function HeroHeader({ movieCount, categoryCount, theme = "dark" }
     <header
       className="text-center relative"
       style={{
-        padding: "clamp(32px,6vw,64px) 0 clamp(24px,4vw,40px)",
-        borderBottom: "1px solid rgba(0,210,255,0.08)",
-        marginBottom: 32,
+        padding: "clamp(48px,8vw,80px) 0 clamp(32px,5vw,56px)",
+        borderBottom: isDark ? "1px solid rgba(0,210,255,0.08)" : "none",
+        marginBottom: isDark ? 32 : 48,
       }}
     >
       {/* Bottom accent line */}
@@ -20,33 +20,35 @@ export default function HeroHeader({ movieCount, categoryCount, theme = "dark" }
       />
 
       <div
-        className="mb-3"
+        className="mb-4"
         style={{
-          fontFamily: "'Share Tech Mono',monospace",
-          fontSize: 11,
-          color: isDark ? "var(--cyber-text-dim)" : "#64748b",
-          letterSpacing: "0.4em",
-          textTransform: "uppercase",
+          fontFamily: isDark ? "'Share Tech Mono',monospace" : "'Assistant', sans-serif",
+          fontSize: isDark ? 11 : 13,
+          fontWeight: isDark ? 400 : 500,
+          color: isDark ? "var(--cyber-text-dim)" : "#64748B",
+          letterSpacing: isDark ? "0.4em" : "0.02em",
+          textTransform: isDark ? "uppercase" : "none",
           animation: "fadeUp 0.5s ease 0.1s both",
         }}
       >
-        ◈ ברוכים הבאים אל ◈
+        {isDark ? "◈ ברוכים הבאים אל ◈" : "ברוכים הבאים"}
       </div>
 
       <h1
-        className="mb-2 leading-none"
+        className="mb-3 leading-none"
         style={{
-          fontFamily: "'Orbitron',sans-serif",
-          fontSize: "clamp(36px,8vw,80px)",
-          fontWeight: 900,
-          letterSpacing: "0.2em",
+          fontFamily: isDark ? "'Orbitron',sans-serif" : "'Assistant', sans-serif",
+          fontSize: isDark ? "clamp(36px,8vw,80px)" : "clamp(42px,9vw,72px)",
+          fontWeight: isDark ? 900 : 800,
+          letterSpacing: isDark ? "0.2em" : "-0.02em",
           background: isDark
             ? "linear-gradient(135deg, #00d2ff 0%, #0080ff 40%, #00ffcc 100%)"
-            : "linear-gradient(135deg, #2563eb 0%, #3b82f6 40%, #60a5fa 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundSize: "200% auto",
-          animation: "flicker 8s infinite, shimmer 4s linear infinite",
+            : "#0F172A",
+          WebkitBackgroundClip: isDark ? "text" : "unset",
+          WebkitTextFillColor: isDark ? "transparent" : "unset",
+          backgroundSize: isDark ? "200% auto" : "unset",
+          animation: isDark ? "flicker 8s infinite, shimmer 4s linear infinite" : "fadeUp 0.5s ease 0.2s both",
+          color: isDark ? "unset" : "#0F172A",
         }}
       >
         ZOVEX
@@ -54,25 +56,26 @@ export default function HeroHeader({ movieCount, categoryCount, theme = "dark" }
 
       <div
         style={{
-          fontFamily: "'Rajdhani',sans-serif",
-          fontSize: "clamp(12px,2vw,16px)",
-          color: isDark ? "var(--cyber-text-dim)" : "#64748b",
-          letterSpacing: "0.25em",
-          textTransform: "uppercase",
+          fontFamily: isDark ? "'Rajdhani',sans-serif" : "'Assistant', sans-serif",
+          fontSize: isDark ? "clamp(12px,2vw,16px)" : "clamp(14px,2.5vw,18px)",
+          fontWeight: isDark ? 400 : 400,
+          color: isDark ? "var(--cyber-text-dim)" : "#64748B",
+          letterSpacing: isDark ? "0.25em" : "0.01em",
+          textTransform: isDark ? "uppercase" : "none",
           animation: "fadeUp 0.5s ease 0.3s both",
-          marginBottom: movieCount > 0 ? 24 : 0,
+          marginBottom: movieCount > 0 ? (isDark ? 24 : 40) : 0,
         }}
       >
-        Cyber Cinema Platform
+        {isDark ? "Cyber Cinema Platform" : "פלטפורמת הסינמה שלך"}
       </div>
 
       {/* Stats */}
       {movieCount > 0 && (
         <div
-          className="inline-flex items-center gap-6 px-6 py-2 rounded"
+          className="inline-flex items-center gap-8 px-8 py-3 rounded-2xl"
           style={{
-            background: isDark ? "rgba(0,210,255,0.04)" : "rgba(37,99,235,0.08)",
-            border: isDark ? "1px solid rgba(0,210,255,0.1)" : "1px solid rgba(37,99,235,0.2)",
+            background: isDark ? "rgba(0,210,255,0.04)" : "#F8FAFC",
+            border: isDark ? "1px solid rgba(0,210,255,0.1)" : "1px solid #E2E8F0",
             animation: "fadeUp 0.5s ease 0.4s both",
           }}
         >
@@ -83,20 +86,22 @@ export default function HeroHeader({ movieCount, categoryCount, theme = "dark" }
             <div key={s.label} className="text-center">
               <div
                 style={{
-                  fontFamily: "'Orbitron',sans-serif",
-                  fontSize: 18,
-                  fontWeight: 900,
-                  color: isDark ? "var(--cyber-neon)" : "#2563eb",
+                  fontFamily: isDark ? "'Orbitron',sans-serif" : "'Assistant', sans-serif",
+                  fontSize: isDark ? 18 : 24,
+                  fontWeight: isDark ? 900 : 700,
+                  color: isDark ? "var(--cyber-neon)" : "#0F172A",
+                  marginBottom: 2,
                 }}
               >
                 {s.val}
               </div>
               <div
                 style={{
-                  fontFamily: "'Share Tech Mono',monospace",
-                  fontSize: 9,
-                  color: isDark ? "var(--cyber-text-dim)" : "#64748b",
-                  letterSpacing: "0.1em",
+                  fontFamily: isDark ? "'Share Tech Mono',monospace" : "'Assistant', sans-serif",
+                  fontSize: isDark ? 9 : 13,
+                  fontWeight: isDark ? 400 : 500,
+                  color: isDark ? "var(--cyber-text-dim)" : "#64748B",
+                  letterSpacing: isDark ? "0.1em" : "0",
                 }}
               >
                 {s.label}

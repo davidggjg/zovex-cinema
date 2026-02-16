@@ -118,7 +118,7 @@ export default function Home() {
             theme={theme}
           />
 
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} theme={theme} />
 
           {/* Admin Access Button */}
           {showAdminAccess && (
@@ -164,6 +164,7 @@ export default function Home() {
             onSelect={setActiveCategory}
             movieCounts={movieCounts}
             totalCount={movies.length}
+            theme={theme}
           />
 
           {/* Search results header */}
