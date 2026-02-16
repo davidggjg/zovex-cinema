@@ -350,15 +350,7 @@ const CSS = `
     --text-secondary: #6b7280;
   }
 
-  .dark {
-    --bg: #ffffff;
-    --text: #1a1a1a;
-    --card: #f8fafc;
-    --accent: #e50914;
-    --glass: rgba(255, 255, 255, 0.95);
-    --border: #e5e7eb;
-    --text-secondary: #6b7280;
-  }
+
 
   * { box-sizing: border-box; }
   body { 
