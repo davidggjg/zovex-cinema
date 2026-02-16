@@ -331,11 +331,11 @@ const CSS = `
 
   :root {
     --primary: #e50914;
-    --neon: #00d2ff;
-    --bg: #080b12;
-    --card: #111827;
-    --text: #ffffff;
-    --dim: #94a3b8;
+    --neon: #e50914;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --dim: #cbd5e1;
   }
 
   .light {
@@ -344,6 +344,7 @@ const CSS = `
     --text: #0f172a;
     --dim: #64748b;
     --primary: #2563eb;
+    --neon: #2563eb;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -354,8 +355,9 @@ const CSS = `
   .nav { 
     position: fixed; top: 0; width: 100%; height: 70px; 
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 40px; background: rgba(8, 11, 18, 0.95); backdrop-filter: blur(10px); z-index: 1000;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 0 40px; 
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    backdrop-filter: blur(10px); z-index: 1000;
   }
 
   .logo { 
@@ -501,6 +503,7 @@ const CSS = `
     background: var(--card); padding: 35px; border-radius: 20px; 
     width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    border: 1px solid rgba(229,9,20,0.2);
   }
   .admin-header { 
     display: flex; justify-content: space-between; align-items: center; 
