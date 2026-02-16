@@ -6,17 +6,19 @@ export default function VideoPlayer({ src, onClose }) {
   
   useEffect(() => {
     let timeout;
-    const handleMouseMove = () => {
+    const handleActivity = () => {
       setShowControls(true);
       clearTimeout(timeout);
       timeout = setTimeout(() => setShowControls(false), 3000);
     };
     
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('click', handleActivity);
     timeout = setTimeout(() => setShowControls(false), 3000);
     
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('click', handleActivity);
       clearTimeout(timeout);
     };
   }, []);
