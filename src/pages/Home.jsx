@@ -168,9 +168,6 @@ export default function Home() {
               onChange={handleSearch} 
             />
           </div>
-          <button className="icon-btn" onClick={() => setIsDark(!isDark)}>
-            {isDark ? '☀️' : '🌙'}
-          </button>
         </div>
       </nav>
 
