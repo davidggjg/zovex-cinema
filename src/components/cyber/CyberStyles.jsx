@@ -24,16 +24,16 @@ export default function CyberStyles() {
       }
 
       .light-page {
-        background: linear-gradient(135deg, #f0f4f8 0%, #e8eef5 100%);
-        color: #2d3748;
+        background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
+        color: #e0e6ed;
         font-family: 'Rajdhani', sans-serif;
         min-height: 100vh;
         direction: rtl;
       }
 
       .light-page ::-webkit-scrollbar { width: 4px; }
-      .light-page ::-webkit-scrollbar-track { background: #e2e8f0; }
-      .light-page ::-webkit-scrollbar-thumb { background: #4040ff; border-radius: 2px; }
+      .light-page ::-webkit-scrollbar-track { background: #0f1419; }
+      .light-page ::-webkit-scrollbar-thumb { background: #5b7cff; border-radius: 2px; }
 
       .cyber-page ::-webkit-scrollbar { width: 4px; }
       .cyber-page ::-webkit-scrollbar-track { background: var(--cyber-bg2); }

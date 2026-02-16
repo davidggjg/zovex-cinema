@@ -34,6 +34,7 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [selectedCategoryToDelete, setSelectedCategoryToDelete] = useState("");
+  const [uploadedThumbnail, setUploadedThumbnail] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -54,6 +55,7 @@ export default function Admin() {
       setCategory("");
       setNewCategory("");
       setError("");
+      setUploadedThumbnail("");
     },
   });
 
@@ -101,6 +103,7 @@ export default function Admin() {
       video_id: parsed.video_id,
       type: parsed.type,
       category: finalCategory,
+      thumbnail_url: uploadedThumbnail || undefined,
     });
   };
 
@@ -326,6 +329,50 @@ export default function Admin() {
                     (e.target.style.borderColor = "rgba(0,210,255,0.15)")
                   }
                 />
+              </div>
+
+              <div>
+                <label style={labelStyle}>תמונה לסרט (אופציונלי)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                        setUploadedThumbnail(file_url);
+                      } catch (err) {
+                        setError("שגיאה בהעלאת התמונה");
+                      }
+                    }
+                  }}
+                  style={{
+                    ...inputStyle,
+                    padding: "8px",
+                  }}
+                />
+                {uploadedThumbnail && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <img
+                      src={uploadedThumbnail}
+                      alt="thumbnail"
+                      className="w-20 h-12 object-cover rounded"
+                    />
+                    <button
+                      onClick={() => setUploadedThumbnail("")}
+                      className="text-xs px-2 py-1 rounded"
+                      style={{
+                        background: "rgba(255,0,60,0.1)",
+                        border: "1px solid rgba(255,0,60,0.3)",
+                        color: "#ff4466",
+                        fontFamily: "'Orbitron',sans-serif",
+                      }}
+                    >
+                      הסר
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
