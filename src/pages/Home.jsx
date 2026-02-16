@@ -389,17 +389,19 @@ const CSS = `
     position: fixed; top: 0; width: 100%; height: 70px; 
     display: flex; justify-content: space-between; align-items: center;
     padding: 0 40px; 
-    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-    backdrop-filter: blur(10px); z-index: 1000;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
 
   .logo { 
-    font-weight: 900; 
-    font-size: 28px; 
+    font-weight: 800; 
+    font-size: 26px; 
     color: var(--accent); 
     cursor: pointer; 
-    letter-spacing: 2px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 1px;
   }
 
   .nav-tools { display: flex; align-items: center; gap: 15px; }
