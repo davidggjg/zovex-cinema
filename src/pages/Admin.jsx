@@ -510,39 +510,45 @@ export default function Admin() {
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
                 <>
                   <div>
-                    <label style={labelStyle}>סדרה קיימת</label>
-                    {[...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].length > 0 && (
-                      <select
-                        value={seriesName}
-                        onChange={(e) => setSeriesName(e.target.value)}
-                        style={{
-                          ...inputStyle,
-                          marginBottom: 8,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <option value="">בחר סדרה קיימת או הקלד חדשה...</option>
-                        {[...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort((a, b) =>
-                          a.localeCompare(b, "he")
-                        ).map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    <input
-                      value={seriesName}
-                      onChange={(e) => setSeriesName(e.target.value)}
-                      placeholder="או הקלד שם סדרה חדשה..."
-                      style={inputStyle}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
-                      }
-                      onBlur={(e) =>
-                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
-                      }
-                    />
+                    <label style={labelStyle}>בחר סדרה</label>
+                    {(() => {
+                      const existingSeries = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort((a, b) =>
+                        a.localeCompare(b, "he")
+                      );
+                      return (
+                        <>
+                          <select
+                            value={seriesName}
+                            onChange={(e) => setSeriesName(e.target.value)}
+                            style={{
+                              ...inputStyle,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <option value="">צור סדרה חדשה...</option>
+                            {existingSeries.map((name) => (
+                              <option key={name} value={name}>
+                                {name}
+                              </option>
+                            ))}
+                          </select>
+                          {!seriesName && (
+                            <input
+                              value={seriesName}
+                              onChange={(e) => setSeriesName(e.target.value)}
+                              placeholder="הקלד שם לסדרה חדשה..."
+                              style={{ ...inputStyle, marginTop: 8 }}
+                              onFocus={(e) =>
+                                (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                              }
+                              onBlur={(e) =>
+                                (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                              }
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
