@@ -121,21 +121,25 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
                 ? "rgba(255,0,0,0.2)"
                 : movie.type === "cloudinary"
                   ? "rgba(52,211,153,0.2)"
-                  : "rgba(66,133,244,0.2)",
+                  : movie.type === "vimeo"
+                    ? "rgba(26,183,234,0.2)"
+                    : "rgba(66,133,244,0.2)",
             border: `1px solid ${
               movie.type === "youtube" 
                 ? "rgba(255,68,68,0.5)" 
                 : movie.type === "cloudinary"
                   ? "rgba(52,211,153,0.5)"
-                  : "rgba(66,133,244,0.5)"
+                  : movie.type === "vimeo"
+                    ? "rgba(26,183,234,0.5)"
+                    : "rgba(66,133,244,0.5)"
             }`,
             fontFamily: "'Orbitron',sans-serif",
             fontSize: 8,
-            color: movie.type === "youtube" ? "#ff6666" : movie.type === "cloudinary" ? "#34d399" : "#4da3ff",
+            color: movie.type === "youtube" ? "#ff6666" : movie.type === "cloudinary" ? "#34d399" : movie.type === "vimeo" ? "#1ab7ea" : "#4da3ff",
             letterSpacing: "0.12em",
           }}
         >
-          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : "☁ DRIVE"}
+          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CL" : movie.type === "vimeo" ? "▶ VM" : movie.type === "dailymotion" ? "▶ DM" : movie.type === "streamable" ? "▶ ST" : "☁ DR"}
         </div>
       </div>
 
