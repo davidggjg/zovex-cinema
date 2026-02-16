@@ -1,6 +1,26 @@
 import { X } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function VideoPlayer({ src, onClose }) {
+  const [showControls, setShowControls] = useState(true);
+  
+  useEffect(() => {
+    let timeout;
+    const handleMouseMove = () => {
+      setShowControls(true);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => setShowControls(false), 3000);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    timeout = setTimeout(() => setShowControls(false), 3000);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(timeout);
+    };
+  }, []);
+
   return (
     <div style={{ 
       position: 'fixed', 
@@ -25,7 +45,9 @@ export default function VideoPlayer({ src, onClose }) {
           borderRadius: '50%',
           padding: '12px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-          transition: 'all 0.2s',
+          transition: 'all 0.3s',
+          opacity: showControls ? 1 : 0,
+          pointerEvents: showControls ? 'auto' : 'none',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
