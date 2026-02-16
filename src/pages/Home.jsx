@@ -794,7 +794,9 @@ const CSS = `
     .movie-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
     .grid-section { padding: 30px 20px; }
     .detail-view { padding: 20px; }
-    .detail-header { padding: 30px; }
+    .detail-header { padding: 30px; height: 40vh; }
     .detail-info h1 { font-size: 2rem; }
+    .episode-list { padding: 20px; }
+    .ep-item { padding: 12px 16px; }
   }
 `;
