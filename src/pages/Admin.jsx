@@ -510,11 +510,31 @@ export default function Admin() {
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
                 <>
                   <div>
-                    <label style={labelStyle}>שם הסדרה (אופציונלי)</label>
+                    <label style={labelStyle}>סדרה קיימת</label>
+                    {[...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].length > 0 && (
+                      <select
+                        value={seriesName}
+                        onChange={(e) => setSeriesName(e.target.value)}
+                        style={{
+                          ...inputStyle,
+                          marginBottom: 8,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="">בחר סדרה קיימת או הקלד חדשה...</option>
+                        {[...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort((a, b) =>
+                          a.localeCompare(b, "he")
+                        ).map((name) => (
+                          <option key={name} value={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <input
                       value={seriesName}
                       onChange={(e) => setSeriesName(e.target.value)}
-                      placeholder="למשל: Breaking Bad"
+                      placeholder="או הקלד שם סדרה חדשה..."
                       style={inputStyle}
                       onFocus={(e) =>
                         (e.target.style.borderColor = "rgba(0,210,255,0.5)")
