@@ -44,7 +44,7 @@ const getThumb = (movie) => {
 
 // Video Player Component with Portal
 const VideoPlayer = ({ videoId, type, onClose }) => {
-  const [hasError, setHasError] = React.useState(false);
+  const [hasError, setHasError] = useState(false);
   const embedUrl = getEmbedUrl(videoId, type);
   const originalUrl = type === "rumble" 
     ? `https://rumble.com/v${videoId}` 
