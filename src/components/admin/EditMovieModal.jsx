@@ -158,10 +158,11 @@ export default function EditMovieModal({ movie, onClose, onUpdate }) {
           </div>
 
           <div>
-            <label style={labelStyle}>מזהה וידאו</label>
+            <label style={labelStyle}>קישור וידאו</label>
             <input
               value={videoId}
               onChange={(e) => setVideoId(e.target.value)}
+              placeholder="https://youtube.com/watch?v=... או https://rumble.com/v..."
               style={inputStyle}
               onFocus={(e) => (e.target.style.borderColor = "#e50914")}
               onBlur={(e) => (e.target.style.borderColor = "rgba(229,9,20,0.2)")}
