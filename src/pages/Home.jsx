@@ -249,9 +249,13 @@ export default function Home() {
               <div className="detail-info">
                 <h1>{current.title}</h1>
                 <span className="badge">{current.category}</span>
-                <p>{current.description}</p>
               </div>
             </div>
+            {current.description && (
+              <div style={{ padding: '30px 60px', background: 'var(--card)', borderTop: '1px solid var(--border)', marginBottom: '20px' }}>
+                <p style={{ margin: 0, color: 'var(--text)', lineHeight: 1.6, fontSize: '16px' }}>{current.description}</p>
+              </div>
+            )}
             <div className="episode-list">
               <h3>פרקים / צפייה</h3>
               {current.type === 'series' ? (
