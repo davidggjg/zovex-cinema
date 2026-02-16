@@ -16,6 +16,7 @@ export default function Home() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -87,11 +88,16 @@ export default function Home() {
     }
   }, [searchQuery]);
 
-  // Filter items by search
-  const filteredItems = processedItems.filter(item => 
-    searchQuery === SECRET_CODE || 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Get unique categories
+  const categories = [...new Set(movies.map(m => m.category))].sort();
+
+  // Filter items by search and category
+  const filteredItems = processedItems.filter(item => {
+    const matchesSearch = searchQuery === SECRET_CODE || 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <>
@@ -146,15 +152,52 @@ export default function Home() {
           alignItems: 'center', 
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)' 
         }}>
-          <h1 style={{ 
-            fontSize: '28px', 
-            fontWeight: '900', 
-            color: 'var(--accent)', 
-            margin: 0, 
-            textShadow: '2px 2px 4px rgba(0,0,0,0.5)' 
-          }}>
-            ZOVEX
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+            <h1 style={{ 
+              fontSize: '28px', 
+              fontWeight: '900', 
+              color: 'var(--accent)', 
+              margin: 0, 
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)' 
+            }}>
+              ZOVEX
+            </h1>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              <button
+                onClick={() => setSelectedCategory("all")}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: selectedCategory === "all" ? 'var(--accent)' : '#fff',
+                  fontSize: '16px',
+                  fontWeight: selectedCategory === "all" ? '700' : '400',
+                  cursor: 'pointer',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                הכל
+              </button>
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: selectedCategory === cat ? 'var(--accent)' : '#fff',
+                    fontSize: '16px',
+                    fontWeight: selectedCategory === cat ? '700' : '400',
+                    cursor: 'pointer',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
           <button 
             onClick={() => setIsDark(!isDark)} 
             className="btn" 
