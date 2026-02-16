@@ -17,10 +17,24 @@ export default function VideoModal({ movie, onClose }) {
     };
   }, [onClose]);
 
-  const embedSrc =
-    movie.type === "youtube"
-      ? `https://www.youtube.com/embed/${movie.video_id}?autoplay=1&rel=0&cc_load_policy=0`
-      : `https://drive.google.com/file/d/${movie.video_id}/preview`;
+  const getEmbedSrc = () => {
+    switch (movie.type) {
+      case "youtube":
+        return `https://www.youtube.com/embed/${movie.video_id}?autoplay=1&rel=0&cc_load_policy=0`;
+      case "drive":
+        return `https://drive.google.com/file/d/${movie.video_id}/preview`;
+      case "vimeo":
+        return `https://player.vimeo.com/video/${movie.video_id}?autoplay=1`;
+      case "dailymotion":
+        return `https://www.dailymotion.com/embed/video/${movie.video_id}?autoplay=1`;
+      case "streamable":
+        return `https://streamable.com/e/${movie.video_id}?autoplay=1`;
+      default:
+        return "";
+    }
+  };
+  
+  const embedSrc = getEmbedSrc();
 
   // Fetch episodes if this is a series
   const { data: episodes = [] } = useQuery({

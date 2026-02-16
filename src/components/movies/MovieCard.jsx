@@ -4,10 +4,18 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
   const [hovered, setHovered] = useState(false);
   const isDark = theme === "dark";
 
-  const thumb =
-    movie.type === "youtube"
-      ? `https://img.youtube.com/vi/${movie.video_id}/mqdefault.jpg`
-      : movie.thumbnail_url || null;
+  const getThumb = () => {
+    if (movie.thumbnail_url) return movie.thumbnail_url;
+    if (movie.type === "youtube") {
+      return `https://img.youtube.com/vi/${movie.video_id}/mqdefault.jpg`;
+    }
+    if (movie.type === "vimeo") {
+      return null; // Vimeo requires API call for thumbnail
+    }
+    return null;
+  };
+  
+  const thumb = getThumb();
 
   return (
     <div

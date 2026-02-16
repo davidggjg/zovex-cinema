@@ -10,17 +10,37 @@ import GlassPanel from "../components/cyber/GlassPanel";
 
 function extractVideoId(url) {
   if (!url) return null;
+  
   // YouTube
   const ytMatch = url.match(
     /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
   );
   if (ytMatch) return { type: "youtube", video_id: ytMatch[1] };
+  
   // Google Drive
   const driveMatch = url.match(
     /drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/
   );
   if (driveMatch) return { type: "drive", video_id: driveMatch[1] };
-  // Plain ID
+  
+  // Vimeo
+  const vimeoMatch = url.match(
+    /vimeo\.com\/(?:video\/)?(\d+)/
+  );
+  if (vimeoMatch) return { type: "vimeo", video_id: vimeoMatch[1] };
+  
+  // Dailymotion
+  const dailymotionMatch = url.match(
+    /dailymotion\.com\/video\/([a-zA-Z0-9]+)/
+  );
+  if (dailymotionMatch) return { type: "dailymotion", video_id: dailymotionMatch[1] };
+  
+  // Streamable
+  const streamableMatch = url.match(
+    /streamable\.com\/([a-zA-Z0-9]+)/
+  );
+  if (streamableMatch) return { type: "streamable", video_id: streamableMatch[1] };
+  
   return null;
 }
 
@@ -87,7 +107,7 @@ export default function Admin() {
     setError("");
     const parsed = extractVideoId(url.trim());
     if (!parsed) {
-      setError("לינק לא תקין — הכנס לינק YouTube או Google Drive");
+      setError("לינק לא תקין — הכנס לינק מ-YouTube, Google Drive, Vimeo, Dailymotion או Streamable");
       return;
     }
     const finalTitle = title.trim();
@@ -295,11 +315,11 @@ export default function Admin() {
 
             <div className="flex flex-col gap-4">
               <div>
-                <label style={labelStyle}>לינק (YouTube / Google Drive)</label>
+                <label style={labelStyle}>לינק וידאו</label>
                 <input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=..."
+                  placeholder="YouTube, Drive, Vimeo, Dailymotion, Streamable..."
                   style={inputStyle}
                   onFocus={(e) =>
                     (e.target.style.borderColor = "rgba(0,210,255,0.5)")
