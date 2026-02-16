@@ -175,24 +175,29 @@ export default function Home() {
       <main className="container">
         {view === 'home' ? (
           <>
-            {processedItems.length > 0 && !searchQuery && (
-              <div className="hero" style={{ backgroundImage: `url(${getThumb(processedItems[0])})` }}>
-                <div className="hero-overlay" />
-                <div className="hero-content">
-                  <h1>{processedItems[0].title}</h1>
-                  <p>{processedItems[0].description}</p>
-                  <div className="hero-btns">
-                    <button className="btn-main" onClick={() => {
-                      if (processedItems[0].type === 'series') {
-                        setVideoData({ videoId: processedItems[0].episodes[0].video_id, type: processedItems[0].episodes[0].type });
-                      } else {
-                        setVideoData({ videoId: processedItems[0].video_id, type: processedItems[0].type });
-                      }
-                    }}>▶ נגן</button>
-                    <button className="btn-sec" onClick={() => { setCurrent(processedItems[0]); setView('detail'); }}>ℹ מידע</button>
+            {!searchQuery && (
+              <>
+                {/* Categories Section */}
+                <div className="categories-section">
+                  <h3>קטגוריות</h3>
+                  <div className="categories-grid">
+                    {[...new Set(movies.map(m => m.category))].sort().map(cat => (
+                      <button
+                        key={cat}
+                        className="category-btn"
+                        onClick={() => setSearchQuery(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
+
+                {/* Hero Banner */}
+                <div className="hero" style={{ backgroundImage: `url(https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6992542871bb3f3ba9500a34/3a08bb583_1771178941220.png)` }}>
+                  <div className="hero-overlay" />
+                </div>
+              </>
             )}
 
             <div className="grid-section">
