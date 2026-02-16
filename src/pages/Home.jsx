@@ -158,7 +158,7 @@ export default function Home() {
 
       {/* Navbar */}
       <nav className="nav">
-        <div className="logo" onClick={() => setView('home')}>ZOVEX</div>
+        <div className="logo" onClick={() => { setView('home'); setSearchQuery(''); }}>ZOVEX</div>
         <div className="nav-tools">
           <div className="search-wrap">
             <input 
