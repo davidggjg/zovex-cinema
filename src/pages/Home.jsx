@@ -484,31 +484,34 @@ const CSS = `
     background: var(--accent); 
     color: white; 
     border: none; 
-    padding: 14px 30px; 
-    border-radius: 6px; 
+    padding: 12px 28px; 
+    border-radius: 8px; 
     cursor: pointer; 
-    font-weight: bold;
-    font-size: 16px;
-    transition: transform 0.2s, background 0.2s;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.2s;
+    font-family: 'Assistant', sans-serif;
   }
   .btn-main:hover {
-    transform: scale(1.05);
     background: #c40812;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
   }
   
   .btn-sec { 
-    background: rgba(255,255,255,0.25); 
+    background: rgba(255,255,255,0.3); 
     color: white; 
-    border: none; 
-    padding: 14px 30px; 
-    border-radius: 6px; 
+    border: 1px solid rgba(255,255,255,0.5);
+    padding: 12px 28px; 
+    border-radius: 8px; 
     cursor: pointer;
     font-weight: 600;
-    font-size: 16px;
-    transition: background 0.2s;
+    font-size: 15px;
+    transition: all 0.2s;
+    font-family: 'Assistant', sans-serif;
   }
   .btn-sec:hover {
-    background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.4);
+    border-color: rgba(255,255,255,0.7);
   }
 
   .grid-section { padding: 40px; }
