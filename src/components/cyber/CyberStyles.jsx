@@ -24,16 +24,33 @@ export default function CyberStyles() {
       }
 
       .light-page {
-        background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
-        color: #c8d0e0;
+        background: #ffffff;
+        color: #1a202c;
         font-family: 'Rajdhani', sans-serif;
         min-height: 100vh;
         direction: rtl;
+        position: relative;
+      }
+
+      .light-page::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6992542871bb3f3ba9500a34/505bf6a49_1771178941220.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        opacity: 0.15;
+        z-index: 0;
+        pointer-events: none;
       }
 
       .light-page ::-webkit-scrollbar { width: 4px; }
-      .light-page ::-webkit-scrollbar-track { background: #0f1419; }
-      .light-page ::-webkit-scrollbar-thumb { background: #5b7cff; border-radius: 2px; }
+      .light-page ::-webkit-scrollbar-track { background: #f7fafc; }
+      .light-page ::-webkit-scrollbar-thumb { background: #4299e1; border-radius: 2px; }
 
       .cyber-page ::-webkit-scrollbar { width: 4px; }
       .cyber-page ::-webkit-scrollbar-track { background: var(--cyber-bg2); }
