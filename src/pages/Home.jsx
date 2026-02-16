@@ -44,16 +44,60 @@ const getThumb = (movie) => {
 
 // Video Player Component with Portal
 const VideoPlayer = ({ videoId, type, onClose }) => {
+  const [hasError, setHasError] = React.useState(false);
+  const embedUrl = getEmbedUrl(videoId, type);
+  const originalUrl = type === "rumble" 
+    ? `https://rumble.com/v${videoId}` 
+    : embedUrl;
+
   return createPortal(
     <div className="vid-ov" onClick={onClose}>
       <div className="vid-container" onClick={e => e.stopPropagation()}>
         <button className="vid-close" onClick={onClose}>✕</button>
-        <iframe
-          src={getEmbedUrl(videoId, type)}
-          allowFullScreen
-          allow="autoplay; encrypted-media"
-          title="Zovex Player"
-        />
+        {!hasError ? (
+          <iframe
+            src={embedUrl}
+            allowFullScreen
+            allow="autoplay; encrypted-media"
+            title="Zovex Player"
+            onError={() => setHasError(true)}
+          />
+        ) : (
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#000',
+            color: '#f8fafc',
+            textAlign: 'center',
+            gap: '20px',
+            padding: '40px',
+          }}>
+            <div style={{ fontSize: '18px', fontWeight: 600 }}>
+              מקור הוידאו חוסם הצגה ישירה
+            </div>
+            <a
+              href={originalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#e50914',
+                color: '#fff',
+                padding: '12px 28px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              🚀 צפה במקור (בחלון חדש)
+            </a>
+          </div>
+        )}
       </div>
     </div>,
     document.body
