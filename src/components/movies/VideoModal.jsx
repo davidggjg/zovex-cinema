@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 
 export default function VideoModal({ movie, onClose }) {
-  const [showPlayer, setShowPlayer] = useState(true);
+  const [currentMovie, setCurrentMovie] = useState(movie);
+  const [selectedSeason, setSelectedSeason] = useState(movie.season_number || 1);
 
   useEffect(() => {
     const handler = (e) => {
@@ -18,19 +19,19 @@ export default function VideoModal({ movie, onClose }) {
   }, [onClose]);
 
   const getEmbedSrc = () => {
-    switch (movie.type) {
+    switch (currentMovie.type) {
       case "youtube":
-        return `https://www.youtube.com/embed/${movie.video_id}?autoplay=1&rel=0&cc_load_policy=0`;
+        return `https://www.youtube.com/embed/${currentMovie.video_id}?autoplay=1&rel=0&cc_load_policy=0`;
       case "drive":
-        return `https://drive.google.com/file/d/${movie.video_id}/preview`;
+        return `https://drive.google.com/file/d/${currentMovie.video_id}/preview`;
       case "vimeo":
-        return `https://player.vimeo.com/video/${movie.video_id}?autoplay=1`;
+        return `https://player.vimeo.com/video/${currentMovie.video_id}?autoplay=1`;
       case "dailymotion":
-        return `https://www.dailymotion.com/embed/video/${movie.video_id}?autoplay=1`;
+        return `https://www.dailymotion.com/embed/video/${currentMovie.video_id}?autoplay=1`;
       case "streamable":
-        return `https://streamable.com/e/${movie.video_id}?autoplay=1`;
+        return `https://streamable.com/e/${currentMovie.video_id}?autoplay=1`;
       case "archive":
-        return `https://archive.org/embed/${movie.video_id}`;
+        return `https://archive.org/embed/${currentMovie.video_id}`;
       default:
         return "";
     }
@@ -38,17 +39,18 @@ export default function VideoModal({ movie, onClose }) {
   
   const embedSrc = getEmbedSrc();
 
-  // Fetch episodes if this is a series
-  const { data: episodes = [] } = useQuery({
+  // Fetch all episodes if this is a series
+  const { data: allEpisodes = [] } = useQuery({
     queryKey: ['episodes', movie.series_name],
     queryFn: () => base44.entities.Movie.filter({ series_name: movie.series_name }, 'season_number,episode_number'),
     enabled: !!movie.series_name,
   });
 
-  // Group episodes by season
-  const [selectedSeason, setSelectedSeason] = useState(movie.season_number || 1);
-  const seasons = [...new Set(episodes.map(ep => ep.season_number || 1))].sort((a, b) => a - b);
-  const seasonEpisodes = episodes.filter(ep => (ep.season_number || 1) === selectedSeason);
+  // Get unique seasons
+  const seasons = [...new Set(allEpisodes.map(ep => ep.season_number))].filter(Boolean).sort((a, b) => a - b);
+  
+  // Filter episodes by selected season
+  const episodes = allEpisodes.filter(ep => ep.season_number === selectedSeason);
 
   return (
     <div
@@ -86,11 +88,12 @@ export default function VideoModal({ movie, onClose }) {
         }}
       >
         <iframe
+          key={currentMovie.id}
           src={embedSrc}
           className="w-full h-full border-none"
           allowFullScreen
           allow="autoplay; encrypted-media"
-          title={movie.title}
+          title={currentMovie.title}
         />
       </div>
 
@@ -112,7 +115,7 @@ export default function VideoModal({ movie, onClose }) {
               color: "white",
             }}
           >
-            {movie.title}
+            {currentMovie.title}
           </h1>
 
           <div className="flex items-center gap-3 mb-4">
@@ -125,9 +128,9 @@ export default function VideoModal({ movie, onClose }) {
                 color: "#ffffff",
               }}
             >
-              {movie.category}
+              {currentMovie.category}
             </span>
-            {movie.series_name && (
+            {currentMovie.series_name && (
               <span
                 style={{
                   fontFamily: "'Rajdhani',sans-serif",
@@ -135,12 +138,14 @@ export default function VideoModal({ movie, onClose }) {
                   color: "#888",
                 }}
               >
-                {movie.series_name} • עונה {movie.season_number || 1} • פרק {movie.episode_number}
+                {currentMovie.series_name}
+                {currentMovie.season_number && ` • עונה ${currentMovie.season_number}`}
+                {currentMovie.episode_number && ` • פרק ${currentMovie.episode_number}`}
               </span>
             )}
           </div>
 
-          {movie.description && (
+          {currentMovie.description && (
             <p
               style={{
                 fontFamily: "'Rajdhani',sans-serif",
@@ -150,14 +155,54 @@ export default function VideoModal({ movie, onClose }) {
                 maxWidth: 800,
               }}
             >
-              {movie.description}
+              {currentMovie.description}
             </p>
           )}
         </div>
 
-        {/* Episodes Section */}
-        {episodes.length > 0 && (
+        {/* Series Section */}
+        {movie.series_name && allEpisodes.length > 0 && (
           <div>
+            {/* Season Selector */}
+            {seasons.length > 1 && (
+              <div className="mb-4">
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {seasons.map((season) => (
+                    <button
+                      key={season}
+                      onClick={() => setSelectedSeason(season)}
+                      className="shrink-0 px-4 py-2 rounded transition-all duration-200 cursor-pointer"
+                      style={{
+                        background: selectedSeason === season 
+                          ? "rgba(255,255,255,0.2)" 
+                          : "rgba(255,255,255,0.05)",
+                        border: selectedSeason === season 
+                          ? "1px solid rgba(255,255,255,0.4)" 
+                          : "1px solid rgba(255,255,255,0.1)",
+                        fontFamily: "'Orbitron',sans-serif",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "white",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedSeason !== season) {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedSeason !== season) {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                        }
+                      }}
+                    >
+                      עונה {season}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Episodes List */}
             <h2
               className="mb-4"
               style={{
@@ -167,52 +212,24 @@ export default function VideoModal({ movie, onClose }) {
                 color: "white",
               }}
             >
-              פרקים
+              {seasons.length > 1 ? `עונה ${selectedSeason}` : "פרקים"}
             </h2>
 
-            {/* Season Selector */}
-            {seasons.length > 1 && (
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                {seasons.map((season) => (
-                  <button
-                    key={season}
-                    onClick={() => setSelectedSeason(season)}
-                    className="cursor-pointer transition-all duration-200 px-4 py-2 rounded whitespace-nowrap"
-                    style={{
-                      background: selectedSeason === season ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.05)",
-                      border: `1px solid ${selectedSeason === season ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.1)"}`,
-                      fontFamily: "'Orbitron',sans-serif",
-                      fontSize: 13,
-                      color: "white",
-                    }}
-                  >
-                    עונה {season}
-                  </button>
-                ))}
-              </div>
-            )}
-
             <div className="grid grid-cols-1 gap-3">
-              {seasonEpisodes.map((ep) => (
+              {episodes.map((ep) => (
                 <button
                   key={ep.id}
-                  onClick={() => {
-                    window.location.reload();
-                    setTimeout(() => {
-                      const event = new CustomEvent('playMovie', { detail: ep });
-                      window.dispatchEvent(event);
-                    }, 100);
-                  }}
+                  onClick={() => setCurrentMovie(ep)}
                   className="flex gap-4 p-3 rounded transition-all duration-200 cursor-pointer text-right"
                   style={{
-                    background: ep.id === movie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
-                    border: ep.id === movie.id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
+                    background: ep.id === currentMovie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)",
+                    border: ep.id === currentMovie.id ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "rgba(255,255,255,0.12)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = ep.id === movie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)";
+                    e.currentTarget.style.background = ep.id === currentMovie.id ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.05)";
                   }}
                 >
                   {ep.thumbnail_url && (

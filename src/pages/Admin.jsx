@@ -7,6 +7,7 @@ import { createPageUrl } from "@/utils";
 import CyberStyles from "../components/cyber/CyberStyles";
 import CyberBackground from "../components/cyber/CyberBackground";
 import GlassPanel from "../components/cyber/GlassPanel";
+import EditMovieModal from "../components/admin/EditMovieModal";
 
 function extractVideoId(url) {
   if (!url) return null;
@@ -91,7 +92,6 @@ export default function Admin() {
       setSeasonNumber("");
       setEpisodeNumber("");
       setCloudinaryCloudName("");
-      setEditingMovie(null);
     },
   });
 
@@ -104,17 +104,6 @@ export default function Admin() {
     mutationFn: ({ id, data }) => base44.entities.Movie.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
-      setUrl("");
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      setNewCategory("");
-      setError("");
-      setUploadedThumbnail("");
-      setSeriesName("");
-      setSeasonNumber("");
-      setEpisodeNumber("");
-      setCloudinaryCloudName("");
       setEditingMovie(null);
     },
   });
@@ -186,25 +175,7 @@ export default function Admin() {
       }
     }
 
-    if (editingMovie) {
-      updateMutation.mutate({ id: editingMovie.id, data: movieData });
-    } else {
-      createMutation.mutate(movieData);
-    }
-  };
-
-  const handleEdit = (movie) => {
-    setEditingMovie(movie);
-    setUrl(`https://youtube.com/watch?v=${movie.video_id}`);
-    setTitle(movie.title);
-    setDescription(movie.description || "");
-    setCategory(movie.category);
-    setUploadedThumbnail(movie.thumbnail_url || "");
-    setSeriesName(movie.series_name || "");
-    setSeasonNumber(movie.season_number ? String(movie.season_number) : "");
-    setEpisodeNumber(movie.episode_number ? String(movie.episode_number) : "");
-    setCloudinaryCloudName(movie.cloudinary_cloud_name || "");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    createMutation.mutate(movieData);
   };
 
   const inputStyle = {
@@ -374,35 +345,8 @@ export default function Admin() {
                 letterSpacing: "0.1em",
               }}
             >
-              {editingMovie ? "ערוך סרט" : "הוסף סרט חדש"}
+              הוסף סרט חדש
             </div>
-            
-            {editingMovie && (
-              <button
-                onClick={() => {
-                  setEditingMovie(null);
-                  setUrl("");
-                  setTitle("");
-                  setDescription("");
-                  setCategory("");
-                  setNewCategory("");
-                  setUploadedThumbnail("");
-                  setSeriesName("");
-                  setSeasonNumber("");
-                  setEpisodeNumber("");
-                  setCloudinaryCloudName("");
-                }}
-                className="mb-4 cursor-pointer transition-all duration-200 px-3 py-1.5 rounded text-xs"
-                style={{
-                  background: "rgba(255,0,60,0.1)",
-                  border: "1px solid rgba(255,0,60,0.3)",
-                  color: "#ff4466",
-                  fontFamily: "'Orbitron',sans-serif",
-                }}
-              >
-                ✕ בטל עריכה
-              </button>
-            )}
 
             <div className="flex flex-col gap-4">
               <div>
@@ -581,38 +525,40 @@ export default function Admin() {
                     />
                   </div>
 
-                  <div>
-                    <label style={labelStyle}>מספר העונה (אופציונלי)</label>
-                    <input
-                      type="number"
-                      value={seasonNumber}
-                      onChange={(e) => setSeasonNumber(e.target.value)}
-                      placeholder="1, 2, 3..."
-                      style={inputStyle}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
-                      }
-                      onBlur={(e) =>
-                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
-                      }
-                    />
-                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label style={labelStyle}>מספר העונה (אופציונלי)</label>
+                      <input
+                        type="number"
+                        value={seasonNumber}
+                        onChange={(e) => setSeasonNumber(e.target.value)}
+                        placeholder="1, 2, 3..."
+                        style={inputStyle}
+                        onFocus={(e) =>
+                          (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                        }
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                        }
+                      />
+                    </div>
 
-                  <div>
-                    <label style={labelStyle}>מספר הפרק (אופציונלי)</label>
-                    <input
-                      type="number"
-                      value={episodeNumber}
-                      onChange={(e) => setEpisodeNumber(e.target.value)}
-                      placeholder="1, 2, 3..."
-                      style={inputStyle}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
-                      }
-                      onBlur={(e) =>
-                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
-                      }
-                    />
+                    <div>
+                      <label style={labelStyle}>מספר הפרק (אופציונלי)</label>
+                      <input
+                        type="number"
+                        value={episodeNumber}
+                        onChange={(e) => setEpisodeNumber(e.target.value)}
+                        placeholder="1, 2, 3..."
+                        style={inputStyle}
+                        onFocus={(e) =>
+                          (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                        }
+                        onBlur={(e) =>
+                          (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                        }
+                      />
+                    </div>
                   </div>
                 </>
               )}
@@ -655,9 +601,7 @@ export default function Admin() {
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {editingMovie 
-                  ? (updateMutation.isPending ? "מעדכן..." : "💾 עדכן סרט")
-                  : (createMutation.isPending ? "מוסיף..." : "➕ הוסף סרט")}
+                {createMutation.isPending ? "מוסיף..." : "➕ הוסף סרט"}
               </button>
             </div>
           </GlassPanel>
@@ -772,7 +716,7 @@ export default function Admin() {
 
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleEdit(movie)}
+                        onClick={() => setEditingMovie(movie)}
                         className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
                         style={{
                           background: "rgba(0,210,255,0.08)",
@@ -790,9 +734,8 @@ export default function Admin() {
                           e.currentTarget.style.boxShadow = "none";
                         }}
                       >
-                        ✎
+                        ✏
                       </button>
-                      
                       <button
                         onClick={() => {
                           if (window.confirm(`למחוק את "${movie.title}"?`))
@@ -825,6 +768,14 @@ export default function Admin() {
           </GlassPanel>
         </div>
       </div>
+
+      {editingMovie && (
+        <EditMovieModal
+          movie={editingMovie}
+          onClose={() => setEditingMovie(null)}
+          onUpdate={(id, data) => updateMutation.mutate({ id, data })}
+        />
+      )}
     </>
   );
 }
