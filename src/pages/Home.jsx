@@ -94,20 +94,20 @@ export default function Home() {
             style={{
               background: theme === "dark" 
                 ? "rgba(0,210,255,0.15)" 
-                : "rgba(91,124,255,0.18)",
+                : "rgba(255,255,255,0.9)",
               border: theme === "dark"
                 ? "1px solid rgba(0,210,255,0.4)"
-                : "1px solid rgba(91,124,255,0.4)",
+                : "1px solid rgba(37,99,235,0.3)",
               fontFamily: "'Orbitron',sans-serif",
               fontSize: 10,
-              color: theme === "dark" ? "var(--cyber-neon)" : "#7b9cff",
+              color: theme === "dark" ? "var(--cyber-neon)" : "#2563eb",
               letterSpacing: "0.1em",
               boxShadow: theme === "dark"
                 ? "0 0 15px rgba(0,210,255,0.2)"
-                : "0 0 15px rgba(91,124,255,0.25)",
+                : "0 2px 8px rgba(0,0,0,0.1)",
             }}
           >
-            {theme === "dark" ? "◐ מצב בהיר" : "◑ מצב כהה"}
+            {theme === "dark" ? "☀ מצב בהיר" : "🌙 מצב כהה"}
           </button>
         </div>
 
