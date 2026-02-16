@@ -602,89 +602,96 @@ const CSS = `
     color: var(--text-secondary);
   }
 
-  .detail-view { padding: 40px; }
+  .detail-view { padding: 40px 60px; }
   .back-btn { 
     background: var(--card); 
-    border: 2px solid rgba(229, 9, 20, 0.3);
+    border: 1px solid var(--border);
     color: var(--text); 
-    padding: 12px 24px; 
+    padding: 10px 20px; 
     border-radius: 8px; 
     cursor: pointer; 
-    margin-bottom: 25px;
-    font-weight: 600;
+    margin-bottom: 30px;
+    font-weight: 500;
     transition: all 0.2s;
+    font-family: 'Assistant', sans-serif;
   }
   .back-btn:hover {
     border-color: var(--accent);
-    transform: translateX(5px);
+    background: #f3f4f6;
   }
 
   .detail-header {
-    height: 55vh; 
+    height: 50vh; 
     background-size: cover; 
     background-position: center;
     position: relative; 
     display: flex; 
     align-items: flex-end; 
     padding: 50px; 
-    border-radius: 12px; 
+    border-radius: 16px; 
     overflow: hidden;
+    margin-bottom: 40px;
+    border: 1px solid var(--border);
   }
 
   .detail-info { position: relative; z-index: 10; }
   .detail-info h1 { 
-    font-size: 2.8rem; 
+    font-size: 2.6rem; 
     margin: 0 0 12px 0;
-    font-weight: 900;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    font-weight: 800;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+    color: #fff;
   }
   .badge { 
     background: var(--accent); 
     color: white; 
-    padding: 7px 18px; 
+    padding: 6px 16px; 
     border-radius: 20px; 
-    font-size: 13px; 
+    font-size: 12px; 
     display: inline-block; 
     margin: 12px 0;
     font-weight: 600;
   }
 
-  .episode-list { margin-top: 35px; }
+  .episode-list { margin-top: 20px; }
   .episode-list h3 { 
-    margin-bottom: 18px;
-    font-size: 22px;
+    margin-bottom: 24px;
+    font-size: 20px;
     font-weight: 700;
+    color: var(--text);
   }
 
   .ep-item {
     display: flex; 
     align-items: center; 
     background: var(--card); 
-    padding: 18px; 
+    padding: 16px 20px; 
     margin-bottom: 12px; 
     border-radius: 10px; 
     cursor: pointer; 
     transition: all 0.2s;
-    border: 2px solid transparent;
+    border: 1px solid var(--border);
   }
   .ep-item:hover { 
-    background: var(--accent);
+    background: #f3f4f6;
     border-color: var(--accent);
-    transform: translateX(-5px);
+    box-shadow: 0 2px 8px rgba(229, 9, 20, 0.1);
   }
   .ep-num { 
-    font-weight: bold; 
-    margin-left: 18px; 
-    opacity: 0.6; 
-    font-size: 20px; 
+    font-weight: 600; 
+    margin-left: 16px; 
+    color: var(--text-secondary);
+    font-size: 16px; 
   }
   .ep-title { 
     flex: 1;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
+    color: var(--text);
   }
   .ep-play { 
-    font-size: 22px; 
+    font-size: 18px;
+    color: var(--accent);
   }
 
   .vid-ov { 
