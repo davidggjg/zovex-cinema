@@ -194,7 +194,7 @@ export default function Home() {
                 </div>
 
                 {/* Hero Banner */}
-                <div className="hero" style={{ backgroundImage: `url(https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6992542871bb3f3ba9500a34/3a08bb583_1771178941220.png)` }}>
+                <div className="hero" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1489599849228-bed2db80ce2d?w=1200&h=800&fit=crop)` }}>
                   <div className="hero-overlay" />
                 </div>
               </>
