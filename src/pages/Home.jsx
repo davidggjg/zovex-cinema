@@ -23,6 +23,8 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [theme, setTheme] = useState("dark");
+  const [showSeriesSelector, setShowSeriesSelector] = useState(false);
+  const [selectedSeriesForModal, setSelectedSeriesForModal] = useState(null);
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -78,6 +80,29 @@ export default function Home() {
 
     return [...standaloneMovies, ...Array.from(seriesMap.values())];
   }, [movies]);
+
+  // Get all unique series names
+  const allSeriesNames = useMemo(() => {
+    return [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort((a, b) =>
+      a.localeCompare(b, "he")
+    );
+  }, [movies]);
+
+  const handleMovieClick = (movie) => {
+    if (movie.is_series) {
+      setSelectedSeriesForModal(movie.title);
+      setShowSeriesSelector(true);
+    } else {
+      setSelectedMovie(movie);
+    }
+  };
+
+  const handleSeriesSelect = (seriesName) => {
+    const firstEpisode = movies.find(m => m.series_name === seriesName && m.episode_number === 1) 
+      || movies.find(m => m.series_name === seriesName);
+    setSelectedMovie(firstEpisode);
+    setShowSeriesSelector(false);
+  };
 
   // Filtering
   const filtered = useMemo(() => {
@@ -260,7 +285,7 @@ export default function Home() {
                       key={movie.id}
                       movie={movie}
                       index={i}
-                      onClick={setSelectedMovie}
+                      onClick={handleMovieClick}
                       theme={theme}
                     />
                   ))}
@@ -318,7 +343,7 @@ export default function Home() {
                           key={movie.id}
                           movie={movie}
                           index={i}
-                          onClick={setSelectedMovie}
+                          onClick={handleMovieClick}
                           theme={theme}
                         />
                       ))}
@@ -330,13 +355,125 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Series Selector Modal */}
+      {showSeriesSelector && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSeriesSelector(false);
+            }
+          }}
+          className="fixed inset-0 z-[1001] flex items-center justify-center p-4"
+          style={{
+            background: "rgba(0,0,0,0.92)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div
+            className="w-full max-w-[600px] rounded-lg p-6 max-h-[80vh] overflow-y-auto"
+            style={{
+              background: theme === "dark"
+                ? "linear-gradient(135deg, rgba(0,210,255,0.08) 0%, rgba(0,128,255,0.04) 100%)"
+                : "white",
+              border: theme === "dark" ? "1px solid rgba(0,210,255,0.25)" : "1px solid #e5e7eb",
+              backdropFilter: "blur(12px)",
+              boxShadow: theme === "dark"
+                ? "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(0,210,255,0.06)"
+                : "0 8px 32px rgba(0,0,0,0.2)",
+              animation: "modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+            }}
+          >
+            <div
+              className="mb-6 text-center"
+              style={{
+                fontFamily: "'Orbitron',sans-serif",
+                fontSize: 20,
+                fontWeight: 700,
+                color: theme === "dark" ? "var(--cyber-neon)" : "#1a1a1a",
+                letterSpacing: "0.12em",
+              }}
+            >
+              בחר סדרה
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {allSeriesNames.map((seriesName) => {
+                const episodeCount = movies.filter(m => m.series_name === seriesName).length;
+                const firstEp = movies.find(m => m.series_name === seriesName);
+                return (
+                  <button
+                    key={seriesName}
+                    onClick={() => handleSeriesSelect(seriesName)}
+                    className="flex items-center gap-4 p-4 rounded transition-all duration-200 cursor-pointer text-right"
+                    style={{
+                      background: theme === "dark" ? "rgba(0,0,0,0.3)" : "#f9fafb",
+                      border: theme === "dark" ? "1px solid rgba(0,210,255,0.15)" : "1px solid #e5e7eb",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = theme === "dark" ? "rgba(0,210,255,0.1)" : "#f3f4f6";
+                      e.currentTarget.style.borderColor = theme === "dark" ? "rgba(0,210,255,0.3)" : "#d1d5db";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = theme === "dark" ? "rgba(0,0,0,0.3)" : "#f9fafb";
+                      e.currentTarget.style.borderColor = theme === "dark" ? "rgba(0,210,255,0.15)" : "#e5e7eb";
+                    }}
+                  >
+                    {firstEp?.thumbnail_url && (
+                      <img
+                        src={firstEp.thumbnail_url}
+                        alt={seriesName}
+                        className="w-24 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div
+                        className="mb-1"
+                        style={{
+                          fontFamily: "'Orbitron',sans-serif",
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: theme === "dark" ? "white" : "#1a1a1a",
+                        }}
+                      >
+                        {seriesName}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "'Rajdhani',sans-serif",
+                          fontSize: 13,
+                          color: theme === "dark" ? "#888" : "#6b7280",
+                        }}
+                      >
+                        {episodeCount} פרקים • {firstEp?.category}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setShowSeriesSelector(false)}
+              className="mt-6 w-full cursor-pointer transition-all duration-200 py-2.5 rounded"
+              style={{
+                background: theme === "dark" ? "rgba(255,0,60,0.08)" : "#f3f4f6",
+                border: theme === "dark" ? "1px solid rgba(255,0,60,0.35)" : "1px solid #d1d5db",
+                fontFamily: "'Orbitron',sans-serif",
+                fontSize: 11,
+                color: theme === "dark" ? "#ff4466" : "#374151",
+                letterSpacing: "0.1em",
+              }}
+            >
+              ביטול
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Video Modal */}
       {selectedMovie && (
         <VideoModal
-          movie={selectedMovie.is_series 
-            ? movies.find(m => m.series_name === selectedMovie.title && m.episode_number === 1) || movies.find(m => m.series_name === selectedMovie.title)
-            : selectedMovie
-          }
+          movie={selectedMovie}
           onClose={() => setSelectedMovie(null)}
         />
       )}
