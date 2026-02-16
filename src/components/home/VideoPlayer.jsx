@@ -9,27 +9,36 @@ export default function VideoPlayer({ src, onClose }) {
     const handleActivity = () => {
       setShowControls(true);
       clearTimeout(timeout);
-      timeout = setTimeout(() => setShowControls(false), 3000);
+      timeout = setTimeout(() => setShowControls(false), 2500);
     };
     
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('click', handleActivity);
-    timeout = setTimeout(() => setShowControls(false), 3000);
+    const videoContainer = document.querySelector('[data-video-container]');
+    if (videoContainer) {
+      videoContainer.addEventListener('mousemove', handleActivity);
+      videoContainer.addEventListener('click', handleActivity);
+    }
+    
+    timeout = setTimeout(() => setShowControls(false), 2500);
     
     return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('click', handleActivity);
+      if (videoContainer) {
+        videoContainer.removeEventListener('mousemove', handleActivity);
+        videoContainer.removeEventListener('click', handleActivity);
+      }
       clearTimeout(timeout);
     };
   }, []);
 
   return (
-    <div style={{ 
-      position: 'fixed', 
-      inset: 0, 
-      background: '#000', 
-      zIndex: 200 
-    }}>
+    <div 
+      data-video-container
+      style={{ 
+        position: 'fixed', 
+        inset: 0, 
+        background: '#000', 
+        zIndex: 200 
+      }}
+    >
       <button 
         onClick={onClose} 
         style={{ 
