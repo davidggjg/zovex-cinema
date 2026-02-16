@@ -51,8 +51,10 @@ export default function VideoModal({ movie, onClose }) {
   // Get unique seasons
   const seasons = [...new Set(allEpisodes.map(ep => ep.season_number))].filter(Boolean).sort((a, b) => a - b);
   
-  // Filter episodes by selected season
-  const episodes = allEpisodes.filter(ep => ep.season_number === selectedSeason);
+  // Filter episodes by selected season - if no seasons, show all
+  const episodes = seasons.length > 0 
+    ? allEpisodes.filter(ep => ep.season_number === selectedSeason)
+    : allEpisodes.sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
 
   return (
     <div
