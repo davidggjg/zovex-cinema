@@ -378,11 +378,12 @@ const CSS = `
     background: var(--bg); 
     color: var(--text); 
     direction: rtl; 
-    transition: background 0.3s ease; 
+    transition: background 0.3s ease;
+    font-size: 16px;
   }
   
   ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 
   .nav { 
     position: fixed; top: 0; width: 100%; height: 70px; 
