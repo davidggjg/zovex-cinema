@@ -4,9 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-import CyberStyles from "../components/cyber/CyberStyles";
-import CyberBackground from "../components/cyber/CyberBackground";
-import GlassPanel from "../components/cyber/GlassPanel";
+
 import EditMovieModal from "../components/admin/EditMovieModal";
 
 function extractVideoId(url) {
@@ -187,11 +185,11 @@ export default function Admin() {
   const inputStyle = {
     width: "100%",
     background: "rgba(0,0,0,0.4)",
-    border: "1px solid rgba(0,210,255,0.15)",
-    borderRadius: 4,
-    color: "var(--cyber-text)",
-    fontFamily: "'Share Tech Mono',monospace",
-    fontSize: 13,
+    border: "1px solid rgba(229,9,20,0.2)",
+    borderRadius: 6,
+    color: "#f8fafc",
+    fontFamily: "'Assistant',sans-serif",
+    fontSize: 14,
     padding: "10px 14px",
     outline: "none",
     direction: "rtl",
@@ -199,45 +197,61 @@ export default function Admin() {
   };
 
   const labelStyle = {
-    fontFamily: "'Orbitron',sans-serif",
-    fontSize: 10,
-    color: "var(--cyber-text-dim)",
-    letterSpacing: "0.12em",
+    fontFamily: "'Assistant',sans-serif",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#cbd5e1",
     marginBottom: 6,
     display: "block",
   };
 
   return (
     <>
-      <CyberStyles />
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap');
+        
+        .admin-page {
+          background: #0f172a;
+          color: #f8fafc;
+          font-family: 'Assistant', sans-serif;
+          min-height: 100vh;
+          direction: rtl;
+        }
+        
+        .admin-page ::-webkit-scrollbar { width: 8px; }
+        .admin-page ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+      `}</style>
 
-      <div className="cyber-page relative min-h-screen z-[1]">
-        <CyberBackground />
+      <div className="admin-page relative min-h-screen"
+        style={{
+          background: 'linear-gradient(to bottom, #0f172a 0%, #1e293b 100%)',
+        }}
+      >
 
         <div className="relative z-[2] max-w-[800px] mx-auto px-4 py-12">
           {/* Header */}
           <div className="flex items-center justify-between mb-10">
             <h1
               style={{
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: "clamp(18px,4vw,28px)",
-                fontWeight: 900,
-                color: "var(--cyber-neon)",
-                letterSpacing: "0.15em",
+                fontFamily: "'Assistant',sans-serif",
+                fontSize: 32,
+                fontWeight: 800,
+                color: "#e50914",
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
               }}
             >
-              פאנל ניהול
+              ZOVEX - פאנל ניהול
             </h1>
             <Link
               to={createPageUrl("Home")}
               className="no-underline px-4 py-2 rounded transition-all duration-200"
               style={{
-                background: "rgba(0,210,255,0.08)",
-                border: "1px solid rgba(0,210,255,0.25)",
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: 10,
-                color: "var(--cyber-neon)",
-                letterSpacing: "0.1em",
+                background: "rgba(229,9,20,0.1)",
+                border: "2px solid #e50914",
+                fontFamily: "'Assistant',sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#fff",
               }}
             >
               ← חזרה לסינמה
@@ -245,15 +259,20 @@ export default function Admin() {
           </div>
 
           {/* Category Manager */}
-          <GlassPanel style={{ padding: 24, marginBottom: 32 }}>
+          <div style={{ 
+            padding: 24, 
+            marginBottom: 32,
+            background: '#1e293b',
+            borderRadius: 8,
+            border: '1px solid rgba(229,9,20,0.2)',
+          }}>
             <div
               className="mb-5"
               style={{
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: 13,
+                fontFamily: "'Assistant',sans-serif",
+                fontSize: 18,
                 fontWeight: 700,
-                color: "var(--cyber-neon)",
-                letterSpacing: "0.1em",
+                color: "#e50914",
               }}
             >
               ניהול קטגוריות
@@ -264,12 +283,12 @@ export default function Admin() {
                 onClick={() => setShowCategoryManager(!showCategoryManager)}
                 className="cursor-pointer transition-all duration-200 py-2.5 px-4 rounded flex items-center justify-between"
                 style={{
-                  background: "rgba(0,210,255,0.08)",
-                  border: "1px solid rgba(0,210,255,0.25)",
-                  fontFamily: "'Orbitron',sans-serif",
-                  fontSize: 11,
-                  color: "var(--cyber-neon)",
-                  letterSpacing: "0.1em",
+                  background: "rgba(229,9,20,0.1)",
+                  border: "1px solid rgba(229,9,20,0.3)",
+                  fontFamily: "'Assistant',sans-serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#fff",
                 }}
               >
                 <span>קטגוריות קיימות ({categories.length})</span>
@@ -283,15 +302,14 @@ export default function Admin() {
                   className="flex flex-col gap-2 p-3 rounded"
                   style={{
                     background: "rgba(0,0,0,0.3)",
-                    border: "1px solid rgba(0,210,255,0.1)",
-                    animation: "slideIn 0.2s ease",
+                    border: "1px solid rgba(229,9,20,0.2)",
                   }}
                 >
                   <div
                     style={{
-                      fontFamily: "'Share Tech Mono',monospace",
-                      fontSize: 10,
-                      color: "var(--cyber-text-dim)",
+                      fontFamily: "'Assistant',sans-serif",
+                      fontSize: 13,
+                      color: "#cbd5e1",
                       marginBottom: 8,
                     }}
                   >
@@ -323,12 +341,12 @@ export default function Admin() {
                       onClick={handleDeleteCategory}
                       className="cursor-pointer transition-all duration-200 py-2 rounded"
                       style={{
-                        background: "rgba(255,0,60,0.15)",
-                        border: "1px solid rgba(255,0,60,0.4)",
-                        fontFamily: "'Orbitron',sans-serif",
-                        fontSize: 11,
-                        color: "#ff4466",
-                        letterSpacing: "0.1em",
+                        background: "rgba(229,9,20,0.2)",
+                        border: "1px solid #e50914",
+                        fontFamily: "'Assistant',sans-serif",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "#fff",
                       }}
                     >
                       🗑 מחק קטגוריה וסרטים
@@ -337,18 +355,23 @@ export default function Admin() {
                 </div>
               )}
             </div>
-          </GlassPanel>
+          </div>
 
           {/* Add Movie Form */}
-          <GlassPanel style={{ padding: 24, marginBottom: 32 }}>
+          <div style={{ 
+            padding: 24, 
+            marginBottom: 32,
+            background: '#1e293b',
+            borderRadius: 8,
+            border: '1px solid rgba(229,9,20,0.2)',
+          }}>
             <div
               className="mb-5"
               style={{
-                fontFamily: "'Orbitron',sans-serif",
-                fontSize: 13,
+                fontFamily: "'Assistant',sans-serif",
+                fontSize: 18,
                 fontWeight: 700,
-                color: "var(--cyber-neon)",
-                letterSpacing: "0.1em",
+                color: "#e50914",
               }}
             >
               הוסף סרט חדש
@@ -363,10 +386,10 @@ export default function Admin() {
                   placeholder="YouTube, Drive, Vimeo, Dailymotion, Streamable..."
                   style={inputStyle}
                   onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                    (e.target.style.borderColor = "#e50914")
                   }
                   onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                    (e.target.style.borderColor = "rgba(229,9,20,0.2)")
                   }
                 />
               </div>
@@ -379,10 +402,10 @@ export default function Admin() {
                   placeholder="הכנס שם..."
                   style={inputStyle}
                   onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                    (e.target.style.borderColor = "#e50914")
                   }
                   onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                    (e.target.style.borderColor = "rgba(229,9,20,0.2)")
                   }
                 />
               </div>
@@ -444,10 +467,10 @@ export default function Admin() {
                       onClick={() => setUploadedThumbnail("")}
                       className="text-xs px-2 py-1 rounded"
                       style={{
-                        background: "rgba(255,0,60,0.1)",
-                        border: "1px solid rgba(255,0,60,0.3)",
-                        color: "#ff4466",
-                        fontFamily: "'Orbitron',sans-serif",
+                        background: "rgba(229,9,20,0.2)",
+                        border: "1px solid #e50914",
+                        color: "#fff",
+                        fontFamily: "'Assistant',sans-serif",
                       }}
                     >
                       הסר
@@ -488,10 +511,10 @@ export default function Admin() {
                   placeholder="...או צור קטגוריה חדשה"
                   style={inputStyle}
                   onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                    (e.target.style.borderColor = "#e50914")
                   }
                   onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                    (e.target.style.borderColor = "rgba(229,9,20,0.2)")
                   }
                 />
               </div>
@@ -634,11 +657,11 @@ export default function Admin() {
                 <div
                   className="rounded px-3 py-2"
                   style={{
-                    background: "rgba(255,0,60,0.1)",
-                    border: "1px solid rgba(255,0,60,0.3)",
-                    fontFamily: "'Share Tech Mono',monospace",
-                    fontSize: 11,
-                    color: "#ff4466",
+                    background: "rgba(229,9,20,0.2)",
+                    border: "1px solid #e50914",
+                    fontFamily: "'Assistant',sans-serif",
+                    fontSize: 14,
+                    color: "#fff",
                   }}
                 >
                   {error}
@@ -648,43 +671,46 @@ export default function Admin() {
               <button
                 onClick={handleAdd}
                 disabled={createMutation.isPending}
-                className="cursor-pointer transition-all duration-200 py-2.5 rounded"
+                className="cursor-pointer transition-all duration-200 py-3 rounded"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(0,210,255,0.2), rgba(0,128,255,0.15))",
-                  border: "1px solid rgba(0,210,255,0.5)",
-                  fontFamily: "'Orbitron',sans-serif",
-                  fontSize: 12,
+                  background: "#e50914",
+                  border: "none",
+                  fontFamily: "'Assistant',sans-serif",
+                  fontSize: 16,
                   fontWeight: 700,
-                  color: "var(--cyber-neon)",
-                  letterSpacing: "0.12em",
+                  color: "#fff",
                   opacity: createMutation.isPending ? 0.5 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow =
-                    "0 0 20px rgba(0,210,255,0.3)";
+                  if (!createMutation.isPending) {
+                    e.currentTarget.style.background = "#c40812";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.background = "#e50914";
                 }}
               >
                 {createMutation.isPending ? "מוסיף..." : "➕ הוסף סרט"}
               </button>
             </div>
-          </GlassPanel>
+          </div>
 
           {/* Movie List */}
-          <GlassPanel style={{ padding: 24 }}>
+          <div style={{ 
+            padding: 24,
+            background: '#1e293b',
+            borderRadius: 8,
+            border: '1px solid rgba(229,9,20,0.2)',
+          }}>
             <div
               className="mb-5 flex items-center justify-between"
             >
               <span
                 style={{
-                  fontFamily: "'Orbitron',sans-serif",
-                  fontSize: 13,
+                  fontFamily: "'Assistant',sans-serif",
+                  fontSize: 18,
                   fontWeight: 700,
-                  color: "var(--cyber-neon)",
-                  letterSpacing: "0.1em",
+                  color: "#e50914",
                 }}
               >
                 סרטים ({movies.length})
@@ -696,8 +722,8 @@ export default function Admin() {
                 <div
                   className="w-8 h-8 rounded-full"
                   style={{
-                    border: "2px solid rgba(0,210,255,0.3)",
-                    borderTop: "2px solid var(--cyber-neon)",
+                    border: "2px solid rgba(229,9,20,0.3)",
+                    borderTop: "2px solid #e50914",
                     animation: "spin 0.9s linear infinite",
                   }}
                 />
@@ -706,9 +732,9 @@ export default function Admin() {
               <div
                 className="text-center py-10 opacity-50"
                 style={{
-                  fontFamily: "'Share Tech Mono',monospace",
-                  fontSize: 12,
-                  color: "var(--cyber-text-dim)",
+                  fontFamily: "'Assistant',sans-serif",
+                  fontSize: 14,
+                  color: "#cbd5e1",
                 }}
               >
                 אין סרטים עדיין
@@ -721,17 +747,17 @@ export default function Admin() {
                     className="flex items-center justify-between gap-3 p-3 rounded transition-colors duration-200"
                     style={{
                       background: "rgba(0,0,0,0.3)",
-                      border: "1px solid rgba(0,210,255,0.08)",
+                      border: "1px solid rgba(229,9,20,0.1)",
                     }}
                   >
                     <div className="flex-1 min-w-0">
                       <div
                         className="truncate"
                         style={{
-                          fontFamily: "'Rajdhani',sans-serif",
+                          fontFamily: "'Assistant',sans-serif",
                           fontWeight: 600,
-                          fontSize: 14,
-                          color: "var(--cyber-text)",
+                          fontSize: 16,
+                          color: "#f8fafc",
                         }}
                       >
                         {movie.title}
@@ -740,9 +766,9 @@ export default function Admin() {
                         <div
                           className="truncate mt-1"
                           style={{
-                            fontFamily: "'Share Tech Mono',monospace",
-                            fontSize: 11,
-                            color: "var(--cyber-text-dim)",
+                            fontFamily: "'Assistant',sans-serif",
+                            fontSize: 13,
+                            color: "#cbd5e1",
                             opacity: 0.7,
                           }}
                         >
@@ -753,27 +779,20 @@ export default function Admin() {
                         <span
                           className="rounded px-2 py-0.5"
                           style={{
-                            background: "rgba(0,210,255,0.08)",
-                            border: "1px solid rgba(0,210,255,0.15)",
-                            fontFamily: "'Orbitron',sans-serif",
-                            fontSize: 8,
-                            color: "var(--cyber-neon3)",
-                            letterSpacing: "0.08em",
+                            background: "rgba(229,9,20,0.15)",
+                            border: "1px solid rgba(229,9,20,0.3)",
+                            fontFamily: "'Assistant',sans-serif",
+                            fontSize: 11,
+                            color: "#fff",
                           }}
                         >
                           {movie.category}
                         </span>
                         <span
                           style={{
-                            fontFamily: "'Orbitron',sans-serif",
-                            fontSize: 8,
-                            color:
-                              movie.type === "youtube"
-                                ? "#ff6666"
-                                : movie.type === "cloudinary"
-                                  ? "#34d399"
-                                  : "#4da3ff",
-                            letterSpacing: "0.1em",
+                            fontFamily: "'Assistant',sans-serif",
+                            fontSize: 11,
+                            color: "#94a3b8",
                           }}
                         >
                           {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : movie.type === "archive" ? "📚 ARCHIVE" : "☁ DRIVE"}
@@ -786,19 +805,17 @@ export default function Admin() {
                         onClick={() => setEditingMovie(movie)}
                         className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
                         style={{
-                          background: "rgba(0,210,255,0.08)",
-                          border: "1px solid rgba(0,210,255,0.25)",
-                          color: "var(--cyber-neon)",
-                          fontFamily: "'Orbitron',sans-serif",
-                          fontSize: 12,
+                          background: "rgba(229,9,20,0.1)",
+                          border: "1px solid rgba(229,9,20,0.3)",
+                          color: "#fff",
+                          fontFamily: "'Assistant',sans-serif",
+                          fontSize: 14,
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(0,210,255,0.2)";
-                          e.currentTarget.style.boxShadow = "0 0 12px rgba(0,210,255,0.3)";
+                          e.currentTarget.style.background = "#e50914";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(0,210,255,0.08)";
-                          e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.background = "rgba(229,9,20,0.1)";
                         }}
                       >
                         ✏
@@ -810,19 +827,17 @@ export default function Admin() {
                         }}
                         className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
                         style={{
-                          background: "rgba(255,0,60,0.08)",
-                          border: "1px solid rgba(255,0,60,0.25)",
-                          color: "#ff4466",
-                          fontFamily: "'Orbitron',sans-serif",
-                          fontSize: 12,
+                          background: "rgba(220,38,38,0.1)",
+                          border: "1px solid rgba(220,38,38,0.3)",
+                          color: "#fff",
+                          fontFamily: "'Assistant',sans-serif",
+                          fontSize: 14,
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(255,0,60,0.2)";
-                          e.currentTarget.style.boxShadow = "0 0 12px rgba(255,0,60,0.3)";
+                          e.currentTarget.style.background = "#dc2626";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(255,0,60,0.08)";
-                          e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.background = "rgba(220,38,38,0.1)";
                         }}
                       >
                         ✕
@@ -832,7 +847,7 @@ export default function Admin() {
                 ))}
               </div>
             )}
-          </GlassPanel>
+          </div>
         </div>
       </div>
 
