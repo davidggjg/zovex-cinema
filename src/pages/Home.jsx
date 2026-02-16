@@ -407,36 +407,39 @@ const CSS = `
   .nav-tools { display: flex; align-items: center; gap: 15px; }
 
   .search-wrap input {
-    background: rgba(255,255,255,0.1); 
-    border: 2px solid rgba(229, 9, 20, 0.3);
-    padding: 10px 18px; 
+    background: var(--card); 
+    border: 1px solid var(--border);
+    padding: 10px 16px; 
     border-radius: 8px; 
     color: var(--text); 
     outline: none; 
     width: 250px;
-    font-size: 15px;
-    transition: border-color 0.2s;
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: 'Assistant', sans-serif;
   }
   
   .search-wrap input:focus {
     border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
   }
 
   .icon-btn { 
-    background: rgba(255,255,255,0.2); 
-    border: none; 
-    border-radius: 50%;
-    padding: 10px;
-    font-size: 20px; 
+    background: var(--card); 
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 18px; 
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s;
+    transition: all 0.2s;
   }
   
   .icon-btn:hover {
-    transform: scale(1.1);
+    background: #f3f4f6;
+    border-color: var(--accent);
   }
 
   .container { padding-top: 70px; }
