@@ -514,25 +514,26 @@ const CSS = `
     border-color: rgba(255,255,255,0.7);
   }
 
-  .grid-section { padding: 40px; }
+  .grid-section { padding: 40px 60px; }
   .grid-section h3 { 
-    margin-bottom: 25px; 
-    font-size: 26px;
+    margin-bottom: 30px; 
+    font-size: 24px;
     font-weight: 700;
+    color: var(--text);
   }
 
   .movie-grid {
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 22px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 24px;
   }
 
   .card { 
     cursor: pointer; 
-    transition: transform 0.3s ease, box-shadow 0.3s ease; 
+    transition: all 0.3s ease; 
   }
   .card:hover { 
-    transform: scale(1.05); 
+    transform: translateY(-4px); 
     z-index: 10;
   }
   
@@ -541,7 +542,11 @@ const CSS = `
     aspect-ratio: 2/3; 
     border-radius: 12px; 
     overflow: hidden; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+  }
+  .card:hover .card-thumb {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   }
   .card-thumb img { 
     width: 100%; 
@@ -552,7 +557,7 @@ const CSS = `
   .card-overlay { 
     position: absolute; 
     inset: 0; 
-    background: rgba(0,0,0,0.5); 
+    background: rgba(0,0,0,0.4); 
     display: flex; 
     align-items: center; 
     justify-content: center; 
@@ -562,38 +567,39 @@ const CSS = `
   .card:hover .card-overlay { opacity: 1; }
 
   .play-btn-circle { 
-    width: 55px; 
-    height: 55px; 
+    width: 50px; 
+    height: 50px; 
     border-radius: 50%; 
-    border: 3px solid white; 
+    border: 2px solid white; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
     color: white; 
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .card-badge { 
     position: absolute; 
-    top: 10px; 
-    right: 10px; 
+    top: 8px; 
+    right: 8px; 
     background: var(--accent); 
     color: white; 
-    padding: 6px 12px; 
+    padding: 5px 10px; 
     border-radius: 6px; 
-    font-size: 11px; 
-    font-weight: bold;
+    font-size: 10px; 
+    font-weight: 600;
   }
 
   .card-info { padding: 12px 0; }
   .card-info h4 { 
     margin: 0 0 6px 0; 
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
   }
   .card-info span { 
-    font-size: 13px; 
-    opacity: 0.7; 
+    font-size: 12px; 
+    color: var(--text-secondary);
   }
 
   .detail-view { padding: 40px; }
