@@ -49,12 +49,15 @@ export default function VideoModal({ movie, onClose }) {
     enabled: !!movie.series_name,
   });
 
-  // Get unique seasons
-  const seasons = [...new Set(allEpisodes.map(ep => ep.season_number))].filter(Boolean).sort((a, b) => a - b);
+  // Get unique seasons (only if all episodes have season numbers)
+  const hasSeasons = allEpisodes.every(ep => ep.season_number);
+  const seasons = hasSeasons 
+    ? [...new Set(allEpisodes.map(ep => ep.season_number))].filter(Boolean).sort((a, b) => a - b)
+    : [];
   
   // Filter episodes by selected season - if no seasons, show all
   const episodes = seasons.length > 0 
-    ? allEpisodes.filter(ep => ep.season_number === selectedSeason)
+    ? allEpisodes.filter(ep => ep.season_number === selectedSeason).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0))
     : allEpisodes.sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
 
   return (
