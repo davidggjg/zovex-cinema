@@ -27,7 +27,7 @@ export default function EditMovieModal({ movie, onClose, onUpdate }) {
   const handleSave = () => {
     const updatedData = {
       title,
-      description: description.trim() || undefined,
+      description: description.trim() || null,
       thumbnail_url: thumbnailUrl || undefined,
       video_id: videoId,
       category,
