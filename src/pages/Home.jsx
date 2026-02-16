@@ -500,6 +500,36 @@ const CSS = `
     border-color: rgba(255,255,255,0.7);
   }
 
+  .categories-section { padding: 40px 60px; }
+  .categories-section h3 { 
+    margin-bottom: 24px; 
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .categories-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .category-btn {
+    padding: 10px 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Assistant', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .category-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
   .grid-section { padding: 40px 60px; }
   .grid-section h3 { 
     margin-bottom: 30px; 
