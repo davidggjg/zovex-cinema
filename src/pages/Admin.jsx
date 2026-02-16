@@ -1,10 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-
-
 import EditMovieModal from "../components/admin/EditMovieModal";
 
 function extractVideoId(url) {
@@ -48,12 +46,29 @@ function extractVideoId(url) {
   
   // Rumble
   const rumbleMatch = url.match(
-    /rumble\.com\/v?([a-zA-Z0-9]+)(?:-|\/|$)/
+    /rumble\.com\/(v[a-zA-Z0-9]+)/
   );
   if (rumbleMatch) return { type: "rumble", video_id: rumbleMatch[1] };
   
   return null;
 }
+
+const detectPlatform = (url) => {
+  if (!url) return '';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
+  if (url.includes('drive.google.com')) return 'Google Drive';
+  if (url.includes('rumble.com')) return 'Rumble';
+  if (url.includes('vimeo.com')) return 'Vimeo';
+  if (url.includes('dailymotion.com')) return 'Dailymotion';
+  if (url.includes('blogger.com') || url.includes('blogspot.com') || url.includes('hakavod.com')) return 'Blogger/Hakavod (חסום)';
+  if (url.includes('streamable.com')) return 'Streamable';
+  if (url.includes('archive.org')) return 'Archive.org';
+  return 'אחר';
+};
+
+const canEmbedPlatform = (platform) => {
+  return !platform.includes('חסום');
+};
 
 export default function Admin() {
   const queryClient = useQueryClient();
@@ -72,6 +87,8 @@ export default function Admin() {
   const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
   const [editingMovie, setEditingMovie] = useState(null);
   const [seriesDescription, setSeriesDescription] = useState("");
+  const [platform, setPlatform] = useState("");
+  const [urlStatus, setUrlStatus] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -98,6 +115,8 @@ export default function Admin() {
       setEpisodeNumber("");
       setCloudinaryCloudName("");
       setSeriesDescription("");
+      setPlatform("");
+      setUrlStatus("");
     },
   });
 
@@ -129,6 +148,28 @@ export default function Admin() {
     }
   };
 
+  const checkUrl = (inputUrl) => {
+    if (!inputUrl) {
+      setUrlStatus("");
+      setPlatform("");
+      return;
+    }
+
+    setUrlStatus("checking");
+    
+    setTimeout(() => {
+      const detectedPlatform = detectPlatform(inputUrl);
+      setPlatform(detectedPlatform);
+      setUrlStatus(canEmbedPlatform(detectedPlatform) ? "valid" : "blocked");
+    }, 500);
+  };
+
+  const handleUrlChange = (e) => {
+    const newUrl = e.target.value;
+    setUrl(newUrl);
+    checkUrl(newUrl);
+  };
+
   const handleAdd = () => {
     setError("");
     const parsed = extractVideoId(url.trim());
@@ -156,7 +197,6 @@ export default function Admin() {
       thumbnail_url: uploadedThumbnail || undefined,
     };
 
-    // Add Cloudinary cloud name if needed
     if (parsed.type === "cloudinary") {
       if (parsed.cloudinary_cloud_name) {
         movieData.cloudinary_cloud_name = parsed.cloudinary_cloud_name;
@@ -168,7 +208,6 @@ export default function Admin() {
       }
     }
 
-    // Add series fields if category is "סדרות"
     if (finalCategory.toLowerCase().includes("סדר")) {
       if (seriesName.trim()) {
         movieData.series_name = seriesName.trim();
@@ -179,7 +218,6 @@ export default function Admin() {
       if (episodeNumber && !isNaN(episodeNumber)) {
         movieData.episode_number = parseInt(episodeNumber);
       }
-      // Use series description if provided, otherwise use episode description
       if (seriesDescription.trim()) {
         movieData.description = seriesDescription.trim();
       }
@@ -386,18 +424,47 @@ export default function Admin() {
             <div className="flex flex-col gap-4">
               <div>
                 <label style={labelStyle}>לינק וידאו</label>
-                <input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="YouTube, Drive, Vimeo, Dailymotion, Streamable..."
-                  style={inputStyle}
-                  onFocus={(e) =>
-                    (e.target.style.borderColor = "#e50914")
-                  }
-                  onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(229,9,20,0.2)")
-                  }
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    value={url}
+                    onChange={handleUrlChange}
+                    placeholder="YouTube, Drive, Vimeo, Rumble..."
+                    style={inputStyle}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = "#e50914")
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = "rgba(229,9,20,0.2)")
+                    }
+                  />
+                  {urlStatus === 'checking' && (
+                    <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
+                      ⏳
+                    </div>
+                  )}
+                  {urlStatus === 'valid' && (
+                    <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#22c55e' }}>
+                      ✓
+                    </div>
+                  )}
+                  {urlStatus === 'blocked' && (
+                    <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#f97316' }}>
+                      ⚠
+                    </div>
+                  )}
+                </div>
+                {platform && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    background: urlStatus === 'valid' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(249, 115, 22, 0.2)',
+                    color: urlStatus === 'valid' ? '#22c55e' : '#f97316',
+                  }}>
+                    {platform}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -416,7 +483,6 @@ export default function Admin() {
                 />
               </div>
 
-              {/* Hide description field if series category */}
               {!((category && category.toLowerCase().includes("סדר")) || 
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
                 <div>
@@ -525,7 +591,6 @@ export default function Admin() {
                 />
               </div>
 
-              {/* Cloudinary Cloud Name - Show only if URL contains cloudinary */}
               {url.includes("cloudinary") && !extractVideoId(url)?.cloudinary_cloud_name && (
                 <div>
                   <label style={labelStyle}>Cloudinary Cloud Name</label>
@@ -544,7 +609,6 @@ export default function Admin() {
                 </div>
               )}
 
-              {/* Series Fields - Show only if category contains "סדר" */}
               {((category && category.toLowerCase().includes("סדר")) || 
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
                 <>
@@ -553,7 +617,7 @@ export default function Admin() {
                     <textarea
                       value={seriesDescription}
                       onChange={(e) => setSeriesDescription(e.target.value)}
-                      placeholder="הוסף תיאור לסדרה שישותף לכל הפרקים..."
+                      placeholder="הוסף תיאור לסדרה..."
                       rows={3}
                       style={{
                         ...inputStyle,
@@ -582,7 +646,6 @@ export default function Admin() {
                             onChange={(e) => {
                               const selectedName = e.target.value;
                               setSeriesName(selectedName);
-                              // Auto-fill series description when selecting existing series
                               if (selectedName) {
                                 const firstEpisode = movies.find(m => m.series_name === selectedName);
                                 if (firstEpisode && firstEpisode.description) {
