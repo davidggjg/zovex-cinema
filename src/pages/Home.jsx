@@ -27,6 +27,8 @@ const getEmbedUrl = (videoId, type) => {
       return `https://streamable.com/e/${videoId}?autoplay=1`;
     case "archive":
       return `https://archive.org/embed/${videoId}`;
+    case "rumble":
+      return `https://rumble.com/embed/${videoId}`;
     default:
       return "";
   }

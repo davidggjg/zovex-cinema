@@ -46,6 +46,12 @@ function extractVideoId(url) {
   );
   if (archiveMatch) return { type: "archive", video_id: archiveMatch[1] };
   
+  // Rumble
+  const rumbleMatch = url.match(
+    /rumble\.com\/(?:embed\/|v)?([a-zA-Z0-9]+)/
+  );
+  if (rumbleMatch) return { type: "rumble", video_id: rumbleMatch[1] };
+  
   return null;
 }
 
