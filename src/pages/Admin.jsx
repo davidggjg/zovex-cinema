@@ -67,6 +67,7 @@ export default function Admin() {
   const [episodeNumber, setEpisodeNumber] = useState("");
   const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
   const [editingMovie, setEditingMovie] = useState(null);
+  const [seriesDescription, setSeriesDescription] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -92,6 +93,7 @@ export default function Admin() {
       setSeasonNumber("");
       setEpisodeNumber("");
       setCloudinaryCloudName("");
+      setSeriesDescription("");
     },
   });
 
@@ -172,6 +174,10 @@ export default function Admin() {
       }
       if (episodeNumber && !isNaN(episodeNumber)) {
         movieData.episode_number = parseInt(episodeNumber);
+      }
+      // Use series description if provided, otherwise use episode description
+      if (seriesDescription.trim()) {
+        movieData.description = seriesDescription.trim();
       }
     }
 
@@ -381,26 +387,30 @@ export default function Admin() {
                 />
               </div>
 
-              <div>
-                <label style={labelStyle}>תיאור (אופציונלי)</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="הוסף תיאור לסרט..."
-                  rows={3}
-                  style={{
-                    ...inputStyle,
-                    resize: "vertical",
-                    minHeight: 80,
-                  }}
-                  onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.5)")
-                  }
-                  onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(0,210,255,0.15)")
-                  }
-                />
-              </div>
+              {/* Hide description field if series category */}
+              {!((category && category.toLowerCase().includes("סדר")) || 
+                (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
+                <div>
+                  <label style={labelStyle}>תיאור (אופציונלי)</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="הוסף תיאור לסרט..."
+                    rows={3}
+                    style={{
+                      ...inputStyle,
+                      resize: "vertical",
+                      minHeight: 80,
+                    }}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                    }
+                  />
+                </div>
+              )}
 
               <div>
                 <label style={labelStyle}>תמונה לסרט (אופציונלי)</label>
@@ -510,6 +520,27 @@ export default function Admin() {
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (
                 <>
                   <div>
+                    <label style={labelStyle}>תיאור הסדרה (אופציונלי)</label>
+                    <textarea
+                      value={seriesDescription}
+                      onChange={(e) => setSeriesDescription(e.target.value)}
+                      placeholder="הוסף תיאור לסדרה שישותף לכל הפרקים..."
+                      rows={3}
+                      style={{
+                        ...inputStyle,
+                        resize: "vertical",
+                        minHeight: 80,
+                      }}
+                      onFocus={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.5)")
+                      }
+                      onBlur={(e) =>
+                        (e.target.style.borderColor = "rgba(0,210,255,0.15)")
+                      }
+                    />
+                  </div>
+
+                  <div>
                     <label style={labelStyle}>בחר סדרה</label>
                     {(() => {
                       const existingSeries = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort((a, b) =>
@@ -519,7 +550,17 @@ export default function Admin() {
                         <>
                           <select
                             value={seriesName}
-                            onChange={(e) => setSeriesName(e.target.value)}
+                            onChange={(e) => {
+                              const selectedName = e.target.value;
+                              setSeriesName(selectedName);
+                              // Auto-fill series description when selecting existing series
+                              if (selectedName) {
+                                const firstEpisode = movies.find(m => m.series_name === selectedName);
+                                if (firstEpisode && firstEpisode.description) {
+                                  setSeriesDescription(firstEpisode.description);
+                                }
+                              }
+                            }}
                             style={{
                               ...inputStyle,
                               cursor: "pointer",
