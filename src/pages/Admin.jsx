@@ -32,7 +32,7 @@ function extractVideoId(url) {
   
   // Dailymotion
   const dailymotionMatch = url.match(
-    /dailymotion\.com\/video\/([a-zA-Z0-9]+)/
+    /(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/
   );
   if (dailymotionMatch) return { type: "dailymotion", video_id: dailymotionMatch[1] };
   
