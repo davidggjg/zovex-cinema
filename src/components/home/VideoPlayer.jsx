@@ -1,37 +1,9 @@
 import { X } from "lucide-react";
-import { useState, useEffect } from "react";
 
 export default function VideoPlayer({ src, onClose }) {
-  const [showControls, setShowControls] = useState(true);
-  
-  useEffect(() => {
-    let timeout;
-    const handleActivity = () => {
-      setShowControls(true);
-      clearTimeout(timeout);
-      timeout = setTimeout(() => setShowControls(false), 2500);
-    };
-    
-    const videoContainer = document.querySelector('[data-video-container]');
-    if (videoContainer) {
-      videoContainer.addEventListener('mousemove', handleActivity);
-      videoContainer.addEventListener('click', handleActivity);
-    }
-    
-    timeout = setTimeout(() => setShowControls(false), 2500);
-    
-    return () => {
-      if (videoContainer) {
-        videoContainer.removeEventListener('mousemove', handleActivity);
-        videoContainer.removeEventListener('click', handleActivity);
-      }
-      clearTimeout(timeout);
-    };
-  }, []);
 
   return (
     <div 
-      data-video-container
       style={{ 
         position: 'fixed', 
         inset: 0, 
@@ -57,8 +29,6 @@ export default function VideoPlayer({ src, onClose }) {
           padding: '12px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           transition: 'all 0.3s',
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? 'auto' : 'none',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
