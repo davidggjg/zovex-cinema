@@ -139,7 +139,7 @@ export default function MovieCard({ movie, index, onClick, theme = "dark" }) {
             letterSpacing: "0.12em",
           }}
         >
-          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CL" : movie.type === "vimeo" ? "▶ VM" : movie.type === "dailymotion" ? "▶ DM" : movie.type === "streamable" ? "▶ ST" : "☁ DR"}
+          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CL" : movie.type === "vimeo" ? "▶ VM" : movie.type === "dailymotion" ? "▶ DM" : movie.type === "streamable" ? "▶ ST" : movie.type === "archive" ? "📚 AR" : "☁ DR"}
         </div>
       </div>
 

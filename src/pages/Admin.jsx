@@ -41,6 +41,12 @@ function extractVideoId(url) {
   );
   if (streamableMatch) return { type: "streamable", video_id: streamableMatch[1] };
   
+  // Archive.org
+  const archiveMatch = url.match(
+    /archive\.org\/details\/([^\/\?]+)/
+  );
+  if (archiveMatch) return { type: "archive", video_id: archiveMatch[1] };
+  
   return null;
 }
 
@@ -109,7 +115,7 @@ export default function Admin() {
     setError("");
     const parsed = extractVideoId(url.trim());
     if (!parsed) {
-      setError("לינק לא תקין — הכנס לינק מ-YouTube, Google Drive, Vimeo, Dailymotion או Streamable");
+      setError("לינק לא תקין — הכנס לינק מאחד המקורות הנתמכים");
       return;
     }
     const finalTitle = title.trim();
@@ -669,7 +675,7 @@ export default function Admin() {
                             letterSpacing: "0.1em",
                           }}
                         >
-                          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : "☁ DRIVE"}
+                          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : movie.type === "archive" ? "📚 ARCHIVE" : "☁ DRIVE"}
                         </span>
                       </div>
                     </div>

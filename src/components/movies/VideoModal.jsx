@@ -29,6 +29,8 @@ export default function VideoModal({ movie, onClose }) {
         return `https://www.dailymotion.com/embed/video/${movie.video_id}?autoplay=1`;
       case "streamable":
         return `https://streamable.com/e/${movie.video_id}?autoplay=1`;
+      case "archive":
+        return `https://archive.org/embed/${movie.video_id}`;
       default:
         return "";
     }
