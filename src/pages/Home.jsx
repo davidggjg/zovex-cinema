@@ -243,39 +243,46 @@ export default function Home() {
         <div style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.9)",
+          background: "rgba(0,0,0,0.7)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 2000,
+          backdropFilter: "blur(5px)",
         }}>
           <div style={{
-            background: "#1e293b",
+            background: "#f8fafc",
             border: "2px solid #e50914",
             borderRadius: "12px",
-            padding: "30px",
+            padding: "40px",
             width: "90%",
             maxWidth: "400px",
             textAlign: "center",
+            boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
           }}>
-            <h2 style={{ color: "#e50914", marginTop: 0 }}>פאנל ניהול</h2>
+            <h2 style={{ color: "#e50914", marginTop: 0, fontSize: 24, fontWeight: 700 }}>פאנל ניהול</h2>
+            <p style={{ color: "#64748b", fontSize: 14, marginBottom: 20 }}>הכנס סיסמה לגישה</p>
             <input
               type="password"
-              placeholder="הקלד סיסמה..."
+              placeholder="סיסמה..."
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleAdminSubmit()}
               style={{
                 width: "100%",
                 padding: "12px",
-                marginBottom: "15px",
-                border: "1px solid rgba(229,9,20,0.3)",
+                marginBottom: "20px",
+                border: "2px solid #e5e7eb",
                 borderRadius: "6px",
-                background: "rgba(0,0,0,0.4)",
-                color: "#f8fafc",
+                background: "#fff",
+                color: "#1f2937",
                 fontSize: "14px",
                 direction: "rtl",
+                outline: "none",
+                transition: "border-color 0.2s",
               }}
+              onFocus={(e) => (e.target.style.borderColor = "#e50914")}
+              onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
               autoFocus
             />
             <div style={{ display: "flex", gap: "10px" }}>
@@ -283,13 +290,17 @@ export default function Home() {
                 onClick={() => setShowAdminPrompt(false)}
                 style={{
                   flex: 1,
-                  padding: "10px",
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  color: "#fff",
+                  padding: "12px",
+                  background: "#e5e7eb",
+                  border: "none",
+                  color: "#1f2937",
                   borderRadius: "6px",
                   cursor: "pointer",
+                  fontWeight: 600,
+                  transition: "background 0.2s",
                 }}
+                onMouseEnter={(e) => (e.target.style.background = "#d1d5db")}
+                onMouseLeave={(e) => (e.target.style.background = "#e5e7eb")}
               >
                 ביטול
               </button>
@@ -297,14 +308,17 @@ export default function Home() {
                 onClick={handleAdminSubmit}
                 style={{
                   flex: 1,
-                  padding: "10px",
+                  padding: "12px",
                   background: "#e50914",
                   border: "none",
                   color: "#fff",
                   borderRadius: "6px",
                   cursor: "pointer",
-                  fontWeight: "bold",
+                  fontWeight: 700,
+                  transition: "background 0.2s",
                 }}
+                onMouseEnter={(e) => (e.target.style.background = "#c40812")}
+                onMouseLeave={(e) => (e.target.style.background = "#e50914")}
               >
                 כניסה
               </button>
