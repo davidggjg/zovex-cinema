@@ -10,7 +10,7 @@ import VideoPlayer from "../components/home/VideoPlayer";
 export default function Home() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAdminAccess, setShowAdminAccess] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
