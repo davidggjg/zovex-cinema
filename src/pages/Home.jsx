@@ -11,6 +11,11 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
   const [isDark, setIsDark] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAdminAccess, setShowAdminAccess] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -69,6 +74,24 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  // Check for secret code
+  const SECRET_CODE = "ZOVEX_ADMIN_2026";
+  const ADMIN_PASSWORD = "cyber2026";
+  
+  useEffect(() => {
+    if (searchQuery.trim() === SECRET_CODE) {
+      setShowAdminAccess(true);
+    } else {
+      setShowAdminAccess(false);
+    }
+  }, [searchQuery]);
+
+  // Filter items by search
+  const filteredItems = processedItems.filter(item => 
+    searchQuery === SECRET_CODE || 
+    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -172,7 +195,63 @@ export default function Home() {
 
       {/* Main Content */}
       {!isLoading && !selectedItem && (
-        <GridView items={processedItems} onSelect={setSelectedItem} />
+        <>
+          {/* Search Bar */}
+          <div style={{ 
+            padding: '120px 40px 20px', 
+            maxWidth: '1600px', 
+            margin: '0 auto' 
+          }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="חיפוש סרטים וסדרות..."
+              style={{
+                width: '100%',
+                maxWidth: '600px',
+                padding: '15px 20px',
+                fontSize: '16px',
+                background: 'var(--card)',
+                border: '2px solid rgba(229, 9, 20, 0.3)',
+                borderRadius: '8px',
+                color: 'var(--text)',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(229, 9, 20, 0.3)'}
+            />
+
+            {/* Admin Access Button */}
+            {showAdminAccess && (
+              <div style={{ marginTop: '20px' }}>
+                <button
+                  onClick={() => {
+                    setShowPasswordDialog(true);
+                    setPassword("");
+                    setPasswordError("");
+                  }}
+                  className="btn"
+                  style={{
+                    padding: '12px 30px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, var(--accent), #c40812)',
+                    color: 'white',
+                    boxShadow: '0 4px 15px rgba(229, 9, 20, 0.4)',
+                  }}
+                >
+                  🔐 גישה לפאנל ניהול
+                </button>
+              </div>
+            )}
+          </div>
+
+          <GridView items={searchQuery === SECRET_CODE ? [] : filteredItems} onSelect={setSelectedItem} />
+        </>
       )}
 
       {/* Detail View */}
@@ -187,6 +266,139 @@ export default function Home() {
       {/* Video Player */}
       {videoSrc && (
         <VideoPlayer src={videoSrc} onClose={() => setVideoSrc(null)} />
+      )}
+
+      {/* Password Dialog */}
+      {showPasswordDialog && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPasswordDialog(false);
+              setPassword("");
+              setPasswordError("");
+            }
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 300,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.9)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <div style={{
+            width: '90%',
+            maxWidth: '400px',
+            padding: '30px',
+            background: 'var(--card)',
+            borderRadius: '12px',
+            border: '2px solid var(--accent)',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+          }}>
+            <h2 style={{
+              margin: '0 0 20px 0',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              color: 'var(--accent)',
+            }}>
+              🔐 הזן סיסמה
+            </h2>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (password === ADMIN_PASSWORD) {
+                    window.location.href = "/Admin";
+                  } else {
+                    setPasswordError("סיסמה שגויה");
+                  }
+                }
+              }}
+              placeholder="הכנס סיסמה..."
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '16px',
+                background: 'rgba(0,0,0,0.3)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '6px',
+                color: 'var(--text)',
+                outline: 'none',
+                marginBottom: '15px',
+              }}
+            />
+
+            {passwordError && (
+              <div style={{
+                padding: '10px',
+                marginBottom: '15px',
+                background: 'rgba(229, 9, 20, 0.1)',
+                border: '1px solid var(--accent)',
+                borderRadius: '6px',
+                color: 'var(--accent)',
+                fontSize: '14px',
+                textAlign: 'center',
+              }}>
+                {passwordError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setShowPasswordDialog(false);
+                  setPassword("");
+                  setPasswordError("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  border: '2px solid rgba(255,255,255,0.2)',
+                  borderRadius: '6px',
+                  background: 'transparent',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                }}
+              >
+                ביטול
+              </button>
+              <button
+                onClick={() => {
+                  if (password === ADMIN_PASSWORD) {
+                    window.location.href = "/Admin";
+                  } else {
+                    setPasswordError("סיסמה שגויה");
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: 'var(--accent)',
+                  color: 'white',
+                  cursor: 'pointer',
+                }}
+              >
+                כניסה
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
