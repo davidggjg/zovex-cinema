@@ -32,6 +32,8 @@ export default function Admin() {
   const [category, setCategory] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [error, setError] = useState("");
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [selectedCategoryToDelete, setSelectedCategoryToDelete] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -59,6 +61,21 @@ export default function Admin() {
     mutationFn: (id) => base44.entities.Movie.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["movies"] }),
   });
+
+  const handleDeleteCategory = async () => {
+    if (!selectedCategoryToDelete) return;
+    
+    const moviesToDelete = movies.filter(m => m.category === selectedCategoryToDelete);
+    
+    if (window.confirm(`למחוק ${moviesToDelete.length} סרטים בקטגוריה "${selectedCategoryToDelete}"?`)) {
+      for (const movie of moviesToDelete) {
+        await base44.entities.Movie.delete(movie.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+      setSelectedCategoryToDelete("");
+      setShowCategoryManager(false);
+    }
+  };
 
   const handleAdd = () => {
     setError("");
@@ -146,6 +163,101 @@ export default function Admin() {
               ← חזרה לסינמה
             </Link>
           </div>
+
+          {/* Category Manager */}
+          <GlassPanel style={{ padding: 24, marginBottom: 32 }}>
+            <div
+              className="mb-5"
+              style={{
+                fontFamily: "'Orbitron',sans-serif",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--cyber-neon)",
+                letterSpacing: "0.1em",
+              }}
+            >
+              ניהול קטגוריות
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setShowCategoryManager(!showCategoryManager)}
+                className="cursor-pointer transition-all duration-200 py-2.5 px-4 rounded flex items-center justify-between"
+                style={{
+                  background: "rgba(0,210,255,0.08)",
+                  border: "1px solid rgba(0,210,255,0.25)",
+                  fontFamily: "'Orbitron',sans-serif",
+                  fontSize: 11,
+                  color: "var(--cyber-neon)",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                <span>קטגוריות קיימות ({categories.length})</span>
+                <span style={{ fontSize: 14 }}>
+                  {showCategoryManager ? "▼" : "◀"}
+                </span>
+              </button>
+
+              {showCategoryManager && categories.length > 0 && (
+                <div
+                  className="flex flex-col gap-2 p-3 rounded"
+                  style={{
+                    background: "rgba(0,0,0,0.3)",
+                    border: "1px solid rgba(0,210,255,0.1)",
+                    animation: "slideIn 0.2s ease",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "'Share Tech Mono',monospace",
+                      fontSize: 10,
+                      color: "var(--cyber-text-dim)",
+                      marginBottom: 8,
+                    }}
+                  >
+                    בחר קטגוריה למחיקה:
+                  </div>
+                  
+                  <select
+                    value={selectedCategoryToDelete}
+                    onChange={(e) => setSelectedCategoryToDelete(e.target.value)}
+                    style={{
+                      ...inputStyle,
+                      marginBottom: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="">בחר קטגוריה...</option>
+                    {categories.map((cat) => {
+                      const count = movies.filter(m => m.category === cat).length;
+                      return (
+                        <option key={cat} value={cat}>
+                          {cat} ({count} סרטים)
+                        </option>
+                      );
+                    })}
+                  </select>
+
+                  {selectedCategoryToDelete && (
+                    <button
+                      onClick={handleDeleteCategory}
+                      className="cursor-pointer transition-all duration-200 py-2 rounded"
+                      style={{
+                        background: "rgba(255,0,60,0.15)",
+                        border: "1px solid rgba(255,0,60,0.4)",
+                        fontFamily: "'Orbitron',sans-serif",
+                        fontSize: 11,
+                        color: "#ff4466",
+                        letterSpacing: "0.1em",
+                      }}
+                    >
+                      🗑 מחק קטגוריה וסרטים
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </GlassPanel>
 
           {/* Add Movie Form */}
           <GlassPanel style={{ padding: 24, marginBottom: 32 }}>

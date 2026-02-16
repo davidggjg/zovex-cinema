@@ -1,4 +1,5 @@
-export default function HeroHeader({ movieCount, categoryCount }) {
+export default function HeroHeader({ movieCount, categoryCount, theme = "dark" }) {
+  const isDark = theme === "dark";
   return (
     <header
       className="text-center relative"
@@ -12,8 +13,9 @@ export default function HeroHeader({ movieCount, categoryCount }) {
       <div
         className="absolute bottom-[-1px] left-1/2 -translate-x-1/2 w-[200px] h-[2px]"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--cyber-neon), transparent)",
+          background: isDark
+            ? "linear-gradient(90deg, transparent, var(--cyber-neon), transparent)"
+            : "linear-gradient(90deg, transparent, #4040ff, transparent)",
         }}
       />
 
@@ -22,7 +24,7 @@ export default function HeroHeader({ movieCount, categoryCount }) {
         style={{
           fontFamily: "'Share Tech Mono',monospace",
           fontSize: 11,
-          color: "var(--cyber-text-dim)",
+          color: isDark ? "var(--cyber-text-dim)" : "#6b7280",
           letterSpacing: "0.4em",
           textTransform: "uppercase",
           animation: "fadeUp 0.5s ease 0.1s both",
@@ -38,8 +40,9 @@ export default function HeroHeader({ movieCount, categoryCount }) {
           fontSize: "clamp(36px,8vw,80px)",
           fontWeight: 900,
           letterSpacing: "0.2em",
-          background:
-            "linear-gradient(135deg, #00d2ff 0%, #0080ff 40%, #00ffcc 100%)",
+          background: isDark
+            ? "linear-gradient(135deg, #00d2ff 0%, #0080ff 40%, #00ffcc 100%)"
+            : "linear-gradient(135deg, #4040ff 0%, #6060ff 40%, #8080ff 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundSize: "200% auto",
@@ -53,7 +56,7 @@ export default function HeroHeader({ movieCount, categoryCount }) {
         style={{
           fontFamily: "'Rajdhani',sans-serif",
           fontSize: "clamp(12px,2vw,16px)",
-          color: "var(--cyber-text-dim)",
+          color: isDark ? "var(--cyber-text-dim)" : "#6b7280",
           letterSpacing: "0.25em",
           textTransform: "uppercase",
           animation: "fadeUp 0.5s ease 0.3s both",
@@ -68,8 +71,8 @@ export default function HeroHeader({ movieCount, categoryCount }) {
         <div
           className="inline-flex items-center gap-6 px-6 py-2 rounded"
           style={{
-            background: "rgba(0,210,255,0.04)",
-            border: "1px solid rgba(0,210,255,0.1)",
+            background: isDark ? "rgba(0,210,255,0.04)" : "rgba(100,100,255,0.08)",
+            border: isDark ? "1px solid rgba(0,210,255,0.1)" : "1px solid rgba(100,100,255,0.2)",
             animation: "fadeUp 0.5s ease 0.4s both",
           }}
         >
@@ -83,7 +86,7 @@ export default function HeroHeader({ movieCount, categoryCount }) {
                   fontFamily: "'Orbitron',sans-serif",
                   fontSize: 18,
                   fontWeight: 900,
-                  color: "var(--cyber-neon)",
+                  color: isDark ? "var(--cyber-neon)" : "#4040ff",
                 }}
               >
                 {s.val}
@@ -92,7 +95,7 @@ export default function HeroHeader({ movieCount, categoryCount }) {
                 style={{
                   fontFamily: "'Share Tech Mono',monospace",
                   fontSize: 9,
-                  color: "var(--cyber-text-dim)",
+                  color: isDark ? "var(--cyber-text-dim)" : "#6b7280",
                   letterSpacing: "0.1em",
                 }}
               >

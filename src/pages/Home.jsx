@@ -22,6 +22,7 @@ export default function Home() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [theme, setTheme] = useState("dark");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -82,13 +83,39 @@ export default function Home() {
     <>
       <CyberStyles />
 
-      <div className="cyber-page relative min-h-screen z-[1]">
-        <CyberBackground />
+      <div className={theme === "dark" ? "cyber-page" : "light-page"} style={{ minHeight: "100vh", position: "relative", zIndex: 1 }}>
+        {theme === "dark" && <CyberBackground />}
+
+        {/* Theme Toggle Button */}
+        <div className="fixed top-4 left-4 z-[100]">
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="cursor-pointer transition-all duration-200 px-4 py-2 rounded"
+            style={{
+              background: theme === "dark" 
+                ? "rgba(0,210,255,0.15)" 
+                : "rgba(100,100,255,0.15)",
+              border: theme === "dark"
+                ? "1px solid rgba(0,210,255,0.4)"
+                : "1px solid rgba(100,100,255,0.4)",
+              fontFamily: "'Orbitron',sans-serif",
+              fontSize: 10,
+              color: theme === "dark" ? "var(--cyber-neon)" : "#4040ff",
+              letterSpacing: "0.1em",
+              boxShadow: theme === "dark"
+                ? "0 0 15px rgba(0,210,255,0.2)"
+                : "0 0 15px rgba(100,100,255,0.2)",
+            }}
+          >
+            {theme === "dark" ? "☀ מצב בהיר" : "🌙 מצב כהה"}
+          </button>
+        </div>
 
         <div className="relative z-[2] max-w-[1200px] mx-auto px-4 pb-16">
           <HeroHeader
             movieCount={movies.length}
             categoryCount={categories.length}
+            theme={theme}
           />
 
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
