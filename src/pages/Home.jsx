@@ -57,9 +57,8 @@ const VideoPlayer = ({ videoId, type, onClose }) => {
   return createPortal(
     <div className="vid-ov" onClick={onClose}>
       <div className="vid-container" onClick={e => e.stopPropagation()}>
-        <div className="vid-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid rgba(229,9,20,0.3)' }}>
+        <div className="vid-header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', padding: '12px', background: 'rgba(0,0,0,0.7)', borderBottom: '1px solid rgba(229,9,20,0.3)' }}>
           <button className="vid-close" onClick={onClose} style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.3)', color: 'white', padding: '10px', borderRadius: '8px', cursor: 'pointer', fontSize: '24px' }}>✕</button>
-          <a href={originalUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ background: '#e50914', color: 'white', padding: '10px 16px', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}>פתח מקור 🔗</a>
         </div>
         <iframe
           src={embedUrl}
