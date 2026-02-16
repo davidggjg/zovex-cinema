@@ -194,7 +194,7 @@ export default function Home() {
                 </div>
 
                 {/* Hero Banner */}
-                <div className="hero" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=1200&h=800&fit=crop)`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="hero" style={{ backgroundImage: `url(https://images.unsplash.com/photo-1485579149c0-123dd979885f?w=1200&h=800&fit=crop)`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div className="hero-overlay" />
                   <div style={{ position: 'relative', zIndex: 10, fontSize: '80px', fontWeight: 800, color: 'white', textShadow: '0 4px 20px rgba(229, 9, 20, 0.6), 0 0 40px rgba(229, 9, 20, 0.4)', letterSpacing: '2px' }}>
                     ZOVEX
