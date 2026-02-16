@@ -148,7 +148,7 @@ export default function Home() {
           <div className="search-wrap">
             <input 
               type="text" 
-              placeholder="חיפוש או הקלד admin..." 
+              placeholder="חיפוש..." 
               value={searchQuery} 
               onChange={handleSearch} 
             />
