@@ -66,7 +66,7 @@ const MovieCard = ({ movie, onClick }) => (
       <div className="card-overlay">
         <div className="play-btn-circle">▶</div>
       </div>
-      <div className="card-badge">{movie.series_name ? 'TV' : 'FILM'}</div>
+      <div className="card-badge">{movie.type === 'series' ? 'TV' : 'FILM'}</div>
     </div>
     <div className="card-info">
       <h4>{movie.title}</h4>
@@ -87,14 +87,47 @@ export default function Home() {
     queryFn: () => base44.entities.Movie.list("-created_date"),
   });
 
-  // Filter movies
+  // Group series into single items
+  const processedItems = useMemo(() => {
+    const seriesMap = new Map();
+    const standaloneMovies = [];
+
+    movies.forEach((movie) => {
+      if (movie.series_name) {
+        if (!seriesMap.has(movie.series_name)) {
+          seriesMap.set(movie.series_name, {
+            id: `series_${movie.series_name}`,
+            title: movie.series_name,
+            type: "series",
+            thumbnail_url: movie.thumbnail_url,
+            video_id: movie.video_id,
+            description: movie.description || "",
+            category: movie.category,
+            episodes: [],
+          });
+        }
+        seriesMap.get(movie.series_name).episodes.push(movie);
+      } else {
+        standaloneMovies.push(movie);
+      }
+    });
+
+    // Sort episodes
+    seriesMap.forEach((series) => {
+      series.episodes.sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+    });
+
+    return [...standaloneMovies, ...Array.from(seriesMap.values())];
+  }, [movies]);
+
+  // Filter items
   const filteredMovies = useMemo(() => {
-    return movies.filter(m => {
+    return processedItems.filter(m => {
       const matchesSearch = m.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            m.category?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
-  }, [movies, searchQuery]);
+  }, [processedItems, searchQuery]);
 
   const handleSearch = (e) => {
     const val = e.target.value;
@@ -130,15 +163,21 @@ export default function Home() {
       <main className="container">
         {view === 'home' ? (
           <>
-            {movies.length > 0 && !searchQuery && (
-              <div className="hero" style={{ backgroundImage: `url(${getThumb(movies[0])})` }}>
+            {processedItems.length > 0 && !searchQuery && (
+              <div className="hero" style={{ backgroundImage: `url(${getThumb(processedItems[0])})` }}>
                 <div className="hero-overlay" />
                 <div className="hero-content">
-                  <h1>{movies[0].title}</h1>
-                  <p>{movies[0].description}</p>
+                  <h1>{processedItems[0].title}</h1>
+                  <p>{processedItems[0].description}</p>
                   <div className="hero-btns">
-                    <button className="btn-main" onClick={() => setVideoData({ videoId: movies[0].video_id, type: movies[0].type })}>▶ נגן</button>
-                    <button className="btn-sec" onClick={() => { setCurrent(movies[0]); setView('detail'); }}>ℹ מידע</button>
+                    <button className="btn-main" onClick={() => {
+                      if (processedItems[0].type === 'series') {
+                        setVideoData({ videoId: processedItems[0].episodes[0].video_id, type: processedItems[0].episodes[0].type });
+                      } else {
+                        setVideoData({ videoId: processedItems[0].video_id, type: processedItems[0].type });
+                      }
+                    }}>▶ נגן</button>
+                    <button className="btn-sec" onClick={() => { setCurrent(processedItems[0]); setView('detail'); }}>ℹ מידע</button>
                   </div>
                 </div>
               </div>
@@ -165,20 +204,15 @@ export default function Home() {
               </div>
             </div>
             <div className="episode-list">
-              <h3>צפייה</h3>
-              {current.series_name ? (
-                // Group episodes by series
-                (() => {
-                  const seriesEpisodes = movies.filter(m => m.series_name === current.series_name)
-                    .sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-                  return seriesEpisodes.map((ep, i) => (
-                    <div key={ep.id} className="ep-item" onClick={() => setVideoData({ videoId: ep.video_id, type: ep.type })}>
-                      <div className="ep-num">{ep.episode_number || i + 1}</div>
-                      <div className="ep-title">{ep.title}</div>
-                      <div className="ep-play">▶</div>
-                    </div>
-                  ));
-                })()
+              <h3>פרקים / צפייה</h3>
+              {current.type === 'series' ? (
+                current.episodes.map((ep, i) => (
+                  <div key={ep.id} className="ep-item" onClick={() => setVideoData({ videoId: ep.video_id, type: ep.type })}>
+                    <div className="ep-num">{ep.episode_number || i + 1}</div>
+                    <div className="ep-title">{ep.title}</div>
+                    <div className="ep-play">▶</div>
+                  </div>
+                ))
               ) : (
                 <button className="btn-main" onClick={() => setVideoData({ videoId: current.video_id, type: current.type })}>צפה בסרט המלא</button>
               )}
