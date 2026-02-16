@@ -733,13 +733,14 @@ const CSS = `
     background: rgba(255,255,255,0.2);
   }
   
-  @media (max-width: 600px) {
-    .hero { padding: 20px; height: 50vh; }
+  @media (max-width: 768px) {
+    .hero { padding: 30px; height: 45vh; margin: 12px; }
     .hero-content h1 { font-size: 2.2rem; }
-    .nav { padding: 0 15px; }
+    .nav { padding: 0 20px; }
     .logo { font-size: 22px; }
-    .search-wrap input { width: 180px; font-size: 14px; }
-    .movie-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+    .search-wrap input { width: 160px; font-size: 13px; }
+    .movie-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+    .grid-section { padding: 30px 20px; }
     .detail-view { padding: 20px; }
     .detail-header { padding: 30px; }
     .detail-info h1 { font-size: 2rem; }
