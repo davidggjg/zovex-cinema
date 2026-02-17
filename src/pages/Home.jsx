@@ -79,43 +79,119 @@ const VideoPlayer = ({ videoId, type, onClose }) => {
 };
 
 // Movie Card Component
-const MovieCard = ({ movie, onClick, viewMode }) => (
-  <div className="card" onClick={() => onClick(movie)} style={viewMode === 'list' ? { display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'center' } : {}}>
-    <div className="card-thumb" style={viewMode === 'list' ? { width: '200px', aspectRatio: '16/9', flexShrink: 0 } : {}}>
-      <img src={getThumb(movie)} alt={movie.title} loading="lazy" />
-      <div className="card-overlay">
-        <div className="play-btn-circle">▶</div>
-      </div>
-      <div className="card-badge">{movie.type === 'series' ? 'TV' : 'FILM'}</div>
-      <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '6px', zIndex: 10 }}>
-        <WatchlistButton movieId={movie.id} size={18} />
-        <ShareButton movieTitle={movie.title} movieId={movie.id} size={18} />
-      </div>
-    </div>
-    <div className="card-info" style={viewMode === 'list' ? { flex: 1 } : {}}>
-      <h4>{movie.title}</h4>
-      {viewMode === 'list' && movie.description && (
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 8px 0', lineHeight: 1.4 }}>
-          {movie.description.substring(0, 150)}...
-        </p>
-      )}
-      <span>{movie.category}</span>
-      {movie.year && <span style={{ marginRight: '8px', opacity: 0.7 }}>{movie.year}</span>}
-      <div style={{ marginTop: '6px' }}>
-        <RatingStars movieId={movie.id} size={14} interactive={false} />
-      </div>
-      {movie.tags && movie.tags.length > 0 && (
-        <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-          {movie.tags.slice(0, 3).map(tag => (
-            <span key={tag} style={{ fontSize: '10px', background: 'var(--accent)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>
-              {tag}
-            </span>
-          ))}
+const MovieCard = ({ movie, onClick, viewMode }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+  
+  return (
+    <div 
+      className="card netflix-card" 
+      onClick={() => onClick(movie)} 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={viewMode === 'list' ? { 
+        display: 'flex', 
+        flexDirection: 'row', 
+        gap: '20px', 
+        alignItems: 'center',
+        padding: '16px',
+        borderRadius: '12px',
+        background: isHovered ? 'rgba(255,255,255,0.05)' : 'transparent',
+        border: '1px solid transparent',
+        borderColor: isHovered ? 'rgba(229,9,20,0.3)' : 'transparent',
+      } : {}}
+    >
+      <div className="card-thumb netflix-thumb" style={viewMode === 'list' ? { width: '280px', aspectRatio: '16/9', flexShrink: 0 } : {}}>
+        <img src={getThumb(movie)} alt={movie.title} loading="lazy" />
+        <div className={`card-overlay netflix-overlay ${isHovered ? 'hovered' : ''}`}>
+          <div className="play-btn-netflix">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+              <circle cx="30" cy="30" r="28" fill="rgba(255,255,255,0.95)" stroke="#e50914" strokeWidth="2"/>
+              <path d="M24 20L42 30L24 40V20Z" fill="#000"/>
+            </svg>
+          </div>
         </div>
-      )}
+        <div className="card-badge-netflix">{movie.type === 'series' ? 'סדרה' : 'סרט'}</div>
+        <div className="card-actions" style={{ 
+          position: 'absolute', 
+          top: '12px', 
+          left: '12px', 
+          display: 'flex', 
+          gap: '8px', 
+          zIndex: 10,
+          opacity: isHovered ? 1 : 0,
+          transform: isHovered ? 'translateY(0)' : 'translateY(-10px)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
+          <WatchlistButton movieId={movie.id} size={20} />
+          <ShareButton movieTitle={movie.title} movieId={movie.id} size={20} />
+        </div>
+        {movie.views > 0 && (
+          <div className="views-badge" style={{
+            position: 'absolute',
+            bottom: '12px',
+            right: '12px',
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(10px)',
+            padding: '6px 12px',
+            borderRadius: '20px',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            opacity: isHovered ? 1 : 0,
+            transform: isHovered ? 'translateY(0)' : 'translateY(10px)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}>
+            👁 {movie.views.toLocaleString()}
+          </div>
+        )}
+      </div>
+      <div className="card-info netflix-info" style={viewMode === 'list' ? { flex: 1 } : {}}>
+        <h4 className="netflix-title">{movie.title}</h4>
+        {viewMode === 'list' && movie.description && (
+          <p className="netflix-desc" style={{ 
+            fontSize: '14px', 
+            color: 'rgba(255,255,255,0.7)', 
+            margin: '8px 0 12px 0', 
+            lineHeight: 1.6,
+            maxHeight: isHovered ? '100px' : '40px',
+            overflow: 'hidden',
+            transition: 'max-height 0.3s ease',
+          }}>
+            {movie.description}
+          </p>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <span className="netflix-category">{movie.category}</span>
+          {movie.year && <span className="netflix-year">{movie.year}</span>}
+        </div>
+        <div style={{ marginTop: '10px' }}>
+          <RatingStars movieId={movie.id} size={16} interactive={false} />
+        </div>
+        {movie.tags && movie.tags.length > 0 && (
+          <div className="netflix-tags" style={{ 
+            marginTop: '10px', 
+            display: 'flex', 
+            gap: '6px', 
+            flexWrap: 'wrap',
+            opacity: isHovered || viewMode === 'list' ? 1 : 0,
+            maxHeight: isHovered || viewMode === 'list' ? '100px' : '0',
+            overflow: 'hidden',
+            transition: 'all 0.3s ease',
+          }}>
+            {movie.tags.slice(0, 4).map(tag => (
+              <span key={tag} className="netflix-tag">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function Home() {
   const [view, setView] = useState('home');
@@ -448,7 +524,7 @@ export default function Home() {
                         className="category-btn"
                         onClick={() => setSearchQuery(cat)}
                       >
-                        {cat}
+                        <span>{cat}</span>
                       </button>
                     ))}
                   </div>
@@ -526,7 +602,9 @@ export default function Home() {
                   </div>
                 ))
               ) : (
-                <button className="btn-main" onClick={() => setVideoData({ videoId: current.video_id, type: current.type })}>צפה בסרט המלא</button>
+                <button className="btn-main" onClick={() => setVideoData({ videoId: current.video_id, type: current.type })}>
+                  <span>▶ צפה בסרט המלא</span>
+                </button>
               )}
             </div>
           </div>
@@ -628,39 +706,48 @@ export default function Home() {
 
 // CSS
 const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
   @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
   
   :root {
-    --bg: #ffffff;
-    --text: #1a1a1a;
-    --card: #f8fafc;
+    --bg: #141414;
+    --text: #ffffff;
+    --card: #1a1a1a;
     --accent: #e50914;
-    --glass: rgba(255, 255, 255, 0.95);
-    --border: #e5e7eb;
-    --text-secondary: #6b7280;
+    --glass: rgba(20, 20, 20, 0.95);
+    --border: rgba(255, 255, 255, 0.1);
+    --text-secondary: #999999;
   }
 
   .light {
-    --bg: #ffffff;
-    --text: #1a1a1a;
-    --card: #f8fafc;
+    --bg: #141414;
+    --text: #ffffff;
+    --card: #1a1a1a;
     --accent: #e50914;
-    --glass: rgba(255, 255, 255, 0.95);
-    --border: #e5e7eb;
-    --text-secondary: #6b7280;
+    --glass: rgba(20, 20, 20, 0.95);
+    --border: rgba(255, 255, 255, 0.1);
+    --text-secondary: #999999;
   }
 
 
 
-  * { box-sizing: border-box; }
+  * { 
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
   body { 
     margin: 0; 
-    font-family: 'Assistant', sans-serif; 
+    font-family: 'Inter', 'Assistant', -apple-system, sans-serif; 
     background: var(--bg); 
     color: var(--text); 
     direction: rtl; 
     transition: background 0.3s ease;
     font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
   
   ::-webkit-scrollbar { width: 8px; }
@@ -672,81 +759,127 @@ const CSS = `
   }
 
   .nav { 
-    position: fixed; top: 0; width: 100%; height: 70px; 
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0 40px; 
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
+    position: fixed; 
+    top: 0; 
+    width: 100%; 
+    height: 70px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    padding: 0 60px; 
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid transparent;
     z-index: 1000;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .nav.scrolled {
+    background: rgba(20,20,20,0.98);
+    border-bottom-color: var(--border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
 
   .logo { 
-    font-weight: 800; 
-    font-size: 26px; 
+    font-weight: 900; 
+    font-size: 32px; 
     color: var(--accent); 
     cursor: pointer; 
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .logo:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 30px rgba(229, 9, 20, 0.8);
   }
 
   .nav-tools { display: flex; align-items: center; gap: 15px; }
 
   .search-wrap input {
-    background: var(--card); 
-    border: 1px solid var(--border);
-    padding: 10px 16px; 
-    border-radius: 8px; 
+    background: rgba(255, 255, 255, 0.05); 
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 20px; 
+    border-radius: 50px; 
     color: var(--text); 
     outline: none; 
-    width: 250px;
+    width: 280px;
     font-size: 14px;
-    transition: all 0.2s;
-    font-family: 'Assistant', sans-serif;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', 'Assistant', sans-serif;
+    backdrop-filter: blur(10px);
   }
   
   .search-wrap input:focus {
+    background: rgba(255, 255, 255, 0.08);
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
+    box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.15), 0 8px 24px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+  }
+  
+  .search-wrap input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
   }
 
   .icon-btn { 
-    background: var(--card); 
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05); 
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    padding: 10px;
+    width: 44px;
+    height: 44px;
     font-size: 18px; 
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text);
+    backdrop-filter: blur(10px);
   }
   
   .icon-btn:hover {
-    background: #f3f4f6;
+    background: rgba(229, 9, 20, 0.9);
     border-color: var(--accent);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(229, 9, 20, 0.3);
   }
 
   .container { padding-top: 70px; }
 
   .hero {
-    height: 60vh; 
+    height: 85vh; 
     background-size: cover; 
     background-position: center;
     position: relative; 
     display: flex; 
-    align-items: flex-end; 
-    padding: 60px;
-    margin: 20px;
-    border-radius: 16px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
     overflow: hidden;
+    background-attachment: fixed;
   }
 
   .hero-overlay { 
     position: absolute; 
     inset: 0; 
-    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%); 
+    background: linear-gradient(
+      to top, 
+      rgba(20,20,20,1) 0%, 
+      rgba(20,20,20,0.7) 40%,
+      rgba(20,20,20,0.4) 70%,
+      transparent 100%
+    );
+  }
+  
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(20,20,20,0.5) 100%);
   }
 
   .hero-content { position: relative; z-index: 10; max-width: 600px; }
@@ -767,20 +900,43 @@ const CSS = `
   .hero-btns { display: flex; gap: 12px; margin-top: 20px; }
 
   .btn-main { 
-    background: var(--accent); 
+    background: linear-gradient(135deg, var(--accent), #ff0050); 
     color: white; 
     border: none; 
-    padding: 12px 28px; 
-    border-radius: 8px; 
+    padding: 14px 32px; 
+    border-radius: 50px; 
     cursor: pointer; 
-    font-weight: 600;
-    font-size: 15px;
-    transition: all 0.2s;
-    font-family: 'Assistant', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 20px rgba(229, 9, 20, 0.3);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
   }
+  
+  .btn-main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #ff0050, var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .btn-main:hover::before {
+    opacity: 1;
+  }
+  
   .btn-main:hover {
-    background: #c40812;
-    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(229, 9, 20, 0.5);
+  }
+  
+  .btn-main span {
+    position: relative;
+    z-index: 1;
   }
   
   .btn-sec { 
@@ -800,128 +956,255 @@ const CSS = `
     border-color: rgba(255,255,255,0.7);
   }
 
-  .categories-section { padding: 40px 60px; }
+  .categories-section { 
+    padding: 60px 60px 40px; 
+    background: linear-gradient(180deg, transparent 0%, rgba(20,20,20,0.5) 100%);
+  }
+  
   .categories-section h3 { 
-    margin-bottom: 24px; 
-    font-size: 20px;
+    margin-bottom: 32px; 
+    font-size: 24px;
     font-weight: 700;
     color: var(--text);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.5px;
   }
+  
   .categories-grid {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
   }
+  
   .category-btn {
-    padding: 10px 20px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
     color: var(--text);
     cursor: pointer;
-    font-family: 'Assistant', sans-serif;
-    font-weight: 500;
+    font-family: 'Inter', 'Assistant', sans-serif;
+    font-weight: 600;
     font-size: 14px;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
   }
+  
+  .category-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent), #ff0050);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
   .category-btn:hover {
-    background: var(--accent);
-    color: white;
     border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(229, 9, 20, 0.3);
+  }
+  
+  .category-btn:hover::before {
+    opacity: 1;
+  }
+  
+  .category-btn span {
+    position: relative;
+    z-index: 1;
   }
 
-  .grid-section { padding: 40px 60px; }
+  .grid-section { 
+    padding: 60px 60px 80px; 
+    position: relative;
+  }
+  
+  .grid-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(229, 9, 20, 0.3) 50%, transparent 100%);
+  }
+  
   .grid-section h3 { 
-    margin-bottom: 30px; 
-    font-size: 24px;
+    margin-bottom: 40px; 
+    font-size: 28px;
     font-weight: 700;
     color: var(--text);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.5px;
+    position: relative;
+    padding-bottom: 16px;
+  }
+  
+  .grid-section h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
   }
 
   .movie-grid {
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 32px 20px;
   }
 
   .movie-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
   }
 
-  .card { 
+  .netflix-card { 
     cursor: pointer; 
-    transition: all 0.3s ease; 
-  }
-  .card:hover { 
-    transform: translateY(-4px); 
-    z-index: 10;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
   }
   
-  .card-thumb { 
+  .netflix-card:hover { 
+    transform: scale(1.05) translateY(-8px);
+    z-index: 20;
+  }
+  
+  .netflix-thumb { 
     position: relative; 
     aspect-ratio: 2/3; 
-    border-radius: 12px; 
+    border-radius: 8px; 
     overflow: hidden; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border: 1px solid var(--border);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .card:hover .card-thumb {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  
+  .netflix-card:hover .netflix-thumb {
+    box-shadow: 0 16px 48px rgba(0,0,0,0.8), 0 0 0 2px rgba(229, 9, 20, 0.4);
+    border-color: rgba(229, 9, 20, 0.5);
   }
-  .card-thumb img { 
+  
+  .netflix-thumb img { 
     width: 100%; 
     height: 100%; 
-    object-fit: cover; 
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .netflix-card:hover .netflix-thumb img {
+    transform: scale(1.08);
   }
 
-  .card-overlay { 
+  .netflix-overlay { 
     position: absolute; 
     inset: 0; 
-    background: rgba(0,0,0,0.4); 
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,0.95) 0%,
+      rgba(0,0,0,0.6) 50%,
+      rgba(0,0,0,0.3) 100%
+    );
     display: flex; 
     align-items: center; 
     justify-content: center; 
     opacity: 0; 
-    transition: opacity 0.3s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(0px);
   }
-  .card:hover .card-overlay { opacity: 1; }
-
-  .play-btn-circle { 
-    width: 50px; 
-    height: 50px; 
-    border-radius: 50%; 
-    border: 2px solid white; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    color: white; 
-    font-size: 20px;
+  
+  .netflix-overlay.hovered { 
+    opacity: 1;
+    backdrop-filter: blur(4px);
   }
 
-  .card-badge { 
+  .play-btn-netflix { 
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  }
+  
+  .netflix-overlay.hovered .play-btn-netflix {
+    transform: scale(1);
+    opacity: 1;
+  }
+  
+  .play-btn-netflix:hover {
+    transform: scale(1.1);
+  }
+
+  .card-badge-netflix { 
     position: absolute; 
-    top: 8px; 
-    right: 8px; 
-    background: var(--accent); 
+    top: 12px; 
+    right: 12px; 
+    background: rgba(229, 9, 20, 0.95);
+    backdrop-filter: blur(10px);
     color: white; 
-    padding: 5px 10px; 
-    border-radius: 6px; 
-    font-size: 10px; 
-    font-weight: 600;
+    padding: 6px 14px; 
+    border-radius: 20px; 
+    font-size: 11px; 
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
   }
 
-  .card-info { padding: 12px 0; }
-  .card-info h4 { 
-    margin: 0 0 6px 0; 
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
+  .netflix-info { 
+    padding: 16px 0; 
   }
-  .card-info span { 
-    font-size: 12px; 
+  
+  .netflix-title { 
+    margin: 0 0 8px 0; 
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.3;
+    letter-spacing: -0.3px;
+    transition: color 0.2s ease;
+  }
+  
+  .netflix-card:hover .netflix-title {
+    color: var(--accent);
+  }
+  
+  .netflix-category { 
+    font-size: 13px; 
     color: var(--text-secondary);
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .netflix-year {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+  }
+  
+  .netflix-desc {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+  }
+  
+  .netflix-tag {
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.3px;
   }
 
   .detail-view { padding: 40px 60px; }
@@ -1055,16 +1338,48 @@ const CSS = `
     background: rgba(255,255,255,0.2);
   }
   
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+  
+  .netflix-card {
+    animation: fadeInUp 0.6s ease-out both;
+  }
+  
+  .netflix-card:nth-child(1) { animation-delay: 0.05s; }
+  .netflix-card:nth-child(2) { animation-delay: 0.1s; }
+  .netflix-card:nth-child(3) { animation-delay: 0.15s; }
+  .netflix-card:nth-child(4) { animation-delay: 0.2s; }
+  .netflix-card:nth-child(5) { animation-delay: 0.25s; }
+  .netflix-card:nth-child(6) { animation-delay: 0.3s; }
+  
   @media (max-width: 768px) {
-    .hero { padding: 30px; height: 45vh; margin: 12px; }
-    .hero-content h1 { font-size: 2.2rem; }
+    .hero { padding: 20px; height: 60vh; margin: 0; }
+    .hero-content h1 { font-size: 2rem; }
     .nav { padding: 0 20px; }
-    .logo { font-size: 22px; }
-    .search-wrap input { width: 160px; font-size: 13px; }
-    .movie-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
-    .grid-section { padding: 30px 20px; }
+    .logo { font-size: 24px; }
+    .search-wrap input { width: 180px; font-size: 13px; }
+    .movie-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 12px; }
+    .grid-section { padding: 40px 20px; }
+    .categories-section { padding: 40px 20px; }
     .detail-view { padding: 20px; }
-    .detail-header { padding: 30px; height: 40vh; }
+    .detail-header { padding: 30px; height: 50vh; }
     .detail-info h1 { font-size: 2rem; }
     .episode-list { padding: 20px; }
     .ep-item { padding: 12px 16px; }
