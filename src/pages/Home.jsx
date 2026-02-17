@@ -974,7 +974,7 @@ const CSS = `
 
   .categories-section { 
     padding: 60px 60px 40px; 
-    background: linear-gradient(180deg, transparent 0%, rgba(20,20,20,0.5) 100%);
+    background: transparent;
   }
   
   .categories-section h3 { 
@@ -994,8 +994,8 @@ const CSS = `
   
   .category-btn {
     padding: 12px 24px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
     border-radius: 50px;
     color: var(--text);
     cursor: pointer;
@@ -1003,9 +1003,9 @@ const CSS = `
     font-weight: 600;
     font-size: 14px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
   
   .category-btn::before {
@@ -1097,8 +1097,8 @@ const CSS = `
     aspect-ratio: 2/3; 
     border-radius: 8px; 
     overflow: hidden; 
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border: 1px solid #e2e8f0;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
@@ -1203,7 +1203,7 @@ const CSS = `
   
   .netflix-year {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary);
     font-weight: 500;
   }
   
@@ -1214,12 +1214,12 @@ const CSS = `
   
   .netflix-tag {
     font-size: 11px;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
+    background: #f1f5f9;
+    color: #475569;
     padding: 4px 10px;
     border-radius: 12px;
     font-weight: 600;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #e2e8f0;
     font-family: 'Inter', sans-serif;
     letter-spacing: 0.3px;
   }
