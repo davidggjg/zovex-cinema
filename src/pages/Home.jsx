@@ -42,7 +42,9 @@ const getEmbedUrl = (videoId, type) => {
       if (videoId.startsWith('http')) {
         return videoId;
       }
-      return `https://rumble.com/embed/v${videoId}/?pub=4`;
+      // אם ה-ID כבר מתחיל ב-v, אל תוסיף v נוסף
+      const rumbleId = videoId.startsWith('v') ? videoId : `v${videoId}`;
+      return `https://rumble.com/embed/${rumbleId}/?pub=4`;
     default:
       return "";
   }
