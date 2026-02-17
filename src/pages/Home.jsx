@@ -301,7 +301,7 @@ export default function Home() {
               )}
             </div>
           </div>
-        ) : null)}
+        ) : null}
       </main>
 
       {videoData && <VideoPlayer videoId={videoData.videoId} type={videoData.type} onClose={() => setVideoData(null)} />}
