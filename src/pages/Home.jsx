@@ -717,23 +717,23 @@ const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
   
   :root {
-    --bg: #141414;
-    --text: #ffffff;
-    --card: #1a1a1a;
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
     --accent: #e50914;
-    --glass: rgba(20, 20, 20, 0.95);
-    --border: rgba(255, 255, 255, 0.1);
-    --text-secondary: #999999;
+    --glass: rgba(255, 255, 255, 0.95);
+    --border: #e2e8f0;
+    --text-secondary: #64748b;
   }
 
   .light {
-    --bg: #141414;
-    --text: #ffffff;
-    --card: #1a1a1a;
+    --bg: #f8fafc;
+    --text: #0f172a;
+    --card: #ffffff;
     --accent: #e50914;
-    --glass: rgba(20, 20, 20, 0.95);
-    --border: rgba(255, 255, 255, 0.1);
-    --text-secondary: #999999;
+    --glass: rgba(255, 255, 255, 0.95);
+    --border: #e2e8f0;
+    --text-secondary: #64748b;
   }
 
 
