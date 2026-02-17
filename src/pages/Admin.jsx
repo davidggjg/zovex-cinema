@@ -764,7 +764,7 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* Movie List */}
+          {/* Movie List - Grouped by Categories */}
           <div style={{ 
             padding: 24,
             background: '#1e293b',
@@ -809,111 +809,135 @@ export default function Admin() {
                 אין סרטים עדיין
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                {movies.map((movie) => (
-                  <div
-                    key={movie.id}
-                    className="flex items-center justify-between gap-3 p-3 rounded transition-colors duration-200"
-                    style={{
-                      background: "rgba(0,0,0,0.3)",
-                      border: "1px solid rgba(229,9,20,0.1)",
-                    }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div
-                        className="truncate"
+              <div className="flex flex-col gap-4">
+                {categories.map((cat) => {
+                  const categoryMovies = movies.filter(m => m.category === cat);
+                  const [isExpanded, setIsExpanded] = useState(true);
+                  
+                  return (
+                    <div key={cat}>
+                      <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="w-full flex items-center justify-between p-3 rounded cursor-pointer transition-all duration-200"
                         style={{
-                          fontFamily: "'Assistant',sans-serif",
-                          fontWeight: 600,
-                          fontSize: 16,
-                          color: "#f8fafc",
+                          background: "rgba(229,9,20,0.15)",
+                          border: "1px solid rgba(229,9,20,0.3)",
                         }}
                       >
-                        {movie.title}
-                      </div>
-                      {movie.description && (
-                        <div
-                          className="truncate mt-1"
-                          style={{
-                            fontFamily: "'Assistant',sans-serif",
-                            fontSize: 13,
-                            color: "#cbd5e1",
-                            opacity: 0.7,
-                          }}
-                        >
-                          {movie.description}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 mt-1">
                         <span
-                          className="rounded px-2 py-0.5"
                           style={{
-                            background: "rgba(229,9,20,0.15)",
-                            border: "1px solid rgba(229,9,20,0.3)",
                             fontFamily: "'Assistant',sans-serif",
-                            fontSize: 11,
+                            fontSize: 16,
+                            fontWeight: 700,
                             color: "#fff",
                           }}
                         >
-                          {movie.category}
+                          {cat} ({categoryMovies.length})
                         </span>
-                        <span
-                          style={{
-                            fontFamily: "'Assistant',sans-serif",
-                            fontSize: 11,
-                            color: "#94a3b8",
-                          }}
-                        >
-                          {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : movie.type === "archive" ? "📚 ARCHIVE" : "☁ DRIVE"}
+                        <span style={{ fontSize: 14, color: "#fff" }}>
+                          {isExpanded ? "▼" : "◀"}
                         </span>
-                      </div>
-                    </div>
+                      </button>
 
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditingMovie(movie)}
-                        className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
-                        style={{
-                          background: "rgba(229,9,20,0.1)",
-                          border: "1px solid rgba(229,9,20,0.3)",
-                          color: "#fff",
-                          fontFamily: "'Assistant',sans-serif",
-                          fontSize: 14,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#e50914";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(229,9,20,0.1)";
-                        }}
-                      >
-                        ✏
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`למחוק את "${movie.title}"?`))
-                            deleteMutation.mutate(movie.id);
-                        }}
-                        className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
-                        style={{
-                          background: "rgba(220,38,38,0.1)",
-                          border: "1px solid rgba(220,38,38,0.3)",
-                          color: "#fff",
-                          fontFamily: "'Assistant',sans-serif",
-                          fontSize: 14,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#dc2626";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(220,38,38,0.1)";
-                        }}
-                      >
-                        ✕
-                      </button>
+                      {isExpanded && (
+                        <div className="flex flex-col gap-2 mt-2">
+                          {categoryMovies.map((movie) => (
+                            <div
+                              key={movie.id}
+                              className="flex items-center justify-between gap-3 p-3 rounded transition-colors duration-200"
+                              style={{
+                                background: "rgba(0,0,0,0.3)",
+                                border: "1px solid rgba(229,9,20,0.1)",
+                              }}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div
+                                  className="truncate"
+                                  style={{
+                                    fontFamily: "'Assistant',sans-serif",
+                                    fontWeight: 600,
+                                    fontSize: 16,
+                                    color: "#f8fafc",
+                                  }}
+                                >
+                                  {movie.title}
+                                </div>
+                                {movie.description && (
+                                  <div
+                                    className="truncate mt-1"
+                                    style={{
+                                      fontFamily: "'Assistant',sans-serif",
+                                      fontSize: 13,
+                                      color: "#cbd5e1",
+                                      opacity: 0.7,
+                                    }}
+                                  >
+                                    {movie.description}
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    style={{
+                                      fontFamily: "'Assistant',sans-serif",
+                                      fontSize: 11,
+                                      color: "#94a3b8",
+                                    }}
+                                  >
+                                    {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : movie.type === "archive" ? "📚 ARCHIVE" : movie.type === "rumble" ? "🎬 RUMBLE" : "☁ DRIVE"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setEditingMovie(movie)}
+                                  className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
+                                  style={{
+                                    background: "rgba(229,9,20,0.1)",
+                                    border: "1px solid rgba(229,9,20,0.3)",
+                                    color: "#fff",
+                                    fontFamily: "'Assistant',sans-serif",
+                                    fontSize: 14,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "#e50914";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "rgba(229,9,20,0.1)";
+                                  }}
+                                >
+                                  ✏
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`למחוק את "${movie.title}"?`))
+                                      deleteMutation.mutate(movie.id);
+                                  }}
+                                  className="shrink-0 w-8 h-8 rounded flex items-center justify-center cursor-pointer transition-all duration-200"
+                                  style={{
+                                    background: "rgba(220,38,38,0.1)",
+                                    border: "1px solid rgba(220,38,38,0.3)",
+                                    color: "#fff",
+                                    fontFamily: "'Assistant',sans-serif",
+                                    fontSize: 14,
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "#dc2626";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "rgba(220,38,38,0.1)";
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
