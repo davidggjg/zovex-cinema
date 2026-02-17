@@ -903,7 +903,7 @@ export default function Admin() {
                                     {movie.description}
                                   </div>
                                 )}
-                                <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
                                   <span
                                     style={{
                                       fontFamily: "'Assistant',sans-serif",
@@ -913,6 +913,39 @@ export default function Admin() {
                                   >
                                     {movie.type === "youtube" ? "▶ YT" : movie.type === "cloudinary" ? "☁ CLOUD" : movie.type === "archive" ? "📚 ARCHIVE" : movie.type === "rumble" ? "🎬 RUMBLE" : "☁ DRIVE"}
                                   </span>
+                                  {movie.series_name && (
+                                    <span
+                                      style={{
+                                        fontFamily: "'Assistant',sans-serif",
+                                        fontSize: 11,
+                                        color: "#94a3b8",
+                                      }}
+                                    >
+                                      📺 {movie.series_name}
+                                    </span>
+                                  )}
+                                  {movie.season_number && (
+                                    <span
+                                      style={{
+                                        fontFamily: "'Assistant',sans-serif",
+                                        fontSize: 11,
+                                        color: "#94a3b8",
+                                      }}
+                                    >
+                                      עונה {movie.season_number}
+                                    </span>
+                                  )}
+                                  {movie.episode_number && (
+                                    <span
+                                      style={{
+                                        fontFamily: "'Assistant',sans-serif",
+                                        fontSize: 11,
+                                        color: "#94a3b8",
+                                      }}
+                                    >
+                                      פרק {movie.episode_number}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
