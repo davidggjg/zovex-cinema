@@ -28,8 +28,8 @@ const getEmbedUrl = (videoId, type) => {
     case "archive":
       return `https://archive.org/embed/${videoId}`;
     case "rumble":
-      // אם זה כבר URL מלא של embed - השתמש בו
-      if (videoId.startsWith('http')) {
+      // אם זה כבר URL מלא של embed (כולל parameters) - השתמש בו כמו שהוא
+      if (videoId.includes('rumble.com/embed/')) {
         return videoId;
       }
       // אם ה-ID כבר מתחיל ב-v, אל תוסיף v נוסף
@@ -45,7 +45,8 @@ const getThumb = (movie) => {
   if (movie.type === "youtube") {
     return `https://img.youtube.com/vi/${movie.video_id}/mqdefault.jpg`;
   }
-  return "";
+  // תמונת ברירת מחדל
+  return "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=600&fit=crop";
 };
 
 // Video Player Component with Portal
@@ -189,7 +190,20 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container">
-        {view === 'home' ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center" style={{ minHeight: '60vh' }}>
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                border: '4px solid rgba(229,9,20,0.2)',
+                borderTop: '4px solid #e50914',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+              }}
+            />
+          </div>
+        ) : view === 'home' ? (
           <>
             {searchQuery && (
               <div style={{ padding: '20px 60px' }}>
@@ -287,7 +301,7 @@ export default function Home() {
               )}
             </div>
           </div>
-        ) : null}
+        ) : null)}
       </main>
 
       {videoData && <VideoPlayer videoId={videoData.videoId} type={videoData.type} onClose={() => setVideoData(null)} />}
@@ -422,6 +436,11 @@ const CSS = `
   
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 
   .nav { 
     position: fixed; top: 0; width: 100%; height: 70px; 
