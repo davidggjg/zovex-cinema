@@ -12,6 +12,11 @@ const extractYouTubeId = (url) => {
 };
 
 const extractRumbleId = (url) => {
+  // אם זה כבר embed URL - החזר את כל ה-URL
+  if (url.includes('rumble.com/embed/')) {
+    return url;
+  }
+  // חילוץ ID רגיל
   const m = url.match(/v([a-z0-9]+)(?:-|\.html|$|\/)/);
   return m ? m[1] : null;
 };
@@ -33,7 +38,11 @@ const getEmbedUrl = (videoId, type) => {
     case "archive":
       return `https://archive.org/embed/${videoId}`;
     case "rumble":
-      return `https://rumble.com/embed/v${videoId}/`;
+      // אם זה כבר URL מלא של embed - השתמש בו
+      if (videoId.startsWith('http')) {
+        return videoId;
+      }
+      return `https://rumble.com/embed/v${videoId}/?pub=4`;
     default:
       return "";
   }
