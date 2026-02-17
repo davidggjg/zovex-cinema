@@ -758,7 +758,7 @@ const CSS = `
   }
   
   ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
   @keyframes spin {
     0% { transform: rotate(0deg); }
