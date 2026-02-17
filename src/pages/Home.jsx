@@ -340,8 +340,8 @@ export default function Home() {
             className="icon-btn"
             onClick={() => setView(view === 'watchlist' ? 'home' : 'watchlist')}
             style={{ 
-              background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
-              borderColor: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
+              background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.15)',
+              borderColor: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.3)'
             }}
           >
             📚
@@ -350,17 +350,17 @@ export default function Home() {
             className="icon-btn"
             onClick={() => setShowFilters(!showFilters)}
             style={{ 
-              background: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
-              borderColor: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
+              background: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.15)',
+              borderColor: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.3)'
             }}
           >
-            <Filter size={18} color="#ffffff" />
+            <Filter size={18} color="#ffffff" strokeWidth={2.5} />
           </button>
           <button 
             className="icon-btn"
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           >
-            {viewMode === 'grid' ? <List size={18} color="#ffffff" /> : <Grid size={18} color="#ffffff" />}
+            {viewMode === 'grid' ? <List size={18} color="#ffffff" strokeWidth={2.5} /> : <Grid size={18} color="#ffffff" strokeWidth={2.5} />}
           </button>
         </div>
       </nav>
@@ -807,11 +807,11 @@ const CSS = `
   .nav-tools { display: flex; align-items: center; gap: 15px; }
 
   .search-wrap input {
-    background: rgba(255, 255, 255, 0.05); 
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15); 
+    border: 2px solid rgba(255, 255, 255, 0.3);
     padding: 12px 20px; 
     border-radius: 50px; 
-    color: var(--text); 
+    color: #ffffff; 
     outline: none; 
     width: 280px;
     font-size: 14px;
@@ -821,19 +821,19 @@ const CSS = `
   }
   
   .search-wrap input:focus {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.2);
     border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.15), 0 8px 24px rgba(0,0,0,0.3);
     transform: translateY(-2px);
   }
   
   .search-wrap input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7);
   }
 
   .icon-btn { 
-    background: rgba(255, 255, 255, 0.1); 
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15); 
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     padding: 10px;
     width: 44px;
