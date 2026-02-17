@@ -58,6 +58,42 @@ function extractVideoId(url) {
   return null;
 }
 
+function extractEpisodeInfo(text) {
+  if (!text) return {};
+  
+  const result = {};
+  
+  // תבניות באנגלית: S01E01, S1E1, Season 1 Episode 1
+  const pattern1 = text.match(/S(?:eason)?\s*(\d+)\s*E(?:pisode)?\s*(\d+)/i);
+  if (pattern1) {
+    result.season = parseInt(pattern1[1]);
+    result.episode = parseInt(pattern1[2]);
+    return result;
+  }
+  
+  // תבניות בעברית: עונה 1 פרק 2, עונה 1 - פרק 2
+  const pattern2 = text.match(/עונה\s*(\d+).*?פרק\s*(\d+)/);
+  if (pattern2) {
+    result.season = parseInt(pattern2[1]);
+    result.episode = parseInt(pattern2[2]);
+    return result;
+  }
+  
+  // רק פרק: E01, EP01, Episode 1, פרק 1
+  const episodeOnly = text.match(/(?:E|EP|Episode|פרק)\s*(\d+)/i);
+  if (episodeOnly) {
+    result.episode = parseInt(episodeOnly[1]);
+  }
+  
+  // רק עונה: Season 1, עונה 1
+  const seasonOnly = text.match(/(?:Season|עונה)\s*(\d+)/i);
+  if (seasonOnly) {
+    result.season = parseInt(seasonOnly[1]);
+  }
+  
+  return result;
+}
+
 const detectPlatform = (url) => {
   if (!url) return '';
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
@@ -190,6 +226,11 @@ export default function Admin() {
     const newUrl = e.target.value;
     setUrl(newUrl);
     checkUrl(newUrl);
+    
+    // ניסיון לזהות פרק ועונה מה-URL
+    const info = extractEpisodeInfo(newUrl);
+    if (info.season) setSeasonNumber(info.season.toString());
+    if (info.episode) setEpisodeNumber(info.episode.toString());
   };
 
   const handleAdd = () => {
@@ -493,7 +534,15 @@ export default function Admin() {
                 <label style={labelStyle}>שם הסרט</label>
                 <input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    setTitle(newTitle);
+                    
+                    // ניסיון לזהות פרק ועונה מהכותרת
+                    const info = extractEpisodeInfo(newTitle);
+                    if (info.season && !seasonNumber) setSeasonNumber(info.season.toString());
+                    if (info.episode && !episodeNumber) setEpisodeNumber(info.episode.toString());
+                  }}
                   placeholder="הכנס שם..."
                   style={inputStyle}
                   onFocus={(e) =>
