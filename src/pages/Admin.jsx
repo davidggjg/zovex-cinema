@@ -813,12 +813,12 @@ export default function Admin() {
               <div className="flex flex-col gap-4">
                 {categories.map((cat) => {
                   const categoryMovies = movies.filter(m => m.category === cat);
-                  const [isExpanded, setIsExpanded] = useState(true);
+                  const isExpanded = expandedCategories[cat] ?? true;
                   
                   return (
                     <div key={cat}>
                       <button
-                        onClick={() => setIsExpanded(!isExpanded)}
+                        onClick={() => setExpandedCategories(prev => ({ ...prev, [cat]: !isExpanded }))}
                         className="w-full flex items-center justify-between p-3 rounded cursor-pointer transition-all duration-200"
                         style={{
                           background: "rgba(229,9,20,0.15)",
