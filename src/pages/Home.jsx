@@ -774,17 +774,18 @@ const CSS = `
     justify-content: space-between; 
     align-items: center;
     padding: 0 60px; 
-    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid var(--border);
     z-index: 1000;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
   
   .nav.scrolled {
-    background: rgba(20,20,20,0.98);
+    background: rgba(255,255,255,0.98);
     border-bottom-color: var(--border);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
   }
 
   .logo { 
