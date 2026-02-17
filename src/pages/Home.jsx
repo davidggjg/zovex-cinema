@@ -80,7 +80,7 @@ const VideoPlayer = ({ videoId, type, onClose }) => {
 
 // Movie Card Component
 const MovieCard = ({ movie, onClick, viewMode }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   return (
     <div 
