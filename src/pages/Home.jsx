@@ -339,21 +339,28 @@ export default function Home() {
           <button 
             className="icon-btn"
             onClick={() => setView(view === 'watchlist' ? 'home' : 'watchlist')}
-            style={{ background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.05)' }}
+            style={{ 
+              background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
+              borderColor: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
+            }}
           >
             📚
           </button>
           <button 
             className="icon-btn"
             onClick={() => setShowFilters(!showFilters)}
+            style={{ 
+              background: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
+              borderColor: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
+            }}
           >
-            <Filter size={18} />
+            <Filter size={18} color="#ffffff" />
           </button>
           <button 
             className="icon-btn"
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           >
-            {viewMode === 'grid' ? <List size={18} /> : <Grid size={18} />}
+            {viewMode === 'grid' ? <List size={18} color="#ffffff" /> : <Grid size={18} color="#ffffff" />}
           </button>
         </div>
       </nav>
@@ -824,8 +831,8 @@ const CSS = `
   }
 
   .icon-btn { 
-    background: rgba(255, 255, 255, 0.05); 
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1); 
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     padding: 10px;
     width: 44px;
@@ -836,8 +843,13 @@ const CSS = `
     align-items: center;
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    color: var(--text);
+    color: #ffffff;
     backdrop-filter: blur(10px);
+  }
+  
+  .icon-btn svg {
+    color: #ffffff;
+    stroke: #ffffff;
   }
   
   .icon-btn:hover {
