@@ -340,8 +340,8 @@ export default function Home() {
             className="icon-btn"
             onClick={() => setView(view === 'watchlist' ? 'home' : 'watchlist')}
             style={{ 
-              background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.15)',
-              borderColor: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.3)'
+              background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
+              borderColor: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
             }}
           >
             📚
@@ -350,17 +350,17 @@ export default function Home() {
             className="icon-btn"
             onClick={() => setShowFilters(!showFilters)}
             style={{ 
-              background: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.15)',
-              borderColor: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.3)'
+              background: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
+              borderColor: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
             }}
           >
-            <Filter size={18} color="#ffffff" strokeWidth={2.5} />
+            <Filter size={18} color="#ffffff" />
           </button>
           <button 
             className="icon-btn"
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           >
-            {viewMode === 'grid' ? <List size={18} color="#ffffff" strokeWidth={2.5} /> : <Grid size={18} color="#ffffff" strokeWidth={2.5} />}
+            {viewMode === 'grid' ? <List size={18} color="#ffffff" /> : <Grid size={18} color="#ffffff" />}
           </button>
         </div>
       </nav>
@@ -774,16 +774,15 @@ const CSS = `
     justify-content: space-between; 
     align-items: center;
     padding: 0 60px; 
-    background: rgba(10, 10, 10, 0.95);
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid transparent;
     z-index: 1000;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 15px rgba(0,0,0,0.3);
   }
   
   .nav.scrolled {
-    background: rgba(10, 10, 10, 0.98);
+    background: rgba(20,20,20,0.98);
     border-bottom-color: var(--border);
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
@@ -807,11 +806,11 @@ const CSS = `
   .nav-tools { display: flex; align-items: center; gap: 15px; }
 
   .search-wrap input {
-    background: rgba(255, 255, 255, 0.15); 
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05); 
+    border: 2px solid rgba(255, 255, 255, 0.1);
     padding: 12px 20px; 
     border-radius: 50px; 
-    color: #ffffff; 
+    color: var(--text); 
     outline: none; 
     width: 280px;
     font-size: 14px;
@@ -821,19 +820,19 @@ const CSS = `
   }
   
   .search-wrap input:focus {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
     border-color: var(--accent);
     box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.15), 0 8px 24px rgba(0,0,0,0.3);
     transform: translateY(-2px);
   }
   
   .search-wrap input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.5);
   }
 
   .icon-btn { 
-    background: rgba(255, 255, 255, 0.15); 
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1); 
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     padding: 10px;
     width: 44px;
@@ -1109,6 +1108,7 @@ const CSS = `
     height: 100%; 
     object-fit: cover;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
   }
   
   .netflix-card:hover .netflix-thumb img {
