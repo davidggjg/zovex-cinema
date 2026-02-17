@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import EditMovieModal from "../components/admin/EditMovieModal";
+import { debounce } from "lodash";
 
 function extractVideoId(url) {
   if (!url) return null;
@@ -95,14 +96,29 @@ export default function Admin() {
   const [urlStatus, setUrlStatus] = useState("");
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounced search for better performance
+  const debouncedSetSearch = useCallback(
+    debounce((value) => setDebouncedSearch(value), 300),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetSearch(searchQuery);
+  }, [searchQuery, debouncedSetSearch]);
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
     queryFn: () => base44.entities.Movie.list("-created_date"),
+    staleTime: 30000, // Cache for 30 seconds
   });
 
-  const categories = [...new Set(movies.map((m) => m.category))].sort((a, b) =>
-    a.localeCompare(b, "he")
+  const categories = useMemo(() => 
+    [...new Set(movies.map((m) => m.category).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, "he")
+    ),
+    [movies]
   );
 
   const createMutation = useMutation({
@@ -835,10 +851,10 @@ export default function Admin() {
                 {categories.map((cat) => {
                   const categoryMovies = movies.filter(m => {
                     const matchesCategory = m.category === cat;
-                    const matchesSearch = searchQuery === "" || 
-                      m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      m.category?.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesSearch = debouncedSearch === "" || 
+                      m.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                      m.description?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                      m.category?.toLowerCase().includes(debouncedSearch.toLowerCase());
                     return matchesCategory && matchesSearch;
                   });
                   
