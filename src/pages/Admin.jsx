@@ -133,6 +133,9 @@ export default function Admin() {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [tags, setTags] = useState([]);
+  const [newTag, setNewTag] = useState("");
+  const [year, setYear] = useState("");
 
   // Debounced search for better performance
   const debouncedSetSearch = useCallback(
@@ -175,6 +178,9 @@ export default function Admin() {
       setSeriesDescription("");
       setPlatform("");
       setUrlStatus("");
+      setTags([]);
+      setNewTag("");
+      setYear("");
     },
   });
 
@@ -284,6 +290,14 @@ export default function Admin() {
       if (seriesDescription.trim()) {
         movieData.description = seriesDescription.trim();
       }
+    }
+
+    if (tags.length > 0) {
+      movieData.tags = tags;
+    }
+
+    if (year && !isNaN(year)) {
+      movieData.year = parseInt(year);
     }
 
     createMutation.mutate(movieData);
@@ -679,6 +693,101 @@ export default function Admin() {
                   />
                 </div>
               )}
+
+              <div>
+                <label style={labelStyle}>שנת יציאה (אופציונלי)</label>
+                <input
+                  type="number"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  placeholder="2024"
+                  style={inputStyle}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "#e50914")
+                  }
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "rgba(229,9,20,0.2)")
+                  }
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>תגיות (אופציונלי)</label>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  {tags.map(tag => (
+                    <span key={tag} style={{
+                      background: 'rgba(229,9,20,0.2)',
+                      border: '1px solid #e50914',
+                      color: '#fff',
+                      padding: '4px 10px',
+                      borderRadius: '16px',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}>
+                      {tag}
+                      <button
+                        onClick={() => setTags(tags.filter(t => t !== tag))}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          padding: 0,
+                        }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && newTag.trim()) {
+                        e.preventDefault();
+                        if (!tags.includes(newTag.trim())) {
+                          setTags([...tags, newTag.trim()]);
+                        }
+                        setNewTag('');
+                      }
+                    }}
+                    placeholder="הוסף תגית (Enter להוספה)"
+                    style={{ ...inputStyle, flex: 1 }}
+                    onFocus={(e) =>
+                      (e.target.style.borderColor = "#e50914")
+                    }
+                    onBlur={(e) =>
+                      (e.target.style.borderColor = "rgba(229,9,20,0.2)")
+                    }
+                  />
+                  <button
+                    onClick={() => {
+                      if (newTag.trim() && !tags.includes(newTag.trim())) {
+                        setTags([...tags, newTag.trim()]);
+                        setNewTag('');
+                      }
+                    }}
+                    style={{
+                      background: '#e50914',
+                      border: 'none',
+                      color: '#fff',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontFamily: "'Assistant',sans-serif",
+                      fontSize: '14px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    הוסף
+                  </button>
+                </div>
+              </div>
 
               {((category && category.toLowerCase().includes("סדר")) || 
                 (newCategory && newCategory.toLowerCase().includes("סדר"))) && (

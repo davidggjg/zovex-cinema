@@ -2,7 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { Sun, Moon } from "lucide-react";
+import { Grid, List, Filter } from "lucide-react";
+import WatchlistButton from "../components/home/WatchlistButton";
+import RatingStars from "../components/home/RatingStars";
+import ShareButton from "../components/home/ShareButton";
 
 // Helper Functions
 const extractYouTubeId = (url) => {
@@ -76,18 +79,40 @@ const VideoPlayer = ({ videoId, type, onClose }) => {
 };
 
 // Movie Card Component
-const MovieCard = ({ movie, onClick }) => (
-  <div className="card" onClick={() => onClick(movie)}>
-    <div className="card-thumb">
+const MovieCard = ({ movie, onClick, viewMode }) => (
+  <div className="card" onClick={() => onClick(movie)} style={viewMode === 'list' ? { display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'center' } : {}}>
+    <div className="card-thumb" style={viewMode === 'list' ? { width: '200px', aspectRatio: '16/9', flexShrink: 0 } : {}}>
       <img src={getThumb(movie)} alt={movie.title} loading="lazy" />
       <div className="card-overlay">
         <div className="play-btn-circle">▶</div>
       </div>
       <div className="card-badge">{movie.type === 'series' ? 'TV' : 'FILM'}</div>
+      <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', gap: '6px', zIndex: 10 }}>
+        <WatchlistButton movieId={movie.id} size={18} />
+        <ShareButton movieTitle={movie.title} movieId={movie.id} size={18} />
+      </div>
     </div>
-    <div className="card-info">
+    <div className="card-info" style={viewMode === 'list' ? { flex: 1 } : {}}>
       <h4>{movie.title}</h4>
+      {viewMode === 'list' && movie.description && (
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 8px 0', lineHeight: 1.4 }}>
+          {movie.description.substring(0, 150)}...
+        </p>
+      )}
       <span>{movie.category}</span>
+      {movie.year && <span style={{ marginRight: '8px', opacity: 0.7 }}>{movie.year}</span>}
+      <div style={{ marginTop: '6px' }}>
+        <RatingStars movieId={movie.id} size={14} interactive={false} />
+      </div>
+      {movie.tags && movie.tags.length > 0 && (
+        <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          {movie.tags.slice(0, 3).map(tag => (
+            <span key={tag} style={{ fontSize: '10px', background: 'var(--accent)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   </div>
 );
@@ -97,6 +122,11 @@ export default function Home() {
   const [current, setCurrent] = useState(null);
   const [videoData, setVideoData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState('grid');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [yearFilter, setYearFilter] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -136,14 +166,59 @@ export default function Home() {
     return [...standaloneMovies, ...Array.from(seriesMap.values())];
   }, [movies]);
 
+  // Track view history
+  useEffect(() => {
+    if (videoData) {
+      const history = JSON.parse(localStorage.getItem('zovex_history') || '[]');
+      const movieId = current?.id;
+      if (movieId && !history.includes(movieId)) {
+        history.unshift(movieId);
+        if (history.length > 50) history.pop();
+        localStorage.setItem('zovex_history', JSON.stringify(history));
+      }
+      
+      // Increment views
+      if (movieId && current?.type !== 'series') {
+        base44.entities.Movie.update(movieId, { views: (current.views || 0) + 1 }).catch(() => {});
+      }
+    }
+  }, [videoData]);
+
+  // All available tags
+  const allTags = useMemo(() => {
+    const tags = new Set();
+    movies.forEach(m => {
+      if (m.tags) m.tags.forEach(t => tags.add(t));
+    });
+    return Array.from(tags).sort();
+  }, [movies]);
+
   // Filter items
   const filteredMovies = useMemo(() => {
-    return processedItems.filter(m => {
+    let filtered = processedItems.filter(m => {
       const matchesSearch = m.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           m.category?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
+                           m.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           m.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesTags = selectedTags.length === 0 || 
+                         (m.tags && selectedTags.some(t => m.tags.includes(t)));
+      
+      const matchesYear = !yearFilter || m.year?.toString() === yearFilter;
+      
+      return matchesSearch && matchesTags && matchesYear;
     });
-  }, [processedItems, searchQuery]);
+
+    // Sort
+    if (sortBy === 'recent') {
+      filtered = filtered.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    } else if (sortBy === 'views') {
+      filtered = filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
+    } else if (sortBy === 'title') {
+      filtered = filtered.sort((a, b) => a.title.localeCompare(b.title, 'he'));
+    }
+
+    return filtered;
+  }, [processedItems, searchQuery, selectedTags, yearFilter, sortBy]);
 
   const [adminPassword, setAdminPassword] = useState("");
   const [showAdminPrompt, setShowAdminPrompt] = useState(false);
@@ -185,11 +260,119 @@ export default function Home() {
               onChange={handleSearch} 
             />
           </div>
+          <button 
+            className="icon-btn"
+            onClick={() => setView(view === 'watchlist' ? 'home' : 'watchlist')}
+            style={{ background: view === 'watchlist' ? 'var(--accent)' : 'var(--card)' }}
+          >
+            📚
+          </button>
+          <button 
+            className="icon-btn"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter size={18} />
+          </button>
+          <button 
+            className="icon-btn"
+            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+          >
+            {viewMode === 'grid' ? <List size={18} /> : <Grid size={18} />}
+          </button>
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="container">
+        {/* Filters Panel */}
+        {showFilters && view === 'home' && (
+          <div style={{ 
+            padding: '20px 60px', 
+            background: 'var(--card)', 
+            borderBottom: '1px solid var(--border)',
+            marginTop: '20px',
+          }}>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div>
+                <label style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>מיין לפי:</label>
+                <select 
+                  value={sortBy} 
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    color: 'var(--text)',
+                    fontSize: '14px',
+                    fontFamily: "'Assistant',sans-serif",
+                  }}
+                >
+                  <option value="recent">הוספו לאחרונה</option>
+                  <option value="views">הכי נצפים</option>
+                  <option value="title">לפי שם</option>
+                </select>
+              </div>
+              
+              {[...new Set(movies.map(m => m.year).filter(Boolean))].length > 0 && (
+                <div>
+                  <label style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>שנה:</label>
+                  <select 
+                    value={yearFilter} 
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    style={{
+                      background: 'var(--bg)',
+                      border: '1px solid var(--border)',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      color: 'var(--text)',
+                      fontSize: '14px',
+                      fontFamily: "'Assistant',sans-serif",
+                    }}
+                  >
+                    <option value="">כל השנים</option>
+                    {[...new Set(movies.map(m => m.year).filter(Boolean))].sort((a, b) => b - a).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {allTags.length > 0 && (
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>תגיות:</label>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {allTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          if (selectedTags.includes(tag)) {
+                            setSelectedTags(selectedTags.filter(t => t !== tag));
+                          } else {
+                            setSelectedTags([...selectedTags, tag]);
+                          }
+                        }}
+                        style={{
+                          background: selectedTags.includes(tag) ? 'var(--accent)' : 'var(--bg)',
+                          border: '1px solid var(--border)',
+                          color: selectedTags.includes(tag) ? '#fff' : 'var(--text)',
+                          padding: '6px 12px',
+                          borderRadius: '16px',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          fontFamily: "'Assistant',sans-serif",
+                        }}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center items-center" style={{ minHeight: '60vh' }}>
             <div
@@ -202,6 +385,25 @@ export default function Home() {
                 animation: 'spin 0.8s linear infinite',
               }}
             />
+          </div>
+        ) : view === 'watchlist' ? (
+          <div className="grid-section">
+            <h3>רשימת הצפייה שלי</h3>
+            <div className={viewMode === 'grid' ? "movie-grid" : "movie-list"}>
+              {(() => {
+                const watchlist = JSON.parse(localStorage.getItem('zovex_watchlist') || '[]');
+                const watchlistMovies = processedItems.filter(m => watchlist.includes(m.id));
+                return watchlistMovies.length > 0 ? (
+                  watchlistMovies.map(m => (
+                    <MovieCard key={m.id} movie={m} onClick={(movie) => { setCurrent(movie); setView('detail'); }} viewMode={viewMode} />
+                  ))
+                ) : (
+                  <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '40px' }}>
+                    אין סרטים ברשימת הצפייה
+                  </p>
+                );
+              })()}
+            </div>
           </div>
         ) : view === 'home' ? (
           <>
@@ -263,10 +465,10 @@ export default function Home() {
             )}
 
             <div className="grid-section">
-              <h3>{searchQuery ? `תוצאות עבור: ${searchQuery}` : 'הוספו לאחרונה'}</h3>
-              <div className="movie-grid">
+              <h3>{searchQuery ? `תוצאות עבור: ${searchQuery}` : sortBy === 'views' ? 'הכי נצפים' : sortBy === 'title' ? 'כל הסרטים' : 'הוספו לאחרונה'}</h3>
+              <div className={viewMode === 'grid' ? "movie-grid" : "movie-list"}>
                 {filteredMovies.map(m => (
-                  <MovieCard key={m.id} movie={m} onClick={(movie) => { setCurrent(movie); setView('detail'); }} />
+                  <MovieCard key={m.id} movie={m} onClick={(movie) => { setCurrent(movie); setView('detail'); }} viewMode={viewMode} />
                 ))}
               </div>
             </div>
@@ -278,7 +480,16 @@ export default function Home() {
               <div className="hero-overlay" />
               <div className="detail-info">
                 <h1>{current.title}</h1>
-                <span className="badge">{current.category}</span>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap' }}>
+                  <span className="badge">{current.category}</span>
+                  {current.year && <span className="badge" style={{ background: 'rgba(255,255,255,0.2)' }}>{current.year}</span>}
+                  {current.views > 0 && <span className="badge" style={{ background: 'rgba(255,255,255,0.2)' }}>👁 {current.views} צפיות</span>}
+                </div>
+                <div style={{ marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <RatingStars movieId={current.id} size={24} />
+                  <WatchlistButton movieId={current.id} size={20} />
+                  <ShareButton movieTitle={current.title} movieId={current.id} size={20} />
+                </div>
               </div>
             </div>
             {current.description && (
@@ -286,6 +497,24 @@ export default function Home() {
                 <p style={{ margin: 0, color: 'var(--text)', lineHeight: 1.6, fontSize: '16px' }}>{current.description}</p>
               </div>
             )}
+
+            {/* Similar Movies */}
+            {(() => {
+              const similar = processedItems
+                .filter(m => m.id !== current.id && m.category === current.category)
+                .slice(0, 6);
+              
+              return similar.length > 0 && (
+                <div style={{ padding: '30px 60px', background: 'var(--card)', borderTop: '1px solid var(--border)', marginBottom: '20px' }}>
+                  <h3 style={{ marginBottom: '20px', fontSize: '20px', fontWeight: 700 }}>סרטים דומים</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
+                    {similar.map(m => (
+                      <MovieCard key={m.id} movie={m} onClick={(movie) => { setCurrent(movie); window.scrollTo(0, 0); }} viewMode="grid" />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="episode-list" style={{ minHeight: 'auto', overflowY: 'visible' }}>
               <h3>פרקים / צפייה</h3>
               {current.type === 'series' ? (
@@ -613,6 +842,12 @@ const CSS = `
     display: grid; 
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 24px;
+  }
+
+  .movie-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .card { 

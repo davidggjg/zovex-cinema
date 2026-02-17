@@ -11,6 +11,9 @@ export default function EditMovieModal({ movie, onClose, onUpdate }) {
   const [seasonNumber, setSeasonNumber] = useState(movie.season_number || "");
   const [episodeNumber, setEpisodeNumber] = useState(movie.episode_number || "");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [tags, setTags] = useState(movie.tags || []);
+  const [newTag, setNewTag] = useState("");
+  const [year, setYear] = useState(movie.year || "");
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -35,6 +38,8 @@ export default function EditMovieModal({ movie, onClose, onUpdate }) {
       series_name: seriesName.trim() || undefined,
       season_number: seasonNumber ? parseInt(seasonNumber) : undefined,
       episode_number: episodeNumber ? parseInt(episodeNumber) : undefined,
+      tags: tags.length > 0 ? tags : undefined,
+      year: year ? parseInt(year) : undefined,
     };
 
     onUpdate(movie.id, updatedData);
@@ -253,6 +258,72 @@ export default function EditMovieModal({ movie, onClose, onUpdate }) {
                 value={episodeNumber}
                 onChange={(e) => setEpisodeNumber(e.target.value)}
                 style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#e50914")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(229,9,20,0.2)")}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>שנת יציאה</label>
+            <input
+              type="number"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              placeholder="2024"
+              style={inputStyle}
+              onFocus={(e) => (e.target.style.borderColor = "#e50914")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(229,9,20,0.2)")}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>תגיות</label>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              {tags.map(tag => (
+                <span key={tag} style={{
+                  background: 'rgba(229,9,20,0.2)',
+                  border: '1px solid #e50914',
+                  color: '#fff',
+                  padding: '4px 10px',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
+                  {tag}
+                  <button
+                    onClick={() => setTags(tags.filter(t => t !== tag))}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      padding: 0,
+                    }}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && newTag.trim()) {
+                    e.preventDefault();
+                    if (!tags.includes(newTag.trim())) {
+                      setTags([...tags, newTag.trim()]);
+                    }
+                    setNewTag('');
+                  }
+                }}
+                placeholder="הוסף תגית (Enter)"
+                style={{ ...inputStyle, flex: 1 }}
                 onFocus={(e) => (e.target.style.borderColor = "#e50914")}
                 onBlur={(e) => (e.target.style.borderColor = "rgba(229,9,20,0.2)")}
               />
