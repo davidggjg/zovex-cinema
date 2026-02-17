@@ -340,8 +340,8 @@ export default function Home() {
             className="icon-btn"
             onClick={() => setView(view === 'watchlist' ? 'home' : 'watchlist')}
             style={{ 
-              background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
-              borderColor: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
+              background: view === 'watchlist' ? 'var(--accent)' : '#f1f5f9',
+              borderColor: view === 'watchlist' ? 'var(--accent)' : '#e2e8f0'
             }}
           >
             📚
@@ -350,17 +350,17 @@ export default function Home() {
             className="icon-btn"
             onClick={() => setShowFilters(!showFilters)}
             style={{ 
-              background: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.1)',
-              borderColor: showFilters ? 'var(--accent)' : 'rgba(255, 255, 255, 0.2)'
+              background: showFilters ? 'var(--accent)' : '#f1f5f9',
+              borderColor: showFilters ? 'var(--accent)' : '#e2e8f0'
             }}
           >
-            <Filter size={18} color="#ffffff" />
+            <Filter size={18} color={showFilters ? '#ffffff' : '#1e293b'} />
           </button>
           <button 
             className="icon-btn"
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           >
-            {viewMode === 'grid' ? <List size={18} color="#ffffff" /> : <Grid size={18} color="#ffffff" />}
+            {viewMode === 'grid' ? <List size={18} color="#1e293b" /> : <Grid size={18} color="#1e293b" />}
           </button>
         </div>
       </nav>
