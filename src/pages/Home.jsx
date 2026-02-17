@@ -76,7 +76,7 @@ const VideoPlayer = ({ videoId, type, onClose }) => {
           allowFullScreen
           allow="autoplay; encrypted-media"
           title="Zovex Player"
-          style={{ width: '100%', height: '100%', border: 'none' }}
+          style={{ width: '100%', height: 'calc(100% - 60px)', border: 'none' }}
         />
       </div>
     </div>,
