@@ -11,16 +11,6 @@ const extractYouTubeId = (url) => {
   return m ? m[1] : null;
 };
 
-const extractRumbleId = (url) => {
-  // אם זה כבר embed URL - החזר אותו כמו שהוא (כולל parameters)
-  if (url.includes('rumble.com/embed/')) {
-    return url;
-  }
-  // חילוץ ID רגיל
-  const m = url.match(/v([a-z0-9]+)(?:-|\.html|$|\/)/);
-  return m ? m[1] : null;
-};
-
 const getEmbedUrl = (videoId, type) => {
   if (!videoId) return "";
   
@@ -236,7 +226,7 @@ export default function Home() {
                 <div className="categories-section">
                   <h3>קטגוריות</h3>
                   <div className="categories-grid">
-                    {[...new Set(movies.map(m => m.category))].sort().map(cat => (
+                    {[...new Set(movies.map(m => m.category).filter(Boolean))].sort().map(cat => (
                       <button
                         key={cat}
                         className="category-btn"
@@ -267,7 +257,7 @@ export default function Home() {
               </div>
             </div>
           </>
-        ) : (
+        ) : current ? (
           <div className="detail-view">
             <button className="back-btn" onClick={() => setView('home')}>← חזרה</button>
             <div className="detail-header" style={{ backgroundImage: `url(${getThumb(current)})` }}>
@@ -297,7 +287,7 @@ export default function Home() {
               )}
             </div>
           </div>
-        )}
+        ) : null}
       </main>
 
       {videoData && <VideoPlayer videoId={videoData.videoId} type={videoData.type} onClose={() => setVideoData(null)} />}
