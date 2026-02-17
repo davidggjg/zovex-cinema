@@ -44,7 +44,11 @@ function extractVideoId(url) {
   );
   if (archiveMatch) return { type: "archive", video_id: archiveMatch[1] };
   
-  // Rumble
+  // Rumble - תמיכה גם ב-embed URLs
+  if (url.includes('rumble.com/embed/')) {
+    const embedMatch = url.match(/rumble\.com\/embed\/(v[a-zA-Z0-9]+)/);
+    if (embedMatch) return { type: "rumble", video_id: url }; // שמור את כל ה-URL
+  }
   const rumbleMatch = url.match(
     /rumble\.com\/(v[a-zA-Z0-9]+)/
   );

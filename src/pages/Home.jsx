@@ -12,7 +12,7 @@ const extractYouTubeId = (url) => {
 };
 
 const extractRumbleId = (url) => {
-  // אם זה כבר embed URL - החזר את כל ה-URL
+  // אם זה כבר embed URL - החזר אותו כמו שהוא (כולל parameters)
   if (url.includes('rumble.com/embed/')) {
     return url;
   }
