@@ -90,6 +90,7 @@ export default function Admin() {
   const [platform, setPlatform] = useState("");
   const [urlStatus, setUrlStatus] = useState("");
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -773,18 +774,34 @@ export default function Admin() {
             border: '1px solid rgba(229,9,20,0.2)',
           }}>
             <div
-              className="mb-5 flex items-center justify-between"
+              className="mb-5"
             >
-              <span
-                style={{
-                  fontFamily: "'Assistant',sans-serif",
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: "#e50914",
-                }}
-              >
-                סרטים ({movies.length})
-              </span>
+              <div className="flex items-center justify-between mb-4">
+                <span
+                  style={{
+                    fontFamily: "'Assistant',sans-serif",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: "#e50914",
+                  }}
+                >
+                  סרטים ({movies.length})
+                </span>
+              </div>
+              
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="חפש סרט לפי שם, תיאור או קטגוריה..."
+                style={inputStyle}
+                onFocus={(e) =>
+                  (e.target.style.borderColor = "#e50914")
+                }
+                onBlur={(e) =>
+                  (e.target.style.borderColor = "rgba(229,9,20,0.2)")
+                }
+              />
             </div>
 
             {isLoading ? (
@@ -812,7 +829,17 @@ export default function Admin() {
             ) : (
               <div className="flex flex-col gap-4">
                 {categories.map((cat) => {
-                  const categoryMovies = movies.filter(m => m.category === cat);
+                  const categoryMovies = movies.filter(m => {
+                    const matchesCategory = m.category === cat;
+                    const matchesSearch = searchQuery === "" || 
+                      m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      m.category?.toLowerCase().includes(searchQuery.toLowerCase());
+                    return matchesCategory && matchesSearch;
+                  });
+                  
+                  if (categoryMovies.length === 0) return null;
+                  
                   const isExpanded = expandedCategories[cat] ?? true;
                   
                   return (
