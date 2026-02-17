@@ -831,8 +831,8 @@ const CSS = `
   }
 
   .icon-btn { 
-    background: rgba(255, 255, 255, 0.1); 
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: #f1f5f9; 
+    border: 2px solid #e2e8f0;
     border-radius: 50%;
     padding: 10px;
     width: 44px;
@@ -843,20 +843,24 @@ const CSS = `
     align-items: center;
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #ffffff;
-    backdrop-filter: blur(10px);
+    color: #1e293b;
   }
   
   .icon-btn svg {
-    color: #ffffff;
-    stroke: #ffffff;
+    color: #1e293b;
+    stroke: #1e293b;
   }
   
   .icon-btn:hover {
-    background: rgba(229, 9, 20, 0.9);
+    background: var(--accent);
     border-color: var(--accent);
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 8px 24px rgba(229, 9, 20, 0.3);
+  }
+  
+  .icon-btn:hover svg {
+    color: #ffffff;
+    stroke: #ffffff;
   }
 
   .container { padding-top: 70px; }
