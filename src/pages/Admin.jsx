@@ -89,6 +89,7 @@ export default function Admin() {
   const [seriesDescription, setSeriesDescription] = useState("");
   const [platform, setPlatform] = useState("");
   const [urlStatus, setUrlStatus] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState({});
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
