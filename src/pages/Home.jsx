@@ -718,22 +718,22 @@ const CSS = `
   
   :root {
     --bg: #f8fafc;
-    --text: #0f172a;
+    --text: #1f2937;
     --card: #ffffff;
     --accent: #e50914;
-    --glass: rgba(255, 255, 255, 0.95);
-    --border: #e2e8f0;
-    --text-secondary: #64748b;
+    --glass: rgba(248, 250, 252, 0.95);
+    --border: rgba(0, 0, 0, 0.1);
+    --text-secondary: #6b7280;
   }
 
   .light {
     --bg: #f8fafc;
-    --text: #0f172a;
+    --text: #1f2937;
     --card: #ffffff;
     --accent: #e50914;
-    --glass: rgba(255, 255, 255, 0.95);
-    --border: #e2e8f0;
-    --text-secondary: #64748b;
+    --glass: rgba(248, 250, 252, 0.95);
+    --border: rgba(0, 0, 0, 0.1);
+    --text-secondary: #6b7280;
   }
 
 
@@ -758,7 +758,7 @@ const CSS = `
   }
   
   ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 
   @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -774,18 +774,17 @@ const CSS = `
     justify-content: space-between; 
     align-items: center;
     padding: 0 60px; 
-    background: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid transparent;
     z-index: 1000;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
   
   .nav.scrolled {
-    background: rgba(255,255,255,0.98);
+    background: rgba(20,20,20,0.98);
     border-bottom-color: var(--border);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
 
   .logo { 
