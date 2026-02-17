@@ -339,7 +339,7 @@ export default function Home() {
           <button 
             className="icon-btn"
             onClick={() => setView(view === 'watchlist' ? 'home' : 'watchlist')}
-            style={{ background: view === 'watchlist' ? 'var(--accent)' : 'var(--card)' }}
+            style={{ background: view === 'watchlist' ? 'var(--accent)' : 'rgba(255, 255, 255, 0.05)' }}
           >
             📚
           </button>
