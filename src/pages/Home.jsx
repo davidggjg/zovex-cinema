@@ -2,21 +2,16 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { Grid, List, Filter } from "lucide-react";
-import WatchlistButton from "../components/home/WatchlistButton";
-import RatingStars from "../components/home/RatingStars";
-import ShareButton from "../components/home/ShareButton";
+import { Search, X, Play } from "lucide-react";
 
-// Helper Functions
+// פונקציות עזר לנגן ולתמונות
 const getEmbedUrl = (videoId, type) => {
   if (!videoId) return "";
   switch (type) {
-    case "youtube": return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+    case "youtube": return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
     case "drive": return `https://drive.google.com/file/d/${videoId}/preview`;
     case "vimeo": return `https://player.vimeo.com/video/${videoId}?autoplay=1`;
-    case "rumble":
-      const rumbleId = videoId.startsWith('v') ? videoId : `v${videoId}`;
-      return `https://rumble.com/embed/${rumbleId}/?pub=4`;
+    case "rumble": return `https://rumble.com/embed/${videoId.startsWith('v') ? videoId : 'v'+videoId}/?pub=4`;
     default: return "";
   }
 };
@@ -27,14 +22,14 @@ const getThumb = (movie) => {
   return "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=600&fit=crop";
 };
 
-// Video Player Component
+// רכיב נגן וידאו
 const VideoPlayer = ({ videoId, type, onClose }) => {
   const embedUrl = getEmbedUrl(videoId, type);
   return createPortal(
     <div className="vid-ov" onClick={onClose}>
       <div className="vid-container" onClick={e => e.stopPropagation()}>
         <div className="vid-header">
-          <button className="vid-close" onClick={onClose}>✕ סגור נגן</button>
+          <button className="vid-close" onClick={onClose}><X size={20} /> סגור נגן</button>
         </div>
         <iframe src={embedUrl} allowFullScreen allow="autoplay; encrypted-media" />
       </div>
@@ -43,52 +38,11 @@ const VideoPlayer = ({ videoId, type, onClose }) => {
   );
 };
 
-// Movie Card Component (העיצוב המקורי חזר)
-const MovieCard = ({ movie, onClick, viewMode }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  return (
-    <div 
-      className={`card netflix-card ${viewMode === 'list' ? 'list-mode' : ''}`} 
-      onClick={() => onClick(movie)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="card-thumb netflix-thumb">
-        <img src={getThumb(movie)} alt={movie.title} loading="lazy" />
-        <div className={`card-overlay netflix-overlay ${isHovered ? 'hovered' : ''}`}>
-          <div className="play-btn-netflix">
-            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-              <circle cx="30" cy="30" r="28" fill="rgba(255,255,255,0.95)" stroke="#e50914" strokeWidth="2"/>
-              <path d="M24 20L42 30L24 40V20Z" fill="#000"/>
-            </svg>
-          </div>
-        </div>
-        <div className="card-badge-netflix">{movie.type === 'series' ? 'סדרה' : 'סרט'}</div>
-        <div className="card-actions" style={{ opacity: isHovered ? 1 : 0 }}>
-          <WatchlistButton movieId={movie.id} size={20} />
-          <ShareButton movieTitle={movie.title} movieId={movie.id} size={20} />
-        </div>
-      </div>
-      <div className="card-info netflix-info">
-        <h4 className="netflix-title">{movie.title}</h4>
-        <div className="netflix-meta">
-          <span className="netflix-category">{movie.category}</span>
-          {movie.year && <span className="netflix-year">{movie.year}</span>}
-        </div>
-        <div style={{ marginTop: '10px' }}>
-          <RatingStars movieId={movie.id} size={16} interactive={false} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function Home() {
   const [view, setView] = useState('home');
   const [current, setCurrent] = useState(null);
   const [videoData, setVideoData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState('grid');
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ["movies"],
@@ -109,7 +63,6 @@ export default function Home() {
         seriesMap.get(movie.series_name).episodes.push(movie);
       } else { standaloneMovies.push(movie); }
     });
-    seriesMap.forEach(s => s.episodes.sort((a,b) => (a.episode_number || 0) - (b.episode_number || 0)));
     return [...standaloneMovies, ...Array.from(seriesMap.values())];
   }, [movies]);
 
@@ -118,80 +71,73 @@ export default function Home() {
   }, [processedItems, searchQuery]);
 
   return (
-    <div className="app light">
+    <div className="app">
       <style>{CSS}</style>
 
-      {/* Navbar - העיצוב המקורי חזר */}
+      {/* Navbar - לוגו אדום וחיפוש */}
       <nav className="nav">
         <div className="logo" onClick={() => { setView('home'); setCurrent(null); setSearchQuery(''); }}>ZOVEX</div>
-        <div className="nav-tools">
-          <div className="search-wrap">
-            <input type="text" placeholder="חיפוש..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          </div>
-          <button className="icon-btn" onClick={() => setView('watchlist')}>📚</button>
-          <button className="icon-btn" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-             {viewMode === 'grid' ? <List size={18} /> : <Grid size={18} />}
-          </button>
+        <div className="search-box">
+          <Search size={18} className="search-icon" />
+          <input type="text" placeholder="חיפוש..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
       </nav>
 
       <main className="container">
         {isLoading ? (
-          <div className="loader-wrap"><div className="loader"></div></div>
+          <div className="loading">טוען תוכן...</div>
         ) : view === 'detail' && current ? (
-          /* מצב פרטים - נקי ללא סרטים דומים */
-          <div className="detail-view-container">
-            <button className="back-btn-modern" onClick={() => setView('home')}>← חזרה לראשי</button>
-            <div className="detail-layout">
-               <div className="detail-poster">
-                  <img src={getThumb(current)} alt={current.title} />
-               </div>
-               <div className="detail-content">
-                  <h1 className="detail-title">{current.title}</h1>
-                  <div className="detail-meta">
-                     <span className="badge">{current.category}</span>
-                     {current.year && <span className="badge-outline">{current.year}</span>}
-                  </div>
-                  <p className="detail-desc">{current.description}</p>
-                  
-                  <div className="watch-section">
-                    <h3>צפייה ישירה</h3>
-                    {current.type === 'series' ? (
-                      <div className="episodes-grid">
-                        {current.episodes.map((ep, i) => (
-                          <div key={i} className="episode-card" onClick={() => setVideoData({ videoId: ep.video_id, type: ep.type })}>
-                            <span className="ep-index">{ep.episode_number || i + 1}</span>
-                            <span className="ep-name">{ep.title}</span>
-                            <span className="ep-play-icon">▶</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <button className="play-main-btn" onClick={() => setVideoData({ videoId: current.video_id, type: current.type })}>
-                        ▶ נגן סרט מלא
+          /* דף פרטים - רק כפתור נגן סרט מלא */
+          <div className="detail-page">
+            <button className="back-btn" onClick={() => setView('home')}><X /></button>
+            <div className="detail-hero" style={{ backgroundImage: `url(${getThumb(current)})` }}>
+              <div className="hero-overlay"></div>
+              <div className="hero-content">
+                <h1 className="movie-title-large">{current.title}</h1>
+                <p className="movie-desc-large">{current.description}</p>
+                <div className="button-group">
+                  {current.type === 'series' ? (
+                    current.episodes.map((ep, i) => (
+                      <button key={i} className="btn-play-red" onClick={() => setVideoData({ videoId: ep.video_id, type: ep.type })}>
+                        <Play fill="white" /> נגן פרק {ep.episode_number || i + 1}
                       </button>
-                    )}
-                  </div>
-               </div>
+                    ))
+                  ) : (
+                    <button className="btn-play-red" onClick={() => setVideoData({ videoId: current.video_id, type: current.type })}>
+                      <Play fill="white" /> נגן סרט מלא
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         ) : (
-          /* דף הבית המקורי */
+          /* דף הבית */
           <>
-            {!searchQuery && view === 'home' && (
-              <div className="hero-modern">
-                <div className="hero-overlay-gradient"></div>
-                <div className="hero-text">ZOVEX</div>
+            {!searchQuery && (
+              <div className="main-hero">
+                <div className="hero-img-wrap">
+                   <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200" alt="hero" />
+                   <div className="hero-grad"></div>
+                   <div className="hero-logo-text">ZOVEX</div>
+                </div>
               </div>
             )}
-            
-            <div className="grid-section">
-              <h3 className="section-title">{searchQuery ? `תוצאות עבור: ${searchQuery}` : 'הוספו לאחרונה'}</h3>
-              <div className={viewMode === 'grid' ? "movie-grid" : "movie-list"}>
-                {filteredMovies.map(m => (
-                  <MovieCard key={m.id} movie={m} onClick={(movie) => { setCurrent(movie); setView('detail'); window.scrollTo(0,0); }} viewMode={viewMode} />
-                ))}
-              </div>
+
+            <div className="section-header">
+               <h2>{searchQuery ? 'תוצאות חיפוש' : 'הוספו לאחרונה'}</h2>
+            </div>
+
+            <div className="movie-grid">
+              {filteredMovies.map(m => (
+                <div key={m.id} className="m-card" onClick={() => { setCurrent(m); setView('detail'); window.scrollTo(0,0); }}>
+                  <div className="m-img-container">
+                    <img src={getThumb(m)} alt={m.title} />
+                    <div className="m-type-tag">{m.type === 'series' ? 'סדרה' : 'סרט'}</div>
+                  </div>
+                  <div className="m-name">{m.title}</div>
+                </div>
+              ))}
             </div>
           </>
         )}
@@ -203,68 +149,59 @@ export default function Home() {
 }
 
 const CSS = `
-  :root { --accent: #e50914; --bg: #f8fafc; --text: #0f172a; --border: #e2e8f0; }
-  body { margin: 0; font-family: 'Assistant', sans-serif; background: var(--bg); direction: rtl; overflow-x: hidden; }
-  
+  :root { --main-red: #e50914; --bg: #ffffff; --text: #111; }
+  body { margin: 0; font-family: 'Assistant', sans-serif; background: var(--bg); direction: rtl; }
+
   /* Navbar */
-  .nav { position: fixed; top: 0; width: 100%; height: 70px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; padding: 0 5%; z-index: 1000; border-bottom: 1px solid var(--border); box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
-  .logo { font-weight: 900; font-size: 30px; color: var(--accent); cursor: pointer; letter-spacing: 2px; text-shadow: 0 0 15px rgba(229, 9, 20, 0.3); }
-  .nav-tools { display: flex; gap: 12px; align-items: center; }
-  .search-wrap input { padding: 10px 20px; border-radius: 50px; border: 1px solid var(--border); width: 250px; outline: none; transition: 0.3s; }
-  .search-wrap input:focus { border-color: var(--accent); width: 300px; }
-  .icon-btn { background: #f1f5f9; border: none; padding: 10px; border-radius: 50%; cursor: pointer; transition: 0.3s; }
-  .icon-btn:hover { background: var(--accent); color: white; }
+  .nav { position: fixed; top: 0; width: 100%; height: 65px; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); box-sizing: border-box; }
+  .logo { font-size: 28px; font-weight: 900; color: var(--main-red); cursor: pointer; letter-spacing: 1px; }
+  .search-box { position: relative; display: flex; align-items: center; }
+  .search-box input { padding: 8px 15px 8px 35px; border-radius: 20px; border: 1px solid #eee; background: #f5f5f5; width: 160px; outline: none; font-size: 14px; }
+  .search-icon { position: absolute; left: 10px; color: #aaa; }
 
-  /* Hero */
-  .hero-modern { height: 400px; background: #000; position: relative; border-radius: 20px; margin: 20px 0 40px; display: flex; align-items: center; justifyContent: center; overflow: hidden; }
-  .hero-text { font-size: 100px; font-weight: 900; color: white; z-index: 2; text-shadow: 0 0 30px var(--accent); }
-  .hero-overlay-gradient { position: absolute; inset: 0; background: linear-gradient(to top, #000, transparent); }
+  .container { padding-top: 65px; }
 
-  /* Grid & Cards */
-  .container { padding: 90px 5% 50px; }
-  .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
-  .netflix-card { cursor: pointer; transition: 0.4s; }
-  .netflix-card:hover { transform: translateY(-10px); }
-  .netflix-thumb { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 2/3; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-  .netflix-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .card-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); opacity: 0; transition: 0.3s; display: flex; align-items: center; justifyContent: center; }
-  .card-overlay.hovered { opacity: 1; }
-  .netflix-title { margin-top: 12px; font-weight: 700; font-size: 18px; color: var(--text); }
-  .card-badge-netflix { position: absolute; top: 10px; right: 10px; background: var(--accent); color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+  /* Hero Section Home */
+  .main-hero { width: 100%; height: 350px; position: relative; overflow: hidden; }
+  .hero-img-wrap { width: 100%; height: 100%; position: relative; }
+  .hero-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .hero-grad { position: absolute; inset: 0; background: linear-gradient(to top, white, transparent); }
+  .hero-logo-text { position: absolute; bottom: 20%; right: 5%; font-size: 80px; font-weight: 900; color: var(--main-red); text-shadow: 2px 2px 20px rgba(0,0,0,0.2); }
 
-  /* Detail View */
-  .detail-layout { display: flex; gap: 50px; margin-top: 30px; flex-wrap: wrap; }
-  .detail-poster img { width: 350px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-  .detail-title { font-size: 48px; font-weight: 900; margin-bottom: 15px; }
-  .badge { background: var(--accent); color: white; padding: 6px 15px; border-radius: 50px; font-size: 14px; }
-  .badge-outline { border: 1px solid #ccc; padding: 6px 15px; border-radius: 50px; font-size: 14px; }
-  .detail-desc { font-size: 18px; line-height: 1.8; color: #444; margin: 30px 0; max-width: 800px; }
-  .play-main-btn { padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-  .play-main-btn:hover { transform: scale(1.05); box-shadow: 0 10px 20px rgba(229, 9, 20, 0.4); }
+  /* Grid - 3 items per row on Mobile! */
+  .section-header { padding: 20px 5% 10px; }
+  .section-header h2 { font-size: 20px; font-weight: 800; border-right: 4px solid var(--main-red); padding-right: 10px; }
+  .movie-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 10px 40px; }
 
-  /* Episodes */
-  .episodes-grid { display: flex; flexDirection: column; gap: 10px; }
-  .episode-card { display: flex; align-items: center; gap: 20px; padding: 15px; background: white; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
-  .episode-card:hover { border-color: var(--accent); background: #fff1f1; }
-  .ep-index { font-weight: 900; color: #ccc; }
-  .ep-name { font-weight: 700; flex: 1; }
-  .ep-play-icon { color: var(--accent); }
+  .m-card { cursor: pointer; transition: transform 0.2s; }
+  .m-img-container { position: relative; aspect-ratio: 2/3; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .m-img-container img { width: 100%; height: 100%; object-fit: cover; }
+  .m-type-tag { position: absolute; top: 5px; right: 5px; background: var(--main-red); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+  .m-name { font-size: 12px; font-weight: 700; margin-top: 8px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #333; }
 
-  /* Video Player */
-  .vid-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; align-items: center; justifyContent: center; }
-  .vid-container { width: 95%; height: 90%; background: #000; }
-  .vid-header { padding: 15px; background: #111; display: flex; }
-  .vid-close { background: var(--accent); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
-  iframe { width: 100%; height: calc(100% - 60px); border: none; }
+  /* Detail Page */
+  .detail-page { position: fixed; inset: 0; background: #fff; z-index: 2000; overflow-y: auto; }
+  .detail-hero { height: 50vh; background-size: cover; background-position: center; position: relative; display: flex; align-items: flex-end; padding: 40px 5%; }
+  .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #fff 10%, transparent); }
+  .hero-content { position: relative; z-index: 2; width: 100%; }
+  .movie-title-large { font-size: 32px; font-weight: 900; margin: 0; }
+  .movie-desc-large { font-size: 16px; color: #444; margin: 15px 0 25px; line-height: 1.5; max-width: 600px; }
+  .back-btn { position: absolute; top: 20px; left: 20px; z-index: 100; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; padding: 8px; cursor: pointer; }
+  
+  .btn-play-red { background: var(--main-red); color: #fff; border: none; padding: 15px 30px; border-radius: 12px; font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; cursor: pointer; width: 100%; justify-content: center; margin-bottom: 10px; }
 
-  /* Mobile Adjustments */
-  @media (max-width: 768px) {
-    .nav { padding: 0 15px; }
-    .search-wrap input { width: 120px; }
-    .search-wrap input:focus { width: 150px; }
-    .hero-text { font-size: 50px; }
-    .detail-poster img { width: 100%; }
-    .movie-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-    .logo { font-size: 20px; }
+  /* Player */
+  .vid-ov { position: fixed; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; }
+  .vid-header { height: 50px; display: flex; align-items: center; padding: 0 15px; }
+  .vid-close { background: var(--main-red); color: #fff; border: none; padding: 6px 15px; border-radius: 5px; display: flex; align-items: center; gap: 5px; }
+  .vid-container { flex: 1; }
+  iframe { width: 100%; height: 100%; border: none; }
+
+  /* Desktop Styles */
+  @media (min-width: 768px) {
+    .movie-grid { grid-template-columns: repeat(6, 1fr); gap: 20px; padding: 0 5% 40px; }
+    .hero-logo-text { font-size: 150px; }
+    .btn-play-red { width: auto; }
+    .search-box input { width: 300px; }
   }
 `;
