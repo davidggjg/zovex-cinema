@@ -35,14 +35,14 @@ export default function Home() {
     queryFn: () => base44.entities.Movie.list("-created_date"),
   });
 
-  // מנגנון ה-Backdoor לפאנל ניהול
+  // כניסה לפאנל ניהול דרך חיפוש
   useEffect(() => {
     if (searchQuery === "ZOVEX_ADMIN_2026") {
-      const password = prompt("נא להזין סיסמת מנהל:");
+      const password = prompt("נא להזין סיסמה:");
       if (password === "ZOVEX ADMIN_2026") {
         navigate("/admin");
       } else if (password !== null) {
-        alert("סיסמה שגויה!");
+        alert("סיסמה שגויה");
         setSearchQuery("");
       }
     }
@@ -52,68 +52,62 @@ export default function Home() {
     const seriesMap = new Map();
     const standaloneMovies = [];
     const cats = new Set(["הכל"]);
-    movies.forEach((movie) => {
-      if (movie.category) cats.add(movie.category);
-      if (movie.series_name) {
-        if (!seriesMap.has(movie.series_name)) {
-          seriesMap.set(movie.series_name, { 
-            id: `series_${movie.series_name}`, title: movie.series_name, type: "series", 
-            thumbnail_url: movie.thumbnail_url, category: movie.category, episodes: [], description: movie.description 
+    movies.forEach((m) => {
+      if (m.category) cats.add(m.category);
+      if (m.series_name) {
+        if (!seriesMap.has(m.series_name)) {
+          seriesMap.set(m.series_name, { 
+            id: `s_${m.series_name}`, title: m.series_name, type: "series", 
+            thumbnail_url: m.thumbnail_url, category: m.category, episodes: [], description: m.description 
           });
         }
-        seriesMap.get(movie.series_name).episodes.push(movie);
-      } else { standaloneMovies.push(movie); }
+        seriesMap.get(m.series_name).episodes.push(m);
+      } else { standaloneMovies.push(m); }
     });
     return { processedItems: [...standaloneMovies, ...Array.from(seriesMap.values())], categories: Array.from(cats) };
   }, [movies]);
 
-  const filteredMovies = useMemo(() => {
+  const filtered = useMemo(() => {
     return processedItems.filter(m => {
-      const matchSearch = m.title?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchCat = activeCat === "הכל" || m.category === activeCat;
-      return matchSearch && matchCat;
+      const mS = m.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      const mC = activeCat === "הכל" || m.category === activeCat;
+      return mS && mC;
     });
   }, [processedItems, searchQuery, activeCat]);
 
   return (
-    <div className="app-mobile-container">
+    <div className="zovex-app">
       <style>{CSS}</style>
 
-      {/* Header מותאם לאפליקציה */}
-      <nav className="mobile-nav">
-        <div className="logo" onClick={() => { setView('home'); setCurrent(null); setSearchQuery(''); setActiveCat('הכל'); }}>ZOVEX</div>
-        <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="חיפוש..." 
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-          />
+      <header className="z-nav">
+        <div className="z-logo" onClick={() => { setView('home'); setSearchQuery(''); setActiveCat('הכל'); }}>ZOVEX</div>
+        <div className="z-search">
+          <Search size={16} className="z-search-icon" />
+          <input type="text" placeholder="חיפוש..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
-      </nav>
+      </header>
 
-      <main className="main-content">
+      <main className="z-main">
         {isLoading ? (
-          <div className="status-msg">טוען סרטים...</div>
+          <div className="z-msg">טוען...</div>
         ) : view === 'detail' && current ? (
-          <div className="full-detail-view">
-            <button className="close-detail" onClick={() => setView('home')}><X /></button>
-            <div className="hero-box" style={{ backgroundImage: `url(${getThumb(current)})` }}>
-              <div className="overlay-fade"></div>
+          <div className="z-detail">
+            <button className="z-back" onClick={() => setView('home')}><X /></button>
+            <div className="z-detail-hero" style={{ backgroundImage: `url(${getThumb(current)})` }}>
+              <div className="z-detail-grad"></div>
             </div>
-            <div className="content-padding">
-              <h1 className="title-text">{current.title}</h1>
-              <p className="desc-text">{current.description}</p>
-              <div className="action-area">
+            <div className="z-detail-info">
+              <h1>{current.title}</h1>
+              <p>{current.description}</p>
+              <div className="z-actions">
                 {current.type === 'series' ? (
                   current.episodes.map((ep, i) => (
-                    <button key={i} className="play-red-btn" onClick={() => setVideoData({ videoId: ep.video_id, type: ep.type })}>
-                      <Play fill="white" size={18} /> פרק {ep.episode_number || i + 1}
+                    <button key={i} className="z-btn-play" onClick={() => setVideoData({ id: ep.video_id, t: ep.type })}>
+                      <Play fill="white" size={18} /> פרק {ep.episode_number || i+1}
                     </button>
                   ))
                 ) : (
-                  <button className="play-red-btn" onClick={() => setVideoData({ videoId: current.video_id, type: current.type })}>
+                  <button className="z-btn-play" onClick={() => setVideoData({ id: current.video_id, t: current.type })}>
                     <Play fill="white" size={18} /> נגן סרט מלא
                   </button>
                 )}
@@ -121,36 +115,27 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="home-scroll-view">
-            {/* Hero אפור ללא גלילה הצידה */}
+          <div className="z-home">
             {!searchQuery && activeCat === "הכל" && (
-              <div className="brand-hero">
-                <div className="glow-brand">ZOVEX</div>
+              <div className="z-hero">
+                <div className="z-hero-text">ZOVEX</div>
               </div>
             )}
 
-            {/* קטגוריות - גלילה פנימית בלבד */}
-            <div className="category-scroller">
+            <div className="z-cats">
               {categories.map(c => (
-                <button key={c} className={`cat-pill ${activeCat === c ? 'active' : ''}`} onClick={() => setActiveCat(c)}>
-                  {c}
-                </button>
+                <button key={c} className={activeCat === c ? 'active' : ''} onClick={() => setActiveCat(c)}>{c}</button>
               ))}
             </div>
 
-            <div className="grid-header-text">
-               {activeCat === "הכל" ? "הוספו לאחרונה" : activeCat}
-            </div>
-
-            {/* גריד 2 בשורה - נעול למסך ללא גלילה אופקית */}
-            <div className="vertical-grid">
-              {filteredMovies.map(m => (
-                <div key={m.id} className="movie-item" onClick={() => { setCurrent(m); setView('detail'); window.scrollTo(0,0); }}>
-                  <div className="image-wrap">
-                    <img src={getThumb(m)} alt={m.title} loading="lazy" />
-                    <div className="type-badge">{m.type === 'series' ? 'סדרה' : 'סרט'}</div>
+            <div className="z-grid">
+              {filtered.map(m => (
+                <div key={m.id} className="z-card" onClick={() => { setCurrent(m); setView('detail'); window.scrollTo(0,0); }}>
+                  <div className="z-card-img">
+                    <img src={getThumb(m)} alt="" loading="lazy" />
+                    <div className="z-badge">{m.type === 'series' ? 'סדרה' : 'סרט'}</div>
                   </div>
-                  <div className="movie-name">{m.title}</div>
+                  <div className="z-card-title">{m.title}</div>
                 </div>
               ))}
             </div>
@@ -159,12 +144,12 @@ export default function Home() {
       </main>
 
       {videoData && createPortal(
-        <div className="fullscreen-player" onClick={() => setVideoData(null)}>
-          <div className="player-inner" onClick={e => e.stopPropagation()}>
-            <div className="player-toolbar">
-              <button className="exit-player" onClick={() => setVideoData(null)}><X size={20} /> סגור</button>
+        <div className="z-player-ov" onClick={() => setVideoData(null)}>
+          <div className="z-player-inner" onClick={e => e.stopPropagation()}>
+            <div className="z-player-top">
+              <button onClick={() => setVideoData(null)}><X size={20} /> סגור</button>
             </div>
-            <iframe src={getEmbedUrl(videoData.videoId, videoData.type)} allowFullScreen allow="autoplay" />
+            <iframe src={getEmbedUrl(videoData.id, videoData.t)} allowFullScreen allow="autoplay" />
           </div>
         </div>,
         document.body
@@ -174,116 +159,84 @@ export default function Home() {
 }
 
 const CSS = `
-  :root { --red: #e50914; --dark: #1a1a1a; }
+  :root { --red: #e50914; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; background: #fff; direction: rtl; font-family: sans-serif; }
   
-  /* מניעת גלילה אופקית על כל האפליקציה */
-  html, body { 
-    margin: 0; 
-    padding: 0; 
-    overflow-x: hidden; 
-    width: 100%; 
-    background: #fff;
-    font-family: 'Assistant', sans-serif;
-    direction: rtl;
-  }
+  .zovex-app { width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
 
-  .app-mobile-container { width: 100%; overflow-x: hidden; }
-
-  /* Nav */
-  .mobile-nav { 
+  /* Navbar - Fix for Mobile */
+  .z-nav { 
     position: fixed; top: 0; width: 100%; height: 60px; background: #fff; 
     display: flex; align-items: center; justify-content: space-between; 
-    padding: 0 15px; z-index: 1000; box-shadow: 0 1px 4px rgba(0,0,0,0.1); 
-    box-sizing: border-box;
+    padding: 0 15px; z-index: 1000; border-bottom: 1px solid #f0f0f0;
   }
-  .logo { font-size: 22px; font-weight: 900; color: var(--red); cursor: pointer; }
-  .search-wrapper { position: relative; flex: 0 0 140px; }
-  .search-wrapper input { 
-    width: 100%; padding: 6px 30px 6px 10px; border-radius: 20px; 
-    border: 1px solid #eee; background: #f8f8f8; outline: none; font-size: 13px; 
-    box-sizing: border-box;
+  .z-logo { font-size: 24px; font-weight: 900; color: var(--red); cursor: pointer; }
+  .z-search { position: relative; width: 140px; }
+  .z-search input { 
+    width: 100%; padding: 7px 30px 7px 10px; border-radius: 20px; 
+    border: 1px solid #eee; background: #f9f9f9; outline: none; font-size: 14px;
   }
-  .search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa; }
+  .z-search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #999; }
 
-  .main-content { padding-top: 60px; width: 100%; }
+  .z-main { padding-top: 60px; flex: 1; width: 100%; }
 
-  /* Hero */
-  .brand-hero { 
-    width: 100%; height: 160px; 
-    background: linear-gradient(135deg, #444, #000); 
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 5px;
+  /* Hero Gray Glow */
+  .z-hero { 
+    width: 100%; height: 180px; 
+    background: linear-gradient(135deg, #444, #111); 
+    display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
   }
-  .glow-brand { font-size: 45px; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--red); letter-spacing: 2px; }
+  .z-hero-text { font-size: 50px; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--red); letter-spacing: 2px; }
 
-  /* Categories - גלילה אופקית רק כאן */
-  .category-scroller { 
-    display: flex; gap: 8px; overflow-x: auto; padding: 12px 15px; 
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  /* Categories Scroller */
+  .z-cats { display: flex; gap: 10px; overflow-x: auto; padding: 12px 15px; scrollbar-width: none; }
+  .z-cats::-webkit-scrollbar { display: none; }
+  .z-cats button { 
+    padding: 6px 16px; border-radius: 20px; background: #f0f0f0; border: none; 
+    white-space: nowrap; font-weight: 700; color: #666; font-size: 13px; cursor: pointer;
   }
-  .category-scroller::-webkit-scrollbar { display: none; }
-  .cat-pill { 
-    padding: 6px 16px; border-radius: 20px; background: #f0f0f0; 
-    border: none; white-space: nowrap; font-weight: 700; color: #555; font-size: 13px;
-  }
-  .cat-pill.active { background: var(--red); color: #fff; }
+  .z-cats button.active { background: var(--red); color: #fff; }
 
-  .grid-header-text { padding: 5px 15px; font-size: 16px; font-weight: 800; color: #222; }
-
-  /* Grid: 2 בשורה בלבד, ללא גלילה הצידה */
-  .vertical-grid { 
-    display: grid; 
-    grid-template-columns: repeat(2, 1fr); 
-    gap: 12px; 
-    padding: 15px; 
-    box-sizing: border-box;
-    width: 100%;
+  /* Vertical Grid - 2 per row, Perfect Fit */
+  .z-grid { 
+    display: grid; grid-template-columns: repeat(2, 1fr); 
+    gap: 15px; padding: 15px; width: 100%; 
   }
-  .movie-item { width: 100%; cursor: pointer; }
-  .image-wrap { 
-    position: relative; aspect-ratio: 2/3; border-radius: 8px; 
-    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+  .z-card { width: 100%; cursor: pointer; }
+  .z-card-img { 
+    position: relative; aspect-ratio: 2/3; border-radius: 12px; 
+    overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: #eee;
   }
-  .image-wrap img { width: 100%; height: 100%; object-fit: cover; }
-  .type-badge { 
-    position: absolute; top: 6px; right: 6px; background: var(--red); 
-    color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; 
-  }
-  .movie-name { 
-    margin-top: 6px; font-size: 13px; font-weight: 700; text-align: center; 
-    color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-  }
+  .z-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .z-badge { position: absolute; top: 8px; right: 8px; background: var(--red); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: bold; }
+  .z-card-title { margin-top: 8px; font-size: 14px; font-weight: 700; text-align: center; color: #222; }
 
   /* Detail View */
-  .full-detail-view { position: fixed; inset: 0; background: #fff; z-index: 2000; overflow-y: auto; }
-  .hero-box { height: 35vh; background-size: cover; background-position: center; position: relative; }
-  .overlay-fade { position: absolute; inset: 0; background: linear-gradient(to top, #fff, transparent); }
-  .content-padding { padding: 20px; }
-  .title-text { font-size: 24px; font-weight: 900; margin: 0 0 10px; }
-  .desc-text { font-size: 15px; color: #555; line-height: 1.6; }
-  .play-red-btn { 
-    width: 100%; padding: 15px; background: var(--red); color: #fff; border: none; 
-    border-radius: 10px; font-size: 18px; font-weight: bold; display: flex; 
-    align-items: center; justify-content: center; gap: 10px; margin-top: 20px;
+  .z-detail { position: fixed; inset: 0; background: #fff; z-index: 2000; overflow-y: auto; }
+  .z-detail-hero { height: 40vh; background-size: cover; background-position: center; position: relative; }
+  .z-detail-grad { position: absolute; inset: 0; background: linear-gradient(to top, #fff, transparent); }
+  .z-detail-info { padding: 20px; }
+  .z-detail-info h1 { font-size: 28px; margin: 0 0 10px; }
+  .z-detail-info p { color: #555; line-height: 1.6; }
+  .z-btn-play { 
+    width: 100%; padding: 16px; background: var(--red); color: #fff; border: none; 
+    border-radius: 12px; font-size: 18px; font-weight: bold; display: flex; 
+    align-items: center; justify-content: center; gap: 10px; margin-top: 15px;
   }
-  .close-detail { 
-    position: absolute; top: 15px; left: 15px; z-index: 2100; 
-    background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; 
-    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-  }
+  .z-back { position: absolute; top: 15px; left: 15px; z-index: 2100; background: rgba(0,0,0,0.4); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; }
 
   /* Player */
-  .fullscreen-player { position: fixed; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; }
-  .player-toolbar { height: 50px; display: flex; align-items: center; padding: 0 15px; }
-  .exit-player { background: var(--red); color: #fff; border: none; padding: 5px 12px; border-radius: 4px; font-weight: bold; }
+  .z-player-ov { position: fixed; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; }
+  .z-player-top { height: 50px; display: flex; align-items: center; padding: 0 15px; }
+  .z-player-top button { background: var(--red); color: #fff; border: none; padding: 6px 15px; border-radius: 5px; font-weight: bold; }
   iframe { flex: 1; width: 100%; border: none; }
 
-  /* Desktop */
   @media (min-width: 768px) {
-    .vertical-grid { grid-template-columns: repeat(6, 1fr); gap: 20px; padding: 20px 5%; }
-    .brand-hero { height: 280px; }
-    .glow-brand { font-size: 90px; }
-    .search-wrapper { flex: 0 0 300px; }
-    .play-red-btn { width: auto; padding: 15px 50px; }
+    .z-grid { grid-template-columns: repeat(6, 1fr); padding: 20px 5%; }
+    .z-hero { height: 300px; }
+    .z-hero-text { font-size: 100px; }
+    .z-search { width: 300px; }
+    .z-btn-play { width: auto; padding: 16px 60px; }
   }
 `;
