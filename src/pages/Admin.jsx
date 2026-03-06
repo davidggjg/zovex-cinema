@@ -2,181 +2,198 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import EditMovieModal from "../components/admin/EditMovieModal";
 import { debounce } from "lodash";
 
-// --- פונקציות עזר מהקוד המקורי ---
+// --- פונקציות עזר מעודכנות ---
 function extractVideoId(url) {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (ytMatch) return { type: "youtube", video_id: ytMatch[1] };
   const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
   if (driveMatch) return { type: "drive", video_id: driveMatch[1] };
-  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (vimeoMatch) return { type: "vimeo", video_id: vimeoMatch[1] };
-  const rumbleMatch = url.match(/rumble\.com\/(v[a-zA-Z0-9]+)/);
+  const rumbleMatch = url.match(/rumble\.com\/(?:embed\/|v)?([a-zA-Z0-9]+)/);
   if (rumbleMatch) return { type: "rumble", video_id: rumbleMatch[1] };
+  const dailyMatch = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+  if (dailyMatch) return { type: "dailymotion", video_id: dailyMatch[1] };
   return { type: "other", video_id: url }; 
 }
 
-function extractEpisodeInfo(text) {
-  if (!text) return {};
-  const result = {};
-  const pattern1 = text.match(/S(?:eason)?\s*(\d+)\s*E(?:pisode)?\s*(\d+)/i);
-  if (pattern1) { result.season = parseInt(pattern1[1]); result.episode = parseInt(pattern1[2]); return result; }
-  const pattern2 = text.match(/עונה\s*(\d+).*?פרק\s*(\d+)/);
-  if (pattern2) { result.season = parseInt(pattern2[1]); result.episode = parseInt(pattern2[2]); return result; }
-  return result;
-}
-
-const detectPlatform = (url) => {
-  if (!url) return '';
-  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YouTube';
-  if (url.includes('drive.google.com')) return 'Google Drive';
-  if (url.includes('rumble.com')) return 'Rumble';
-  return 'אחר';
-};
-
-// --- קומפוננטת הניהול הראשית ---
 export default function Admin() {
   const [passcode, setPasscode] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
-
+  const [activeTab, setActiveTab] = useState("movies"); // 'movies' | 'series' | 'keys'
   const queryClient = useQueryClient();
-  const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [error, setError] = useState("");
-  const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const [selectedCategoryToDelete, setSelectedCategoryToDelete] = useState("");
-  const [uploadedThumbnail, setUploadedThumbnail] = useState("");
-  const [seriesName, setSeriesName] = useState("");
-  const [seasonNumber, setSeasonNumber] = useState("");
-  const [episodeNumber, setEpisodeNumber] = useState("");
-  const [editingMovie, setEditingMovie] = useState(null);
-  const [seriesDescription, setSeriesDescription] = useState("");
-  const [platform, setPlatform] = useState("");
-  const [urlStatus, setUrlStatus] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [tags, setTags] = useState([]);
-  const [newTag, setNewTag] = useState("");
-  const [year, setYear] = useState("");
 
-  // לוגיקת חיפוש
-  const debouncedSetSearch = useCallback(debounce((value) => setDebouncedSearch(value), 300), []);
-  useEffect(() => { debouncedSetSearch(searchQuery); }, [searchQuery, debouncedSetSearch]);
+  // מפתחות API
+  const [groqKey, setGroqKey] = useState(localStorage.getItem("groq_key") || "");
+  const [tmdbKey, setTmdbKey] = useState(localStorage.getItem("tmdb_key") || "");
+  const [keyStatus, setKeyStatus] = useState({ groq: "idle", tmdb: "idle" });
+
+  // שדות טופס
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("סרטים");
+  const [season, setSeason] = useState("1");
+  const [episode, setEpisode] = useState("");
+  const [posterUrl, setPosterUrl] = useState("");
 
   // טעינת נתונים
-  const { data: movies = [], isLoading } = useQuery({
+  const { data: movies = [] } = useQuery({
     queryKey: ["movies"],
     queryFn: () => base44.entities.Movie.list("-created_date"),
   });
 
-  const categories = useMemo(() => 
-    [...new Set(movies.map((m) => m.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "he")),
-    [movies]
-  );
+  // בדיקת מפתחות API
+  const testKeys = async () => {
+    setKeyStatus({ groq: "testing", tmdb: "testing" });
+    
+    // בדיקת Groq
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/models", {
+        headers: { "Authorization": `Bearer ${groqKey}` }
+      });
+      if (res.ok) {
+        setKeyStatus(prev => ({ ...prev, groq: "ok" }));
+        localStorage.setItem("groq_key", groqKey);
+      } else {
+        setKeyStatus(prev => ({ ...prev, groq: "error" }));
+      }
+    } catch { setKeyStatus(prev => ({ ...prev, groq: "error" })); }
 
-  // מוטציות (יצירה, מחיקה, עדכון)
+    // בדיקת TMDB
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/authentication?api_key=${tmdbKey}`);
+      if (res.ok) {
+        setKeyStatus(prev => ({ ...prev, tmdb: "ok" }));
+        localStorage.setItem("tmdb_key", tmdbKey);
+      } else {
+        setKeyStatus(prev => ({ ...prev, tmdb: "error" }));
+      }
+    } catch { setKeyStatus(prev => ({ ...prev, tmdb: "error" })); }
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Movie.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
-      resetForm();
+      alert("נשמר בהצלחה!");
+      setTitle(""); setUrl(""); setDescription(""); setEpisode("");
     },
   });
 
-  const resetForm = () => {
-    setUrl(""); setTitle(""); setDescription(""); setCategory(""); setNewCategory("");
-    setUploadedThumbnail(""); setSeriesName(""); setSeasonNumber(""); setEpisodeNumber("");
-    setTags([]); setYear("");
-  };
+  const handleSave = () => {
+    const videoData = extractVideoId(url);
+    if (!videoData || !title || !description) return alert("חובה למלא שם, תקציר ולינק תקין");
 
-  const handleAdd = () => {
-    const parsed = extractVideoId(url.trim());
-    if (!parsed || !title.trim()) { setError("חסרים פרטים"); return; }
-    
-    const movieData = {
-      title: title.trim(),
-      description: description.trim(),
-      video_id: parsed.video_id,
-      type: parsed.type,
-      category: (newCategory.trim() || category).trim(),
-      thumbnail_url: uploadedThumbnail || undefined,
-      year: year ? parseInt(year) : undefined,
-      tags: tags.length > 0 ? tags : undefined
+    const payload = {
+      title: activeTab === "series" ? `${title} - עונה ${season} פרק ${episode}` : title,
+      description,
+      video_id: videoData.video_id,
+      type: videoData.type,
+      category: activeTab === "series" ? "סדרות" : category,
+      thumbnail_url: posterUrl,
+      metadata: activeTab === "series" ? { season, episode } : {}
     };
 
-    createMutation.mutate(movieData);
+    createMutation.mutate(payload);
   };
 
-  // --- מסך כניסה (סיסמה) ---
+  // --- מסך כניסה ---
   if (!isAuthorized) {
     return (
-      <div style={{ height: "100vh", background: "#0f172a", display: "flex", justifyContent: "center", alignItems: "center", direction: "rtl", fontFamily: "Assistant" }}>
-        <div style={{ background: "#1e293b", padding: "40px", borderRadius: "12px", border: "2px solid #e50914", textAlign: "center", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
-          <h1 style={{ color: "#e50914", marginBottom: "20px" }}>ZOVEX ADMIN</h1>
+      <div style={authContainer}>
+        <div style={authCard}>
+          <h1 style={{ color: "#1d1d1f", fontWeight: "800", marginBottom: "20px" }}>ZOVEX CINEMA</h1>
           <input 
             type="password" 
-            placeholder="הכנס קוד גישה"
-            onChange={(e) => setPasscode(e.target.value)}
-            style={{ padding: "12px", width: "200px", borderRadius: "6px", border: "none", marginBottom: "20px", display: "block", margin: "0 auto 20px" }}
+            placeholder="הזן קוד גישה" 
+            onKeyDown={(e) => e.key === "Enter" && passcode === "ZovexAdmin2026" && setIsAuthorized(true)}
+            onChange={(e) => setPasscode(e.target.value)} 
+            style={inputStyle} 
           />
-          <button 
-            onClick={() => passcode === "ZOVEX2026" ? setIsAuthorized(true) : alert("קוד שגוי")}
-            style={{ background: "#e50914", color: "white", padding: "10px 30px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}
-          >
-            כניסה למערכת
-          </button>
+          <button onClick={() => passcode === "ZovexAdmin2026" ? setIsAuthorized(true) : alert("קוד שגוי")} style={btnPrimary}>כניסה למערכת</button>
         </div>
       </div>
     );
   }
 
-  // --- הפאנל המקורי (מוצג רק אחרי סיסמה) ---
   return (
-    <div className="admin-page" style={{ background: '#0f172a', minHeight: '100vh', color: 'white', padding: '20px', direction: 'rtl', fontFamily: 'Assistant' }}>
-      <div className="max-w-[800px] mx-auto">
-        <div className="flex justify-between items-center mb-8">
-            <h1 style={{ color: '#e50914', fontSize: '30px', fontWeight: '800' }}>ZOVEX - ניהול תוכן</h1>
-            <Link to="/" style={{ color: 'white', textDecoration: 'none', border: '1px solid #e50914', padding: '5px 15px', borderRadius: '5px' }}>חזרה לאתר</Link>
+    <div style={{ background: "#F5F5F7", minHeight: "100vh", direction: "rtl", fontFamily: "Assistant" }}>
+      <header style={headerStyle}>
+        <div style={{ fontSize: "24px", fontWeight: "900" }}>ZO<span style={{color: "#0071E3"}}>VEX</span></div>
+        <Link to="/" style={{ textDecoration: "none", color: "#666" }}>חזרה לאתר</Link>
+      </header>
+
+      <div style={{ max_width: "900px", margin: "40px auto", padding: "0 20px" }}>
+        <div style={tabContainer}>
+          <button style={activeTab === "movies" ? activeTabStyle : tabStyle} onClick={() => setActiveTab("movies")}>🎬 סרטים</button>
+          <button style={activeTab === "series" ? activeTabStyle : tabStyle} onClick={() => setActiveTab("series")}>📺 סדרות</button>
+          <button style={activeTab === "keys" ? activeTabStyle : tabStyle} onClick={() => setActiveTab("keys")}>⚙️ מפתחות (AI/API)</button>
         </div>
 
-        {/* טופס הוספה מהקוד המקורי שלך */}
-        <div style={{ background: '#1e293b', padding: '20px', borderRadius: '10px', border: '1px solid rgba(229,9,20,0.3)' }}>
-            <h3 style={{ marginBottom: '15px', color: '#e50914' }}>הוספת סרט/פרק חדש</h3>
-            <input placeholder="שם הסרט" value={title} onChange={(e) => setTitle(e.target.value)} style={inStyle} />
-            <input placeholder="לינק (YouTube, Drive, וכו')" value={url} onChange={(e) => setUrl(e.target.value)} style={inStyle} />
-            <select value={category} onChange={(e) => setCategory(e.target.value)} style={inStyle}>
-                <option value="">בחר קטגוריה</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input placeholder="או קטגוריה חדשה" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} style={inStyle} />
-            <button onClick={handleAdd} style={{ width: '100%', padding: '12px', background: '#e50914', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
-                {createMutation.isPending ? "שומר..." : "פרסם תוכן"}
-            </button>
-            {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
-        </div>
+        <div style={cardStyle}>
+          {activeTab === "keys" ? (
+            <div>
+              <h3>הגדרות מערכת</h3>
+              <label>Groq API Key (AI):</label>
+              <input type="password" value={groqKey} onChange={e => setGroqKey(e.target.value)} style={inputStyle} />
+              <StatusIndicator status={keyStatus.groq} />
+              
+              <label style={{marginTop: "20px", display: "block"}}>TMDB API Key (מידע/פוסטרים):</label>
+              <input type="password" value={tmdbKey} onChange={e => setTmdbKey(e.target.value)} style={inputStyle} />
+              <StatusIndicator status={keyStatus.tmdb} />
 
-        {/* רשימת סרטים קיימת */}
-        <div style={{ marginTop: '40px' }}>
-            <h3 style={{ marginBottom: '10px' }}>סרטים במערכת ({movies.length})</h3>
-            <div style={{ display: 'grid', gap: '10px' }}>
-                {movies.slice(0, 10).map(movie => (
-                    <div key={movie.id} style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '5px', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>{movie.title} ({movie.category})</span>
-                        <button onClick={() => base44.entities.Movie.delete(movie.id).then(() => queryClient.invalidateQueries(["movies"]))} style={{ color: '#ff4444', background: 'none', border: 'none', cursor: 'pointer' }}>מחק</button>
-                    </div>
-                ))}
+              <button onClick={testKeys} style={{...btnPrimary, marginTop: "20px", background: "#333"}}>בצע בדיקת תקינות</button>
             </div>
+          ) : (
+            <div>
+              <h3>{activeTab === "movies" ? "הוספת סרט חדש" : "הוספת פרק לסדרה"}</h3>
+              <input placeholder="שם הסרט/סדרה" value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} />
+              
+              {activeTab === "series" && (
+                <div style={{display: "flex", gap: "10px"}}>
+                  <input type="number" placeholder="עונה" value={season} onChange={e => setSeason(e.target.value)} style={inputStyle} />
+                  <input type="number" placeholder="מספר פרק" value={episode} onChange={e => setEpisode(e.target.value)} style={inputStyle} />
+                </div>
+              )}
+
+              <input placeholder="לינק לוידאו (Rumble, YT, Drive...)" value={url} onChange={e => setUrl(e.target.value)} style={inputStyle} />
+              <textarea placeholder="תקציר חובה (יופיע מתחת לתמונה)" value={description} onChange={e => setDescription(e.target.value)} style={{...inputStyle, height: "100px"}} />
+              
+              <label>העלאת פוסטר (מהטלפון):</label>
+              <input type="file" accept="image/*" style={inputStyle} />
+
+              <button onClick={handleSave} style={btnPrimary}>
+                {createMutation.isPending ? "שומר..." : "שמור ופרסם באתר"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-const inStyle = { width: "100%", padding: "12px", marginBottom: "12px", borderRadius: "5px", border: "1px solid #334155", background: "#0f172a", color: "white" };
+// --- קומפוננטות עזר פנימיות ---
+const StatusIndicator = ({ status }) => {
+  const colors = { idle: "#ccc", testing: "#ff9500", ok: "#34c759", error: "#ff3b30" };
+  const labels = { idle: "לא נבדק", testing: "בודק...", ok: "תקין ומחובר", error: "שגיאה במפתח" };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", marginTop: "5px" }}>
+      <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: colors[status] }}></div>
+      <span>{labels[status]}</span>
+    </div>
+  );
+};
+
+// --- סטייל (Cinema Light Mode) ---
+const authContainer = { height: "100vh", background: "#F5F5F7", display: "flex", justifyContent: "center", alignItems: "center", direction: "rtl" };
+const authCard = { background: "#fff", padding: "50px", borderRadius: "30px", boxShadow: "0 20px 60px rgba(0,0,0,0.05)", textAlign: "center", width: "350px" };
+const headerStyle = { background: "#fff", padding: "15px 5%", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #E5E5E5" };
+const inputStyle = { width: "100%", padding: "14px", margin: "10px 0", borderRadius: "12px", border: "1px solid #DDD", fontSize: "16px", outline: "none" };
+const btnPrimary = { background: "#0071E3", color: "white", padding: "14px 30px", border: "none", borderRadius: "12px", width: "100%", fontWeight: "700", cursor: "pointer" };
+const cardStyle = { background: "#fff", padding: "30px", borderRadius: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.03)" };
+const tabContainer = { display: "flex", gap: "10px", marginBottom: "20px" };
+const tabStyle = { background: "#E5E5E7", border: "none", padding: "10px 20px", borderRadius: "10px", cursor: "pointer", fontWeight: "600", color: "#666" };
+const activeTabStyle = { ...tabStyle, background: "#0071E3", color: "white" };
