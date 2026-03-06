@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Settings, Plus, Sparkles, ChevronDown, ChevronUp, Image as ImageIcon, Search, Check, Loader2 } from "lucide-react";
+import { Edit2, Trash2, Settings, Plus, Sparkles, Image as ImageIcon, Search, Check, Loader2 } from "lucide-react";
 
 export default function Admin() {
   const [passcode, setPasscode] = useState("");
@@ -10,7 +10,6 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("content");
   const queryClient = useQueryClient();
 
-  // TMDB Live Search Logic
   const [tmdbKey, setTmdbKey] = useState(localStorage.getItem("tmdb_key") || "");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -25,18 +24,13 @@ export default function Admin() {
   const [category, setCategory] = useState("סרטים");
   const [season, setSeason] = useState("1");
   const [episode, setEpisode] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
 
-  // אפקט לחיפוש חי ב-TMDB (Live Search)
+  // חיפוש חי (Live Search)
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchQuery.length >= 2 && tmdbKey) {
-        performLiveSearch();
-      } else {
-        setSearchResults([]);
-      }
-    }, 500); // מחכה חצי שנייה מההקלדה האחרונה כדי לא להציף את השרת
-
+      if (searchQuery.length >= 2 && tmdbKey) performLiveSearch();
+      else setSearchResults([]);
+    }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
@@ -46,32 +40,37 @@ export default function Admin() {
       const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(searchQuery)}&language=he-IL`);
       const data = await res.json();
       setSearchResults(data.results || []);
-    } catch (e) {
-      console.error("TMDB Error", e);
-    } finally {
-      setIsSearching(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setIsSearching(false); }
   };
 
-  const selectResult = (item) => {
-    const name = item.title || item.name;
-    const year = (item.release_date || item.first_air_date || "").split("-")[0];
-    
-    setTitle(`${name}${year ? ` (${year})` : ""}`);
-    setDescription(item.overview || ""); // כאן התיאור נכנס אוטומטית
-    setThumb(item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : ""); // הפוסטר
-    
-    // סוג התוכן נקבע אוטומטית לפי התוצאה
-    if (item.media_type === "tv") {
-      setType("series");
-      setCategory("סדרות");
-    } else {
-      setType("movie");
-      setCategory("סרטים");
-    }
+  // פונקציה שמביאה את התיאור המלא והארוך ביותר
+  const selectResult = async (item) => {
+    setIsSearching(true);
+    try {
+      // שליפת מידע מפורט לפי ID כדי לקבל תיאור מלא
+      const typePath = item.media_type === "tv" ? "tv" : "movie";
+      const detailRes = await fetch(`https://api.themoviedb.org/3/${typePath}/${item.id}?api_key=${tmdbKey}&language=he-IL`);
+      const details = await detailRes.json();
 
-    setSearchResults([]);
-    setSearchQuery("");
+      const name = details.title || details.name;
+      const year = (details.release_date || details.first_air_date || "").split("-")[0];
+      
+      setTitle(`${name}${year ? ` (${year})` : ""}`);
+      setDescription(details.overview || "אין תיאור זמין"); // התיאור הארוך
+      setThumb(details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : "");
+      
+      if (item.media_type === "tv") {
+        setType("series");
+        setCategory("סדרות");
+      } else {
+        setType("movie");
+        setCategory("סרטים");
+      }
+      setSearchResults([]);
+      setSearchQuery("");
+    } catch (e) { alert("שגיאה במשיכת תיאור מלא"); }
+    finally { setIsSearching(false); }
   };
 
   const { data: allItems = [] } = useQuery({ 
@@ -98,8 +97,8 @@ export default function Admin() {
       <header style={headerStyle}>
         <div style={logoStyle}>ZO<span>VEX</span> ADMIN</div>
         <div style={{display:'flex', gap:'15px'}}>
-          <button onClick={() => setActiveTab("keys")} style={iconBtn}><Settings/></button>
-          <button onClick={() => setActiveTab("content")} style={iconBtn}><Plus/></button>
+          <button onClick={() => setActiveTab("keys")} style={iconBtn}><Settings size={22}/></button>
+          <button onClick={() => setActiveTab("content")} style={iconBtn}><Plus size={22}/></button>
           <Link to="/" style={linkStyle}>חזרה לאתר</Link>
         </div>
       </header>
@@ -108,34 +107,28 @@ export default function Admin() {
         {activeTab === "keys" ? (
           <div style={cardStyle}>
             <h3>הגדרות מפתחות</h3>
-            <label>TMDB API Key (חובה):</label>
-            <input type="password" placeholder="הדבק כאן את המפתח" value={tmdbKey} onChange={e => {setTmdbKey(e.target.value); localStorage.setItem("tmdb_key", e.target.value)}} style={inStyle} />
+            <label>TMDB API Key:</label>
+            <input type="password" value={tmdbKey} onChange={e => {setTmdbKey(e.target.value); localStorage.setItem("tmdb_key", e.target.value)}} style={inStyle} />
           </div>
         ) : (
           <>
-            {/* חיפוש חי חכם */}
-            <div style={{...cardStyle, border: '2px solid #0071E3', position: 'relative'}}>
-              <h4 style={{marginTop: 0, color: '#0071E3'}}><Sparkles size={18} /> חיפוש מהיר (Live)</h4>
+            <div style={{...cardStyle, border: '2px solid #0071E3'}}>
+              <h4 style={{marginTop: 0, color: '#0071E3'}}><Sparkles size={18} /> חיפוש חכם (מושך תיאור מלא)</h4>
               <div style={{position:'relative'}}>
-                <input 
-                  placeholder="הקלד שם לסריקה אוטומטית..." 
-                  value={searchQuery} 
-                  onChange={e => setSearchQuery(e.target.value)} 
-                  style={{...inStyle, paddingRight: '40px'}} 
-                />
-                <div style={{position:'absolute', right:'12px', top:'18px'}}>
-                  {isSearching ? <Loader2 size={20} className="animate-spin" color="#0071E3" /> : <Search size={20} color="#999" />}
+                <input placeholder="הקלד שם..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={inStyle} />
+                <div style={{position:'absolute', left:'12px', top:'18px'}}>
+                  {isSearching && <Loader2 size={20} className="animate-spin" color="#0071E3" />}
                 </div>
               </div>
 
               {searchResults.length > 0 && (
                 <div style={resultsBox}>
-                  {searchResults.slice(0, 6).map(item => (
+                  {searchResults.slice(0, 5).map(item => (
                     <div key={item.id} style={resultItem} onClick={() => selectResult(item)}>
                       <img src={item.poster_path ? `https://image.tmdb.org/t/p/w92${item.poster_path}` : ''} style={resImg} />
                       <div style={{flex:1}}>
-                        <div style={{fontWeight:'bold', fontSize:'14px'}}>{item.title || item.name}</div>
-                        <div style={{fontSize:'12px', color:'#666'}}>{item.media_type === 'tv' ? 'סדרה' : 'סרט'} • {(item.release_date || item.first_air_date || "").split("-")[0]}</div>
+                        <div style={{fontWeight:'bold'}}>{item.title || item.name}</div>
+                        <div style={{fontSize:'12px', color:'#666'}}>{item.media_type === 'tv' ? 'סדרה' : 'סרט'}</div>
                       </div>
                       <Check size={16} color="#34C759" />
                     </div>
@@ -145,14 +138,10 @@ export default function Admin() {
             </div>
 
             <div style={cardStyle}>
-              <h3>פרטי התוכן</h3>
-              
-              <label>שם הסרט/סדרה:</label>
+              <h3>פרסום תוכן</h3>
+              <label>שם:</label>
               <input value={title} onChange={e => setTitle(e.target.value)} style={inStyle} />
               
-              <label>פוסטר (הוזן אוטומטית):</label>
-              <input value={thumb} onChange={e => setThumb(e.target.value)} style={inStyle} />
-
               <div style={typeRow}>
                 <button onClick={() => {setType("movie"); setCategory("סרטים")}} style={type === "movie" ? activeT : inactiveT}>סרט</button>
                 <button onClick={() => {setType("series"); setCategory("סדרות")}} style={type === "series" ? activeT : inactiveT}>סדרה</button>
@@ -166,17 +155,17 @@ export default function Admin() {
               )}
 
               <label>קישור לצפייה:</label>
-              <input placeholder="הדבק קישור (Drive/Rumble/YT)" value={url} onChange={e => setUrl(e.target.value)} style={inStyle} />
+              <input placeholder="הדבק כאן קישור וידאו" value={url} onChange={e => setUrl(e.target.value)} style={inStyle} />
               
-              <label>תקציר (הוזן אוטומטית):</label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)} style={{...inStyle, height:'120px'}} />
+              <label>תקציר מלא:</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)} style={{...inStyle, height:'150px'}} />
 
               <button onClick={() => saveMutation.mutate({
                   title: type === "series" ? `${title} - עונה ${season} פרק ${episode}` : title,
                   description, video_id: url, category, thumbnail_url: thumb,
                   metadata: { season, episode }
               })} style={{...btnMain, width: '100%', marginTop: '10px'}}>
-                {editingId ? "עדכן תוכן" : "פרסם באתר עכשיו"}
+                {editingId ? "עדכן תוכן" : "פרסם עכשיו"}
               </button>
             </div>
           </>
@@ -187,15 +176,7 @@ export default function Admin() {
 }
 
 // עיצובים
-const resultsBox = { 
-  background: '#fff', 
-  borderRadius: '12px', 
-  marginTop: '5px', 
-  border: '1px solid #0071E3', 
-  maxHeight: '300px', 
-  overflowY: 'auto',
-  boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
-};
+const resultsBox = { background: '#fff', borderRadius: '12px', marginTop: '5px', border: '1px solid #ddd', overflow: 'hidden' };
 const resultItem = { display: 'flex', alignItems: 'center', padding: '10px', gap: '15px', cursor: 'pointer', borderBottom: '1px solid #eee' };
 const resImg = { width: '35px', height: '50px', borderRadius: '4px', objectFit: 'cover' };
 const adminLayout = { background: "#F5F5F7", minHeight: "100vh", direction: "rtl", fontFamily: "Assistant" };
@@ -206,7 +187,7 @@ const btnMain = { background: "#0071E3", color: "#fff", border: "none", padding:
 const typeRow = { display: "flex", gap: "10px", margin: "15px 0" };
 const activeT = { flex: 1, padding: "12px", background: "#0071E3", color: "#fff", border: "none", borderRadius: "10px", fontWeight: "bold" };
 const inactiveT = { flex: 1, padding: "12px", background: "#f5f5f7", border: "1px solid #ddd", borderRadius: "10px", cursor: "pointer" };
-const headerStyle = { background: "#fff", padding: "15px 5%", display: "flex", justifySpaceBetween: "space-between", borderBottom: "1px solid #ddd", alignItems:'center' };
+const headerStyle = { background: "#fff", padding: "15px 5%", display: "flex", justifyContent: "space-between", borderBottom: "1px solid #ddd", alignItems:'center' };
 const logoStyle = { fontSize: "20px", fontWeight: "900" };
 const iconBtn = { background: "none", border: "none", cursor: "pointer" };
 const linkStyle = { color: "#0071E3", textDecoration: "none", fontWeight: "bold" };
