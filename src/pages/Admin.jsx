@@ -26,7 +26,6 @@ export default function Admin() {
   const [season, setSeason] = useState("1");
   const [episode, setEpisode] = useState("");
 
-  // חיפוש חי (Live Search)
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.length >= 2 && tmdbKey) performLiveSearch();
@@ -45,18 +44,20 @@ export default function Admin() {
     finally { setIsSearching(false); }
   };
 
-  // פונקציה להארכת התקציר בעזרת AI
   const enhanceDescriptionWithAI = async (shortDesc, itemTitle) => {
     setIsAiLoading(true);
     try {
-      // כאן אנחנו משתמשים ביכולות ה-Generative של המודל
-      const prompt = `כתוב תקציר מורחב, מקצועי ומרגש בעברית לסרט/סדרה בשם "${itemTitle}". בסיס המידע: "${shortDesc}". תכתוב לפחות 3-4 פסקאות מעניינות בלי ספוילרים.`;
+      // אם אין תיאור בכלל, נבקש מה-AI לכתוב לפי השם בלבד
+      const baseInfo = shortDesc && shortDesc.length > 5 ? `בסיס המידע: ${shortDesc}` : "אין מידע קודם, תכתוב מהיכרותך עם הסרט";
+      const prompt = `כתוב תקציר עלילתי ארוך, מקצועי ומרתק בעברית לסרט או הסדרה "${itemTitle}". ${baseInfo}. תכתוב 3 פסקאות לפחות, שפה עשירה, בלי ספוילרים.`;
       
-      const response = await base44.ai.generateText(prompt);
-      setDescription(response.text);
+      const response = await base44.ai.ask(prompt); // שימוש ב-ask שהוא לרוב יציב יותר
+      if (response && response.text) {
+        setDescription(response.text);
+      }
     } catch (e) {
       console.error("AI Error", e);
-      alert("ה-AI לא הצליח להאריך את הטקסט, משתמש במקור.");
+      // אם נכשל, התיאור המקורי כבר שם מהשלב הקודם
     } finally {
       setIsAiLoading(false);
     }
@@ -64,6 +65,9 @@ export default function Admin() {
 
   const selectResult = async (item) => {
     setIsSearching(true);
+    setSearchResults([]);
+    setSearchQuery("");
+    
     try {
       const typePath = item.media_type === "tv" ? "tv" : "movie";
       const detailRes = await fetch(`https://api.themoviedb.org/3/${typePath}/${item.id}?api_key=${tmdbKey}&language=he-IL`);
@@ -76,6 +80,10 @@ export default function Admin() {
       setTitle(fullTitle);
       setThumb(details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : "");
       
+      // קודם כל שמים את מה שיש ב-TMDB כדי שלא יהיה ריק
+      const originalDesc = details.overview || "";
+      setDescription(originalDesc);
+
       if (item.media_type === "tv") {
         setType("series");
         setCategory("סדרות");
@@ -84,13 +92,14 @@ export default function Admin() {
         setCategory("סרטים");
       }
 
-      // הפעלת ה-AI להארכת התקציר אוטומטית
-      await enhanceDescriptionWithAI(details.overview || "סרט מרתק", fullTitle);
+      // עכשיו שולחים ל-AI שישפר את זה בשידור חי
+      enhanceDescriptionWithAI(originalDesc, fullTitle);
 
-      setSearchResults([]);
-      setSearchQuery("");
-    } catch (e) { alert("שגיאה במשיכת נתונים"); }
-    finally { setIsSearching(false); }
+    } catch (e) { 
+      alert("שגיאה במשיכת נתונים"); 
+    } finally { 
+      setIsSearching(false); 
+    }
   };
 
   const saveMutation = useMutation({
@@ -128,9 +137,9 @@ export default function Admin() {
         ) : (
           <>
             <div style={{...cardStyle, border: '2px solid #0071E3'}}>
-              <h4 style={{marginTop: 0, color: '#0071E3'}}><Sparkles size={18} /> חיפוש מהיר + שדרוג AI</h4>
+              <h4 style={{marginTop: 0, color: '#0071E3'}}><Sparkles size={18} /> חיפוש מהיר</h4>
               <div style={{position:'relative'}}>
-                <input placeholder="הקלד שם סרט/סדרה..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={inStyle} />
+                <input placeholder="הקלד שם סרט או סדרה..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={inStyle} />
                 <div style={{position:'absolute', left:'12px', top:'18px'}}>
                   {(isSearching || isAiLoading) && <Loader2 size={20} className="animate-spin" color="#0071E3" />}
                 </div>
@@ -155,7 +164,7 @@ export default function Admin() {
             <div style={cardStyle}>
               <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                 <h3>פרסום תוכן</h3>
-                {isAiLoading && <span style={{fontSize:'12px', color:'#0071E3', fontWeight:'bold'}}>AI כותב תקציר... <Wand2 size={14} style={{display:'inline'}}/></span>}
+                {isAiLoading && <span style={{fontSize:'12px', color:'#0071E3', fontWeight:'bold'}}>ה-AI משדרג את התקציר... <Wand2 size={14} style={{display:'inline'}}/></span>}
               </div>
               
               <label>שם:</label>
@@ -176,12 +185,11 @@ export default function Admin() {
               <label>קישור לצפייה:</label>
               <input placeholder="הדבק כאן קישור וידאו" value={url} onChange={e => setUrl(e.target.value)} style={inStyle} />
               
-              <label>תקציר משודרג (AI):</label>
+              <label>תקציר מורחב:</label>
               <textarea 
                 value={description} 
                 onChange={e => setDescription(e.target.value)} 
                 style={{...inStyle, height:'200px', lineHeight:'1.5', borderColor: isAiLoading ? '#0071E3' : '#ddd'}} 
-                placeholder={isAiLoading ? "ה-AI יוצר כרגע תקציר ארוך ומקצועי..." : "התקציר יופיע כאן"}
               />
 
               <button onClick={() => saveMutation.mutate({
@@ -189,7 +197,7 @@ export default function Admin() {
                   description, video_id: url, category, thumbnail_url: thumb,
                   metadata: { season, episode }
               })} style={{...btnMain, width: '100%', marginTop: '10px'}} disabled={isAiLoading}>
-                {isAiLoading ? "ממתין ל-AI..." : editingId ? "עדכן תוכן" : "פרסם עכשיו"}
+                {isAiLoading ? "ממתין ל-AI..." : editingId ? "עדכן" : "פרסם באתר"}
               </button>
             </div>
           </>
@@ -199,15 +207,15 @@ export default function Admin() {
   );
 }
 
-// עיצובים (נשארים זהים עם שיפורים קלים)
+// עיצובים
 const resultsBox = { background: '#fff', borderRadius: '12px', marginTop: '5px', border: '1px solid #ddd', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' };
 const resultItem = { display: 'flex', alignItems: 'center', padding: '12px', gap: '15px', cursor: 'pointer', borderBottom: '1px solid #eee' };
 const resImg = { width: '35px', height: '50px', borderRadius: '4px', objectFit: 'cover' };
 const adminLayout = { background: "#F5F5F7", minHeight: "100vh", direction: "rtl", fontFamily: "Assistant" };
 const container = { maxWidth: "600px", margin: "20px auto", padding: "0 20px" };
 const cardStyle = { background: "#fff", padding: "25px", borderRadius: "24px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", marginBottom:'20px' };
-const inStyle = { width: "100%", padding: "14px", margin: "8px 0", borderRadius: "12px", border: "1px solid #ddd", fontSize: "16px", outline: "none", boxSizing: 'border-box', transition: '0.3s' };
-const btnMain = { background: "#0071E3", color: "#fff", border: "none", padding: "16px", borderRadius: "14px", fontWeight: "bold", cursor: "pointer", fontSize:'16px' };
+const inStyle = { width: "100%", padding: "14px", margin: "8px 0", borderRadius: "12px", border: "1px solid #ddd", fontSize: "16px", outline: "none", boxSizing: 'border-box' };
+const btnMain = { background: "#0071E3", color: "#fff", border: "none", padding: "16px", borderRadius: "14px", fontWeight: "bold", cursor: "pointer" };
 const typeRow = { display: "flex", gap: "10px", margin: "15px 0" };
 const activeT = { flex: 1, padding: "12px", background: "#0071E3", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "bold" };
 const inactiveT = { flex: 1, padding: "12px", background: "#f5f5f7", border: "1px solid #ddd", borderRadius: "12px", cursor: "pointer" };
