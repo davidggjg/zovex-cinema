@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { 
   Edit2, Trash2, Settings, Plus, Sparkles, ChevronDown, 
-  ChevronUp, Image as ImageIcon, ExternalLink, Loader2, CheckCircle, AlertCircle, X, Search 
+  ChevronUp, Image as ImageIcon, ExternalLink, Loader2, CheckCircle, AlertCircle, X, Cpu 
 } from "lucide-react";
 
 const Toast = ({ message, type, onClose }) => (
@@ -21,40 +21,40 @@ export default function Admin() {
   const [passcode, setPasscode] = useState("");
   const [activeTab, setActiveTab] = useState("content");
   
+  // State לטופס
   const [formData, setFormData] = useState({
     id: null, title: "", url: "", thumb: "", description: "",
-    category: "כללי", type: "movie", season: 1, episode: ""
+    category: "", type: "movie", season: 1, episode: ""
   });
 
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [tmdbResults, setTmdbResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   const [toast, setToast] = useState(null);
   const [expandedSeries, setExpandedSeries] = useState(null);
 
-  // רשימת קטגוריות נפוצות - אפשר להוסיף כאן עוד
-  const categoryOptions = ["פעולה", "קומדיה", "דרמה", "ילדים", "אימה", "אנימציה", "דוקו", "מדע בדיוני", "כללי"];
+  // שליפת קטגוריות קיימות מהדאטה כדי להציע למשתמש
+  const { data: movies = [], isLoading } = useQuery({
+    queryKey: ["movies"],
+    queryFn: () => base44.entities.Movie.list("-created_date")
+  });
+
+  const existingCategories = useMemo(() => {
+    const cats = new Set(movies.map(m => m.category).filter(Boolean));
+    return Array.from(cats);
+  }, [movies]);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const { data: movies = [], isLoading } = useQuery({
-    queryKey: ["movies"],
-    queryFn: () => base44.entities.Movie.list("-created_date")
-  });
-
-  // חיפוש אוטומטי תוך כדי הקלדה (Debounce)
+  // חיפוש אוטומטי ב-TMDB
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (formData.title.length > 2 && !formData.id) {
-        searchTMDB(formData.title);
-      } else {
-        setTmdbResults([]);
-      }
-    }, 500);
+      if (formData.title.length > 2 && !formData.id) searchTMDB(formData.title);
+    }, 600);
     return () => clearTimeout(timer);
   }, [formData.title]);
 
@@ -66,41 +66,19 @@ export default function Admin() {
       const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${key}&query=${encodeURIComponent(query)}&language=he-IL`);
       const data = await res.json();
       setTmdbResults(data.results || []);
-    } catch (err) {
-      console.error("TMDB Error", err);
-    } finally {
-      setIsSearching(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setIsSearching(false); }
   };
 
   const selectTmdbItem = (item) => {
-    // מיפוי ז'אנרים לקטגוריות שלנו (ה-AI ה"חכם" שביקשת)
-    const genreMap = { 28: "פעולה", 35: "קומדיה", 18: "דרמה", 10751: "ילדים", 16: "אנימציה", 27: "אימה", 99: "דוקו" };
-    const autoCat = item.genre_ids ? genreMap[item.genre_ids[0]] || "כללי" : "כללי";
-
     setFormData(prev => ({
       ...prev,
       title: item.title || item.name,
       description: item.overview,
-      thumb: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : prev.thumb,
-      category: autoCat
+      thumb: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : prev.thumb
     }));
     setTmdbResults([]);
-  };
-
-  const verifyKey = async () => {
-    const key = localStorage.getItem("tmdb_key");
-    if (!key) return showToast("אנא הכנס מפתח קודם", "error");
-    setIsVerifying(true);
-    try {
-      const res = await fetch(`https://api.themoviedb.org/3/configuration?api_key=${key}`);
-      if (res.ok) showToast("המפתח תקין! המערכת מסונכרנת");
-      else throw new Error();
-    } catch (err) {
-      showToast("מפתח לא תקין", "error");
-    } finally {
-      setIsVerifying(false);
-    }
+    showToast("הנתונים נמשכו מ-TMDB");
   };
 
   const saveMutation = useMutation({
@@ -108,17 +86,21 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       resetForm();
-      showToast("נשמר בהצלחה");
+      showToast("פורסם בהצלחה!");
     }
   });
 
-  const resetForm = () => setFormData({ id: null, title: "", url: "", thumb: "", description: "", category: "כללי", type: "movie", season: 1, episode: "" });
+  const resetForm = () => {
+    setFormData({ id: null, title: "", url: "", thumb: "", description: "", category: "", type: "movie", season: 1, episode: "" });
+    setIsAddingNewCategory(false);
+    setNewCategoryName("");
+  };
 
   const startEdit = (item) => {
     setFormData({
       id: item.id, title: item.title.split(" - ")[0], url: item.video_id,
       thumb: item.thumbnail_url, description: item.description,
-      category: item.category || "כללי", type: item.category === "סדרות" ? "series" : "movie",
+      category: item.category || "", type: item.category === "סדרות" ? "series" : "movie",
       season: item.metadata?.season || 1, episode: item.metadata?.episode || ""
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -150,38 +132,39 @@ export default function Admin() {
       <main className="admin-content">
         {activeTab === 'settings' ? (
           <section className="card fade-in">
-            <h3>הגדרות וסריקה</h3>
+            <h3>מפתחות מערכת (AI)</h3>
             <div className="field">
-              <label>מפתח TMDB API</label>
-              <div className="input-with-action">
-                <input type="password" placeholder="הכנס מפתח..." defaultValue={localStorage.getItem("tmdb_key")} onChange={e => localStorage.setItem("tmdb_key", e.target.value)} />
-                <button className="ai-btn" onClick={verifyKey} disabled={isVerifying}>
-                  {isVerifying ? <Loader2 className="spin" size={18}/> : "סרוק מפתח"}
-                </button>
+              <label>מפתח TMDB (למידע ותמונות)</label>
+              <input type="password" placeholder="TMDB API Key..." defaultValue={localStorage.getItem("tmdb_key")} onChange={e => localStorage.setItem("tmdb_key", e.target.value)} />
+            </div>
+            <div className="field">
+              <label>מפתח Groq (לתיאורים חכמים)</label>
+              <div className="input-with-icon">
+                <Cpu size={18} className="input-icon"/>
+                <input type="password" placeholder="Groq API Key..." defaultValue={localStorage.getItem("groq_key")} onChange={e => localStorage.setItem("groq_key", e.target.value)} style={{paddingRight: '40px'}} />
               </div>
             </div>
+            <p className="hint">מפתחות אלו מאפשרים למערכת למשוך נתונים ולכתוב תקצירים באופן אוטומטי.</p>
           </section>
         ) : (
           <div className="fade-in">
             <section className="card editor-card">
               <div className="type-toggle">
-                <button className={formData.type === 'movie' ? 'active' : ''} onClick={() => setFormData({...formData, type: 'movie'})}>סרט</button>
-                <button className={formData.type === 'series' ? 'active' : ''} onClick={() => setFormData({...formData, type: 'series'})}>סדרה</button>
+                <button className={formData.type === 'movie' ? 'active' : ''} onClick={() => setFormData({...formData, type: 'movie'})}>🎬 סרט</button>
+                <button className={formData.type === 'series' ? 'active' : ''} onClick={() => setFormData({...formData, type: 'series', category: 'סדרות'})}>📺 סדרה</button>
               </div>
 
               <div className="field" style={{position: 'relative'}}>
-                <label>שם הכותר (הקלד להצעות)</label>
-                <div className="input-with-action">
-                  <input name="title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="למשל: ספיידרמן" />
-                  {isSearching && <Loader2 className="spin input-loader" size={18}/>}
-                </div>
+                <label>שם הסרט/סדרה</label>
+                <input value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="הקלד שם..." />
+                {isSearching && <Loader2 className="spin input-loader" size={18}/>}
                 
                 {tmdbResults.length > 0 && (
-                  <div className="suggestions-dropdown">
-                    {tmdbResults.slice(0, 5).map(item => (
-                      <div key={item.id} className="suggestion-item" onClick={() => selectTmdbItem(item)}>
+                  <div className="suggestions">
+                    {tmdbResults.slice(0, 4).map(item => (
+                      <div key={item.id} className="sug-item" onClick={() => selectTmdbItem(item)}>
                         <img src={`https://image.tmdb.org/t/p/w92${item.poster_path}`} alt="" />
-                        <span>{item.title || item.name} ({new Date(item.release_date || item.first_air_date).getFullYear()})</span>
+                        <span>{item.title || item.name}</span>
                       </div>
                     ))}
                   </div>
@@ -191,10 +174,29 @@ export default function Admin() {
               <div className="grid-2">
                 <div className="field">
                   <label>קטגוריה</label>
-                  <select className="admin-input" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
-                    {categoryOptions.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    <option value="סדרות">סדרות (אוטומטי)</option>
-                  </select>
+                  {!isAddingNewCategory ? (
+                    <select 
+                      value={formData.category} 
+                      onChange={(e) => {
+                        if (e.target.value === "NEW") setIsAddingNewCategory(true);
+                        else setFormData({...formData, category: e.target.value});
+                      }}
+                    >
+                      <option value="">ללא קטגוריה</option>
+                      {existingCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                      <option value="NEW" style={{fontWeight: 'bold', color: '#007aff'}}>+ קטגוריה חדשה...</option>
+                    </select>
+                  ) : (
+                    <div className="input-with-action">
+                      <input 
+                        autoFocus 
+                        placeholder="שם הקטגוריה..." 
+                        value={newCategoryName} 
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                      />
+                      <button className="small-cancel" onClick={() => setIsAddingNewCategory(false)}><X size={14}/></button>
+                    </div>
+                  )}
                 </div>
                 {formData.type === 'series' && (
                   <div className="field">
@@ -205,8 +207,8 @@ export default function Admin() {
               </div>
 
               <div className="field">
-                <label>קישור וידאו</label>
-                <input value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} placeholder="הדבק לינק כאן" />
+                <label>לינק לוידאו</label>
+                <input value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} placeholder="YouTube / Drive Link" />
               </div>
 
               <div className="field">
@@ -214,24 +216,32 @@ export default function Admin() {
                 <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
               </div>
 
-              <button className="save-btn" onClick={() => saveMutation.mutate({
-                title: formData.type === 'series' ? `${formData.title} - עונה ${formData.season} פרק ${formData.episode}` : formData.title,
-                description: formData.description, video_id: formData.url,
-                category: formData.type === 'series' ? "סדרות" : formData.category,
-                thumbnail_url: formData.thumb, metadata: { season: formData.season, episode: formData.episode }
-              })}>
-                {saveMutation.isLoading ? "שומר..." : "פרסם עכשיו"}
+              <button className="save-btn" onClick={() => {
+                const finalCategory = isAddingNewCategory ? newCategoryName : formData.category;
+                saveMutation.mutate({
+                  title: formData.type === 'series' ? `${formData.title} - עונה ${formData.season} פרק ${formData.episode}` : formData.title,
+                  description: formData.description,
+                  video_id: formData.url,
+                  category: formData.type === 'series' ? "סדרות" : finalCategory,
+                  thumbnail_url: formData.thumb,
+                  metadata: { season: formData.season, episode: formData.episode }
+                });
+              }}>
+                {saveMutation.isLoading ? <Loader2 className="spin" size={20}/> : (formData.id ? "עדכן תוכן" : "פרסם עכשיו")}
               </button>
             </section>
 
-            <section className="card">
-              <h4>תוכן קיים</h4>
+            <section className="list-section">
+              <h3>ניהול תוכן</h3>
               {movies.map(m => (
-                <div key={m.id} className="row">
-                  <span>{m.title} <small>({m.category})</small></span>
-                  <div className="actions">
-                    <button onClick={() => startEdit(m)}><Edit2 size={14}/></button>
-                    <button className="del" onClick={() => base44.entities.Movie.delete(m.id).then(() => queryClient.invalidateQueries(["movies"]))}><Trash2 size={14}/></button>
+                <div key={m.id} className="item-row">
+                  <div className="item-info">
+                    <strong>{m.title}</strong>
+                    {m.category && <span className="tag">{m.category}</span>}
+                  </div>
+                  <div className="item-actions">
+                    <button onClick={() => startEdit(m)}><Edit2 size={16}/></button>
+                    <button className="del" onClick={() => window.confirm("למחוק?") && base44.entities.Movie.delete(m.id).then(() => queryClient.invalidateQueries(["movies"]))}><Trash2 size={16}/></button>
                   </div>
                 </div>
               ))}
@@ -245,32 +255,38 @@ export default function Admin() {
 }
 
 const CSS = `
-  .admin-page { background: #f2f2f7; min-height: 100vh; direction: rtl; font-family: 'Assistant', sans-serif; }
-  .admin-nav { background: #fff; padding: 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #d1d1d6; position: sticky; top:0; z-index:100; }
+  .admin-page { background: #f2f2f7; min-height: 100vh; direction: rtl; font-family: 'Assistant', sans-serif; padding-bottom: 40px; }
+  .admin-nav { background: #fff; padding: 15px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #d1d1d6; position: sticky; top:0; z-index:100; }
   .admin-logo span { color: #007aff; font-weight: 900; }
   .nav-group { display: flex; gap: 15px; }
   .nav-group button.active { color: #007aff; }
   .admin-content { max-width: 500px; margin: 20px auto; padding: 0 15px; }
-  .card { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+  .card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); margin-bottom: 20px; }
   .field { margin-bottom: 15px; }
-  .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 5px; }
-  input, textarea, select { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 15px; box-sizing: border-box; }
-  .input-with-action { display: flex; gap: 10px; }
-  .ai-btn { background: #007aff; color: #fff; border: none; padding: 0 15px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
-  .suggestions-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d1d1d6; border-radius: 10px; z-index: 50; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-  .suggestion-item { display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-bottom: 1px solid #f2f2f7; }
-  .suggestion-item:hover { background: #f2f2f7; }
-  .suggestion-item img { width: 35px; height: 50px; border-radius: 4px; object-fit: cover; }
-  .save-btn { width: 100%; background: #007aff; color: #fff; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; }
-  .type-toggle { display: flex; background: #e3e3e8; padding: 3px; border-radius: 10px; margin-bottom: 20px; }
-  .type-toggle button { flex: 1; border: none; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; background: none; }
-  .type-toggle button.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; }
-  .actions { display: flex; gap: 10px; }
+  .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #3a3a3c; }
+  input, textarea, select { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 16px; box-sizing: border-box; background: #f9f9fb; transition: 0.2s; }
+  input:focus { border-color: #007aff; outline: none; background: #fff; }
+  .input-with-icon { position: relative; }
+  .input-icon { position: absolute; right: 12px; top: 14px; color: #8e8e93; }
+  .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border-radius: 12px; box-shadow: 0 15px 45px rgba(0,0,0,0.1); z-index: 50; overflow: hidden; }
+  .sug-item { display: flex; align-items: center; gap: 12px; padding: 10px; cursor: pointer; border-bottom: 1px solid #f2f2f7; }
+  .sug-item:hover { background: #f2f2f7; }
+  .sug-item img { width: 35px; height: 50px; border-radius: 4px; object-fit: cover; }
+  .type-toggle { display: flex; background: #e3e3e8; padding: 4px; border-radius: 12px; margin-bottom: 20px; }
+  .type-toggle button { flex: 1; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 700; background: none; transition: 0.2s; }
+  .type-toggle button.active { background: #fff; color: #007aff; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .save-btn { width: 100%; background: #007aff; color: #fff; border: none; padding: 16px; border-radius: 14px; font-weight: 800; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .item-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f2f2f7; }
+  .tag { font-size: 11px; background: #eef6ff; color: #007aff; padding: 2px 8px; border-radius: 6px; margin-right: 8px; font-weight: 700; }
+  .item-actions { display: flex; gap: 10px; }
+  .item-actions button { background: #f2f2f7; border: none; padding: 8px; border-radius: 8px; cursor: pointer; }
   .del { color: #ff3b30; }
-  .input-loader { position: absolute; left: 60px; top: 38px; color: #007aff; }
-  .toast-message { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 12px 20px; border-radius: 50px; display: flex; align-items: center; gap: 10px; z-index: 1000; }
+  .input-loader { position: absolute; left: 15px; top: 40px; color: #007aff; }
+  .small-cancel { background: #ff3b30; color: #fff; border: none; padding: 0 10px; border-radius: 10px; margin-right: 5px; cursor: pointer; }
+  .hint { font-size: 12px; color: #8e8e93; margin-top: 10px; }
+  .toast-message { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 14px 24px; border-radius: 50px; display: flex; align-items: center; gap: 12px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .login-box { background: #fff; padding: 40px; border-radius: 25px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.1); width: 320px; }
 `;
