@@ -1,4 +1,4 @@
-jsx
+
 import React, { useState, useMemo, useEffect } from "react";
 import { Search, Send, Play } from "lucide-react";
 import { Movie } from "@/entities/Movie";
