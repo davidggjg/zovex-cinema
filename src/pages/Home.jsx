@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { Search, X, Play, ChevronLeft, MessageCircle } from "lucide-react";
+import { Search, X, Play, ChevronLeft, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -22,7 +22,6 @@ export default function Home() {
     if (searchQuery === "ZovexAdmin2026") navigate("/admin");
   }, [searchQuery, navigate]);
 
-  // לוגיקה לקיבוץ סדרות - ללא הפרדה של "פרק אחרון"
   const { displayItems, categories } = useMemo(() => {
     const seriesMap = new Map();
     const films = [];
@@ -30,18 +29,10 @@ export default function Home() {
 
     movies.forEach(item => {
       if (item.category) cats.add(item.category);
-      
       if (item.category === "סדרות") {
-        // לוקח את המילה הראשונה בלבד כשם הסדרה לצורך הקיבוץ
         const baseName = item.title.split(" ")[0].trim(); 
-        
         if (!seriesMap.has(baseName)) {
-          seriesMap.set(baseName, { 
-            ...item, 
-            title: baseName, 
-            type: 'series', 
-            episodes: [] 
-          });
+          seriesMap.set(baseName, { ...item, title: baseName, type: 'series', episodes: [] });
         }
         seriesMap.get(baseName).episodes.push(item);
       } else {
@@ -49,26 +40,12 @@ export default function Home() {
       }
     });
 
-    // מיון פרקים לפי מספר הפרק שהגדרת (כדי שיהיה סדר כרונולוגי)
     seriesMap.forEach(s => {
       s.episodes.sort((a, b) => (parseInt(a.metadata?.episode) || 0) - (parseInt(b.metadata?.episode) || 0));
     });
 
-    return { 
-      displayItems: [...films, ...Array.from(seriesMap.values())], 
-      categories: Array.from(cats) 
-    };
+    return { displayItems: [...films, ...Array.from(seriesMap.values())], categories: Array.from(cats) };
   }, [movies]);
-
-  const similarMovies = useMemo(() => {
-    if (!current || current.type === 'series') return [];
-    const firstWord = current.title.split(" ")[0];
-    return movies.filter(m => 
-      m.id !== current.id && 
-      m.title.includes(firstWord) && 
-      m.category !== "סדרות"
-    ).slice(0, 6);
-  }, [current, movies]);
 
   const filteredItems = displayItems.filter(item => {
     const matchesCat = activeCat === "הכל" || item.category === activeCat;
@@ -101,24 +78,9 @@ export default function Home() {
               </div>
 
               {current.type === 'movie' ? (
-                <>
-                  <button className="play-action-btn" onClick={() => setVideoData({url: current.video_id})}>
-                    <Play fill="white" size={24} /> צפייה ישירה
-                  </button>
-                  {similarMovies.length > 0 && (
-                    <div className="similar-section">
-                      <h3 className="section-title">סרטים דומים</h3>
-                      <div className="similar-grid">
-                        {similarMovies.map(m => (
-                          <div key={m.id} className="small-card" onClick={() => { setCurrent(m); window.scrollTo(0,0); }}>
-                            <img src={m.thumbnail_url} alt="" />
-                            <p>{m.title}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
+                <button className="play-action-btn" onClick={() => setVideoData({url: current.video_id})}>
+                  <Play fill="white" size={24} /> צפייה ישירה
+                </button>
               ) : (
                 <div className="series-list">
                   <h3 className="section-title">פרקי הסדרה</h3>
@@ -127,7 +89,6 @@ export default function Home() {
                       <div key={ep.id} className="episode-row" onClick={() => setVideoData({url: ep.video_id})}>
                         <div className="ep-info">
                           <div className="ep-play-icon"><Play size={14} fill="white"/></div>
-                          {/* כאן זה מציג בדיוק את הכותרת המלאה מהניהול */}
                           <span>{ep.title}</span>
                         </div>
                         <ChevronLeft size={18} color="#86868B"/>
@@ -157,11 +118,14 @@ export default function Home() {
         )}
       </main>
 
-      {/* כפתור תמיכה צף - טלגרם */}
+      {/* כפתור תמיכה צף משופר */}
       <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" className="fab-support">
         <div className="fab-content">
-          <span className="fab-text">רוצים שנוסיף סרט / סדרה? בעיות תמיכה? לחצו כאן</span>
-          <div className="fab-icon"><MessageCircle size={24} color="white" /></div>
+          <span className="fab-text">🚀 בקשת סרטים ותמיכה</span>
+          <div className="fab-icon">
+            <HelpCircle size={26} color="white" />
+            <div className="pulse-ring"></div>
+          </div>
         </div>
       </a>
 
@@ -196,49 +160,36 @@ const CSS = `
   .search-bar { background: #E8E8ED; padding: 10px 15px; border-radius: 12px; display: flex; align-items: center; width: 220px; }
   .search-bar input { background: none; border: none; outline: none; margin-right: 10px; width: 100%; font-size: 14px; }
 
-  .category-strip { display: flex; gap: 10px; padding: 20px 5%; overflow-x: auto; scrollbar-width: none; }
-  .category-strip button { padding: 8px 18px; border-radius: 20px; border: none; background: #FFF; cursor: pointer; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-  .category-strip button.active { background: var(--blue); color: #FFF; }
-
   .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; padding: 0 5% 50px; }
   .movie-card { cursor: pointer; transition: 0.3s ease; }
   .card-thumb { position: relative; aspect-ratio: 2/3; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
   .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
   .series-tag { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.8); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-  .movie-card h4 { margin-top: 10px; font-size: 14px; text-align: center; font-weight: 700; }
 
-  .detail-view { background: #FFF; min-height: 100vh; position: relative; }
-  .back-btn { position: absolute; top: 20px; right: 20px; z-index: 100; background: #FFF; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; }
-  .hero-banner { width: 100%; height: 45vh; background: #000; }
-  .hero-banner img { width: 100%; height: 100%; object-fit: contain; }
-  .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, #FFF); }
-
-  .info-section { padding: 0 8% 50px; max-width: 850px; margin: -40px auto 0; position: relative; z-index: 10; }
-  .info-section h1 { font-size: 38px; font-weight: 900; margin-bottom: 20px; }
-  .summary-card { background: #F5F5F7; padding: 25px; border-radius: 25px; border: 1px solid #E5E5E5; margin-bottom: 30px; }
-  .summary-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .blue-dash { width: 35px; height: 5px; background: var(--blue); border-radius: 10px; }
-  .summary-text { font-size: 17px; line-height: 1.8; color: #333; }
-
-  .play-action-btn { background: var(--blue); color: #FFF; border: none; padding: 18px 50px; border-radius: 18px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
-  .section-title { font-size: 22px; font-weight: 800; margin: 30px 0 15px; border-right: 4px solid var(--blue); padding-right: 12px; }
-
-  /* כפתור צף טלגרם */
-  .fab-support { position: fixed; bottom: 25px; left: 25px; text-decoration: none; z-index: 2000; }
-  .fab-content { display: flex; align-items: center; background: #222; padding: 5px 5px 5px 15px; border-radius: 50px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: 0.3s; max-width: 45px; overflow: hidden; white-space: nowrap; }
-  .fab-support:hover .fab-content { max-width: 450px; background: var(--blue); }
-  .fab-icon { background: var(--blue); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .fab-text { color: white; font-size: 13px; font-weight: bold; margin-left: 10px; opacity: 0; transition: 0.3s; }
+  /* כפתור תמיכה צף - עיצוב חדש */
+  .fab-support { position: fixed; bottom: 30px; left: 30px; text-decoration: none; z-index: 2000; }
+  .fab-content { display: flex; align-items: center; background: #1c1c1e; padding: 6px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 52px; overflow: hidden; white-space: nowrap; }
+  .fab-support:hover .fab-content { max-width: 300px; background: var(--blue); padding-right: 20px; }
+  .fab-icon { background: var(--blue); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+  .fab-text { color: white; font-size: 14px; font-weight: 800; margin-left: 12px; opacity: 0; transition: 0.3s; }
   .fab-support:hover .fab-text { opacity: 1; }
 
-  .episode-row { background: #1D1D1F; color: #FFF; padding: 16px 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; }
-  .ep-info { display: flex; align-items: center; gap: 12px; }
-  .ep-play-icon { background: var(--blue); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  /* אנימציית דופק */
+  .pulse-ring { position: absolute; width: 100%; height: 100%; background: var(--blue); border-radius: 50%; opacity: 0.6; animation: pulse 2s infinite; z-index: -1; }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
 
+  /* שאר העיצוב */
+  .detail-view { background: #FFF; min-height: 100vh; position: relative; }
+  .back-btn { position: absolute; top: 20px; right: 20px; z-index: 100; background: #FFF; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+  .hero-banner { width: 100%; height: 45vh; background: #000; }
+  .hero-banner img { width: 100%; height: 100%; object-fit: contain; }
+  .info-section { padding: 0 8% 50px; max-width: 850px; margin: -40px auto 0; position: relative; z-index: 10; }
+  .summary-card { background: #F5F5F7; padding: 25px; border-radius: 25px; border: 1px solid #E5E5E5; margin-bottom: 30px; }
+  .episode-row { background: #1D1D1F; color: #FFF; padding: 16px 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .video-overlay-screen { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; }
-  .video-controls { padding: 15px; }
-  .close-player { background: var(--blue); color: #FFF; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; }
   .iframe-container { flex: 1; position: relative; }
-  .safety-blocker { position: absolute; top: 0; right: 0; width: 100%; height: 60px; z-index: 10001; }
   iframe { width: 100%; height: 100%; border: none; }
 `;
