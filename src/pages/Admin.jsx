@@ -1,125 +1,189 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Settings, Plus, Sparkles, Loader2, Film, Tv } from "lucide-react";
+import { Edit2, Trash2, Settings, Plus, Sparkles, Loader2, Film, Tv, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Admin() {
   const [passcode, setPasscode] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [activeTab, setActiveTab] = useState("content"); // content | keys
-  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("content");
+  const [expandedSeries, setExpandedSeries] = useState(null);
+  const [status, setStatus] = useState({ groq: "pending", tmdb: "pending" });
   const queryClient = useQueryClient();
 
-  // מפתחות
   const [groqKey, setGroqKey] = useState(localStorage.getItem("groq_key") || "");
   const [tmdbKey, setTmdbKey] = useState(localStorage.getItem("tmdb_key") || "");
 
-  // טופס
   const [editingId, setEditingId] = useState(null);
   const [type, setType] = useState("movie");
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [newCategory, setNewCategory] = useState("");
   const [season, setSeason] = useState("1");
   const [episode, setEpisode] = useState("");
 
-  const { data: movies = [] } = useQuery({
-    queryKey: ["movies"],
-    queryFn: () => base44.entities.Movie.list("-created_date"),
-  });
+  const { data: movies = [] } = useQuery({ queryKey: ["movies"], queryFn: () => base44.entities.Movie.list("-created_date") });
 
-  const categories = useMemo(() => [...new Set(movies.map(m => m.category).filter(Boolean))], [movies]);
+  // בדיקת תקינות מפתחות
+  useEffect(() => {
+    const checkKeys = async () => {
+      if (groqKey) {
+        try {
+          const res = await fetch("https://api.groq.com/openai/v1/models", { headers: { Authorization: `Bearer ${groqKey}` } });
+          setStatus(prev => ({ ...prev, groq: res.ok ? "ok" : "invalid" }));
+        } catch { setStatus(prev => ({ ...prev, groq: "error" })); }
+      }
+      if (tmdbKey) {
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3/configuration?api_key=${tmdbKey}`);
+          setStatus(prev => ({ ...prev, tmdb: res.ok ? "ok" : "invalid" }));
+        } catch { setStatus(prev => ({ ...prev, tmdb: "error" })); }
+      }
+    };
+    checkKeys();
+  }, [groqKey, tmdbKey]);
+
+  // פונקציית הקסם: משיכת מידע אוטומטי (תמונה, שנה, תקציר)
+  const autoFill = async () => {
+    if (!tmdbKey) return alert("חובה מפתח TMDB בהגדרות!");
+    try {
+      const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(title)}&language=he-IL`);
+      const data = await res.json();
+      if (data.results?.[0]) {
+        const item = data.results[0];
+        const year = (item.release_date || item.first_air_date || "").split("-")[0];
+        setTitle(prev => year ? `${prev} (${year})` : prev);
+        setDescription(item.overview);
+        const imgUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
+        // שמירת התמונה בתוך שדה נסתר או מטריקה
+        localStorage.setItem("temp_thumb", imgUrl);
+        alert("המידע נמשך בהצלחה!");
+      }
+    } catch { alert("שגיאה במשיכת נתונים"); }
+  };
 
   const saveMutation = useMutation({
     mutationFn: (data) => editingId ? base44.entities.Movie.update(editingId, data) : base44.entities.Movie.create(data),
-    onSuccess: () => { queryClient.invalidateQueries(["movies"]); resetForm(); alert("נשמר בהצלחה!"); }
+    onSuccess: () => { queryClient.invalidateQueries(["movies"]); resetForm(); }
   });
 
-  const resetForm = () => { setEditingId(null); setTitle(""); setUrl(""); setDescription(""); setEpisode(""); setCategory(""); setNewCategory(""); };
+  const resetForm = () => { setEditingId(null); setTitle(""); setUrl(""); setDescription(""); setEpisode(""); };
+
+  // קיבוץ סדרות לתצוגת ניהול
+  const groupedContent = useMemo(() => {
+    const groups = { movies: [], series: {} };
+    movies.forEach(m => {
+      if (m.category === "סדרות" || m.metadata?.season) {
+        const base = m.title.split(" - ")[0];
+        if (!groups.series[base]) groups.series[base] = [];
+        groups.series[base].push(m);
+      } else { groups.movies.push(m); }
+    });
+    return groups;
+  }, [movies]);
 
   if (!isAuthorized) return (
-    <div style={authContainer}>
-      <div style={authCard}>
-        <h2>ZOVEX ADMIN</h2>
-        <input type="password" placeholder="קוד כניסה" onChange={e => setPasscode(e.target.value)} style={inStyle} />
-        <button onClick={() => passcode === "ZovexAdmin2026" ? setIsAuthorized(true) : alert("קוד שגוי")} style={btnMain}>כניסה</button>
+    <div style={authStyle}>
+      <div style={cardStyle}>
+        <h2 style={{color:'#0071E3'}}>ZOVEX TERMINAL</h2>
+        <input type="password" placeholder="Passcode" onChange={e => setPasscode(e.target.value)} style={inStyle} />
+        <button onClick={() => passcode === "ZovexAdmin2026" ? setIsAuthorized(true) : alert("Access Denied")} style={btnMain}>AUTHORIZE</button>
       </div>
     </div>
   );
 
   return (
-    <div style={adminLayout}>
-      <header style={header}>
-        <div style={logo}>ZO<span>VEX</span> <small>ADMIN</small></div>
-        <div style={nav}>
-          <button onClick={() => setActiveTab("keys")} style={iconBtn}><Settings size={20}/></button>
-          <button onClick={() => setActiveTab("content")} style={iconBtn}><Plus size={20}/></button>
-          <Link to="/" style={link}>חזרה לאתר</Link>
+    <div style={adminBg}>
+      <header style={headerStyle}>
+        <div style={logoStyle}>ZO<span>VEX</span> 🛰️</div>
+        <div style={{display:'flex', gap:'10px'}}>
+          <button onClick={() => setActiveTab("keys")} style={iconBtn}><Settings/></button>
+          <button onClick={() => setActiveTab("content")} style={iconBtn}><Plus/></button>
+          <Link to="/" style={linkStyle}>EXIT</Link>
         </div>
       </header>
 
-      <div style={container}>
+      <div style={contentWrap}>
         {activeTab === "keys" ? (
-          <div style={card}>
-            <h3>ניהול מפתחות מערכת</h3>
-            <label>Groq API Key (לתקצירים):</label>
-            <input type="password" value={groqKey} onChange={e => {setGroqKey(e.target.value); localStorage.setItem("groq_key", e.target.value)}} style={inStyle} />
-            <label>TMDB API Key (למידע נוסף):</label>
-            <input type="password" value={tmdbKey} onChange={e => {setTmdbKey(e.target.value); localStorage.setItem("tmdb_key", e.target.value)}} style={inStyle} />
-            <button onClick={() => alert("המפתחות נשמרו בדפדפן")} style={btnMain}>עדכן מפתחות</button>
+          <div style={cardStyle}>
+            <h3>Key Management Center</h3>
+            <div style={statusGrid}>
+              <div style={statusBox}>
+                <span>Groq AI (Summaries)</span>
+                {status.groq === "ok" ? <CheckCircle color="green"/> : <XCircle color="red"/>}
+                <input type="password" value={groqKey} onChange={e => {setGroqKey(e.target.value); localStorage.setItem("groq_key", e.target.value)}} style={inStyle} />
+              </div>
+              <div style={statusBox}>
+                <span>TMDB API (Images/Metadata)</span>
+                {status.tmdb === "ok" ? <CheckCircle color="green"/> : <XCircle color="red"/>}
+                <input type="password" value={tmdbKey} onChange={e => {setTmdbKey(e.target.value); localStorage.setItem("tmdb_key", e.target.value)}} style={inStyle} />
+              </div>
+            </div>
           </div>
         ) : (
           <>
-            <div style={card}>
-              <h3>{editingId ? "עריכת תוכן" : "הוספת סרט או סדרה"}</h3>
-              <div style={typeSwitch}>
-                <button onClick={() => setType("movie")} style={type === "movie" ? activeT : inactiveT}>🎬 סרט</button>
-                <button onClick={() => setType("series")} style={type === "series" ? activeT : inactiveT}>📺 סדרה</button>
+            <div style={cardStyle}>
+              <div style={{display:'flex', justifyContent:'space-between'}}>
+                <h3>{editingId ? "Edit Content" : "Add Content"}</h3>
+                <button onClick={autoFill} style={aiBtn}><Sparkles size={16}/> Auto-Fill Info</button>
               </div>
-
+              <div style={typeRow}>
+                <button onClick={() => setType("movie")} style={type === "movie" ? activeT : inactiveT}>Movie</button>
+                <button onClick={() => setType("series")} style={type === "series" ? activeT : inactiveT}>Series</button>
+              </div>
               <input placeholder="שם הסרט/סדרה" value={title} onChange={e => setTitle(e.target.value)} style={inStyle} />
-              
-              <div style={rowInput}>
-                <select value={category} onChange={e => setCategory(e.target.value)} style={inStyle}>
-                  <option value="">בחר קטגוריה...</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <input placeholder="או הוסף קטגוריה חדשה" value={newCategory} onChange={e => setNewCategory(e.target.value)} style={inStyle} />
-              </div>
-
               {type === "series" && (
-                <div style={rowInput}>
-                  <input type="number" placeholder="עונה" value={season} onChange={e => setSeason(e.target.value)} style={inStyle} />
-                  <input type="number" placeholder="מספר פרק" value={episode} onChange={e => setEpisode(e.target.value)} style={inStyle} />
+                <div style={{display:'flex', gap:'10px'}}>
+                  <input placeholder="עונה" value={season} onChange={e => setSeason(e.target.value)} style={inStyle} />
+                  <input placeholder="פרק" value={episode} onChange={e => setEpisode(e.target.value)} style={inStyle} />
                 </div>
               )}
-
-              <input placeholder="מזהה וידאו (Video ID)" value={url} onChange={e => setUrl(e.target.value)} style={inStyle} />
-              <textarea placeholder="תקציר..." value={description} onChange={e => setDescription(e.target.value)} style={{...inStyle, height: '100px'}} />
-
+              <input placeholder="Rumble ID" value={url} onChange={e => setUrl(e.target.value)} style={inStyle} />
+              <textarea placeholder="תקציר..." value={description} onChange={e => setDescription(e.target.value)} style={{...inStyle, height:'80px'}} />
               <button onClick={() => saveMutation.mutate({
                 title: type === "series" ? `${title} - עונה ${season} פרק ${episode}` : title,
-                description, video_id: url, category: newCategory || category,
-                metadata: type === "series" ? { season, episode } : {}
-              })} style={btnMain}>שמור ופרסם</button>
+                description, video_id: url, category: type === "series" ? "סדרות" : "סרטים",
+                thumbnail_url: localStorage.getItem("temp_thumb"),
+                metadata: { season, episode }
+              })} style={btnMain}>DEPLOY CONTENT</button>
             </div>
 
-            <div style={{marginTop: '40px'}}>
-              <h3>רשימת תוכן (ניהול מלאי)</h3>
-              <div style={card}>
-                {movies.map(m => (
+            <div style={{marginTop:'30px'}}>
+              <h3>Inventory Management</h3>
+              <div style={cardStyle}>
+                <h4>Movies</h4>
+                {groupedContent.movies.map(m => (
                   <div key={m.id} style={itemRow}>
-                    <div style={{display:'flex', alignItems:'center', gap:'10px', flex:1}}>
-                      {m.category === "סדרות" ? <Tv size={16}/> : <Film size={16}/>}
-                      <div style={{fontWeight:'bold'}}>{m.title} <small style={{color:'#888'}}>({m.category})</small></div>
+                    <span>{m.title}</span>
+                    <div>
+                      <button onClick={() => { setEditingId(m.id); setTitle(m.title); setUrl(m.video_id); setType("movie"); }} style={iconBtn}><Edit2 size={14}/></button>
+                      <button onClick={() => base44.entities.Movie.delete(m.id).then(()=>queryClient.invalidateQueries(["movies"]))} style={iconBtn}><Trash2 size={14} color="red"/></button>
                     </div>
-                    <div style={{display:'flex', gap:'5px'}}>
-                      <button onClick={() => { setEditingId(m.id); setTitle(m.title); setUrl(m.video_id); setDescription(m.description); setCategory(m.category); window.scrollTo(0,0); }} style={iconBtn}><Edit2 size={14}/></button>
-                      <button onClick={() => window.confirm("למחוק?") && base44.entities.Movie.delete(m.id).then(() => queryClient.invalidateQueries(["movies"]))} style={iconBtn}><Trash2 size={14} color="red"/></button>
+                  </div>
+                ))}
+
+                <h4 style={{marginTop:'20px'}}>Series</h4>
+                {Object.entries(groupedContent.series).map(([name, eps]) => (
+                  <div key={name} style={{borderBottom:'1px solid #eee', marginBottom:'5px'}}>
+                    <div onClick={() => setExpandedSeries(expandedSeries === name ? null : name)} style={{cursor:'pointer', padding:'10px', display:'flex', justifyContent:'space-between', background:'#f9f9f9'}}>
+                      <div style={{fontWeight:'bold'}}>{name} ({eps.length} פרקים)</div>
+                      {expandedSeries === name ? <ChevronUp/> : <ChevronDown/>}
                     </div>
+                    {expandedSeries === name && (
+                      <div style={{padding:'10px', background:'#fff'}}>
+                        {eps.map(ep => (
+                          <div key={ep.id} style={itemRow}>
+                            <small>{ep.title}</small>
+                            <div>
+                              <button onClick={() => { setEditingId(ep.id); setTitle(name); setUrl(ep.video_id); setType("series"); }} style={iconBtn}><Edit2 size={12}/></button>
+                              <button onClick={() => base44.entities.Movie.delete(ep.id).then(()=>queryClient.invalidateQueries(["movies"]))} style={iconBtn}><Trash2 size={12} color="red"/></button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -132,20 +196,20 @@ export default function Admin() {
 }
 
 // Styles
-const adminLayout = { background: "#F5F5F7", minHeight: "100vh", direction: "rtl", fontFamily: "Assistant, sans-serif" };
-const header = { background: "#fff", padding: "15px 5%", display: "flex", justifyContent: "space-between", borderBottom: "1px solid #ddd" };
-const logo = { fontSize: "22px", fontWeight: "900" };
-const nav = { display: "flex", gap: "15px", alignItems: "center" };
-const container = { maxWidth: "900px", margin: "30px auto", padding: "0 20px" };
-const card = { background: "#fff", padding: "25px", borderRadius: "18px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)" };
-const inStyle = { width: "100%", padding: "12px", margin: "8px 0", borderRadius: "10px", border: "1px solid #ddd", fontSize: "16px" };
-const btnMain = { background: "#0071E3", color: "#fff", border: "none", padding: "14px", borderRadius: "10px", width: "100%", fontWeight: "bold", cursor: "pointer", marginTop: "10px" };
-const typeSwitch = { display: "flex", gap: "10px", marginBottom: "15px" };
-const activeT = { flex: 1, padding: "10px", borderRadius: "8px", border: "none", background: "#0071E3", color: "#fff", fontWeight: "bold" };
-const inactiveT = { flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid #ddd", background: "#fff", cursor: "pointer" };
-const rowInput = { display: "flex", gap: "10px" };
-const itemRow = { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f0f0f0" };
-const iconBtn = { background: "#f5f5f7", border: "none", padding: "8px", borderRadius: "8px", cursor: "pointer" };
-const link = { textDecoration: "none", color: "#0071E3", fontWeight: "bold" };
-const authContainer = { height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#F5F5F7" };
-const authCard = { background: "#fff", padding: "40px", borderRadius: "20px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" };
+const adminBg = { background: "#0F172A", minHeight: "100vh", color: "#E2E8F0", direction: "rtl", fontFamily: "Assistant" };
+const headerStyle = { background: "#1E293B", padding: "15px 5%", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #334155" };
+const logoStyle = { fontSize: "24px", fontWeight: "900", color: "#fff" };
+const contentWrap = { maxWidth: "800px", margin: "30px auto", padding: "0 20px" };
+const cardStyle = { background: "#1E293B", padding: "25px", borderRadius: "15px", border: "1px solid #334155" };
+const inStyle = { width: "100%", padding: "12px", margin: "8px 0", borderRadius: "8px", border: "1px solid #334155", background: "#0F172A", color: "#fff", outline: "none" };
+const btnMain = { background: "#3B82F6", color: "#fff", border: "none", padding: "14px", borderRadius: "8px", width: "100%", fontWeight: "bold", cursor: "pointer", marginTop: "10px" };
+const statusGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginTop: "20px" };
+const statusBox = { padding: "15px", background: "#334155", borderRadius: "10px", textAlign: "center" };
+const aiBtn = { background: "#8B5CF6", color: "#fff", border: "none", padding: "5px 15px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px" };
+const typeRow = { display: "flex", gap: "10px", margin: "15px 0" };
+const activeT = { flex: 1, padding: "10px", background: "#3B82F6", border: "none", color: "#fff", borderRadius: "8px" };
+const inactiveT = { flex: 1, padding: "10px", background: "#334155", border: "none", color: "#94A3B8", borderRadius: "8px", cursor: "pointer" };
+const itemRow = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #334155" };
+const iconBtn = { background: "none", border: "none", color: "#94A3B8", cursor: "pointer", padding: "5px" };
+const linkStyle = { color: "#3B82F6", textDecoration: "none", fontWeight: "bold" };
+const authStyle = { height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "#0F172A" };
