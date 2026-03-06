@@ -2,22 +2,16 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { 
-  Edit2, Trash2, Settings, Plus, Sparkles, Image as ImageIcon, 
-  ExternalLink, Loader2, CheckCircle, AlertCircle, X, PlayCircle 
-} from "lucide-react";
+import { Settings, Plus, ExternalLink, Loader2, PlayCircle, Lock } from "lucide-react";
 
-// פונקציית עזר לתיקון לינקים לפני שמירה
 const formatVideoUrl = (url) => {
   if (!url) return "";
   let formatted = url.trim();
-  // תיקון יוטיוב
-  if (formatted.includes("youtube.com/watch?v=")) {
+  if (formatted.includes("watch?v=")) {
     formatted = formatted.replace("watch?v=", "embed/").split("&")[0];
   } else if (formatted.includes("youtu.be/")) {
     formatted = `https://www.youtube.com/embed/${formatted.split("/").pop()}`;
   }
-  // תיקון גוגל דרייב
   if (formatted.includes("drive.google.com")) {
     if (formatted.includes("/view")) {
       formatted = formatted.replace("/view", "/preview");
@@ -33,71 +27,81 @@ export default function Admin() {
   const queryClient = useQueryClient();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [passcode, setPasscode] = useState("");
-  const [activeTab, setActiveTab] = useState("content");
-  
   const [formData, setFormData] = useState({
-    id: null, title: "", url: "", thumb: "", description: "",
-    category: "", type: "movie"
-  });
-
-  const { data: movies = [], isLoading } = useQuery({
-    queryKey: ["movies"],
-    queryFn: () => base44.entities.Movie.list("-created_date")
+    title: "", url: "", thumb: "", description: "", category: "", type: "movie"
   });
 
   const saveMutation = useMutation({
-    mutationFn: (data) => {
-      // כאן אנחנו מוודאים שמות שדות שמתאימים ל-DetailView
-      const payload = {
-        title: data.title,
-        description: data.description,
-        video_id: formatVideoUrl(data.url), // התיקון הקריטי
-        thumbnail_url: data.thumb,
-        category: data.category,
-        type: data.type
-      };
-      return formData.id ? base44.entities.Movie.update(formData.id, payload) : base44.entities.Movie.create(payload);
-    },
+    mutationFn: (data) => base44.entities.Movie.create({
+      title: data.title,
+      description: data.description,
+      video_id: formatVideoUrl(data.url),
+      thumbnail_url: data.thumb,
+      category: data.category,
+      type: data.type
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
-      setFormData({ id: null, title: "", url: "", thumb: "", description: "", category: "", type: "movie" });
-      alert("פורסם בהצלחה!");
+      setFormData({ title: "", url: "", thumb: "", description: "", category: "", type: "movie" });
+      alert("התוכן פורסם בהצלחה!");
     }
   });
 
   if (!isAuthorized) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#1c1c1e', color: 'white', direction: 'rtl' }}>
-        <div style={{ background: '#2c2c2e', padding: '30px', borderRadius: '15px', textAlign: 'center' }}>
-            <h2>כניסת מנהל</h2>
-            <input type="password" placeholder="קוד גישה" style={{ display: 'block', margin: '15px 0', padding: '10px', borderRadius: '5px', border: 'none' }} onChange={e => setPasscode(e.target.value)} />
-            <button onClick={() => passcode === "ZovexAdmin2026" && setIsAuthorized(true)} style={{ background: '#007aff', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer' }}>כניסה</button>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0a0a0a', direction: 'rtl' }}>
+      <div style={{ background: '#1a1a1a', padding: '40px', borderRadius: '20px', textAlign: 'center', border: '1px solid #333', width: '350px' }}>
+        <h2 style={{ color: '#fff', fontSize: '28px', marginBottom: '20px' }}>ZO<span style={{color:'#e50914'}}>VEX</span> ADMIN</h2>
+        <div style={{ position: 'relative', marginBottom: '20px' }}>
+          <Lock size={18} style={{ position: 'absolute', right: '12px', top: '15px', color: '#666' }} />
+          <input 
+            type="password" 
+            placeholder="קוד גישה" 
+            style={{ width: '100%', padding: '15px 40px 15px 15px', borderRadius: '10px', border: '1px solid #333', background: '#0a0a0a', color: '#fff', boxSizing: 'border-box' }}
+            value={passcode}
+            onChange={e => setPasscode(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && passcode === "ZovexAdmin2026" && setIsAuthorized(true)}
+          />
         </div>
+        <button 
+          onClick={() => passcode === "ZovexAdmin2026" ? setIsAuthorized(true) : alert("קוד שגוי!")}
+          style={{ width: '100%', padding: '15px', background: '#e50914', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}
+        >
+          כניסה למערכת
+        </button>
+      </div>
     </div>
   );
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', direction: 'rtl', fontFamily: 'sans-serif' }}>
-      <h1>ניהול תוכן ZOVEX</h1>
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-        <input placeholder="כותרת" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} style={inputStyle} />
-        <input placeholder="לינק לוידאו (יוטיוב/דרייב)" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} style={inputStyle} />
-        <input placeholder="לינק לתמונה (Thumbnail)" value={formData.thumb} onChange={e => setFormData({...formData, thumb: e.target.value})} style={inputStyle} />
-        <textarea placeholder="תיאור / תקציר" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{...inputStyle, height: '100px'}} />
-        
-        <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} style={inputStyle}>
-            <option value="">בחר קטגוריה</option>
-            <option value="פעולה">פעולה</option>
-            <option value="דרמה">דרמה</option>
-            <option value="קומדיה">קומדיה</option>
-            <option value="ילדים">ילדים</option>
-        </select>
+    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', direction: 'rtl', padding: '40px' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
+        <h1 style={{ margin: 0 }}>ZO<span style={{color:'#e50914'}}>VEX</span> <small style={{fontSize:'14px', color:'#666'}}>ניהול תוכן</small></h1>
+        <Link to="/" style={{ color: '#fff' }}><ExternalLink /></Link>
+      </header>
 
-        <button onClick={() => saveMutation.mutate(formData)} style={{ width: '100%', padding: '15px', background: '#007aff', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-          {saveMutation.isLoading ? "מפרסם..." : "פרסם תוכן חדש"}
+      <div style={{ maxWidth: '600px', margin: '0 auto', background: '#1a1a1a', padding: '30px', borderRadius: '20px', border: '1px solid #333' }}>
+        <label style={labelStyle}>שם הסרט/סדרה</label>
+        <input style={inputStyle} value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+        
+        <label style={labelStyle}>קישור וידאו (YouTube/Drive)</label>
+        <input style={inputStyle} value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} placeholder="הדבק לינק כאן..." />
+        
+        <label style={labelStyle}>קישור לתמונה (Thumbnail)</label>
+        <input style={inputStyle} value={formData.thumb} onChange={e => setFormData({...formData, thumb: e.target.value})} />
+        
+        <label style={labelStyle}>תקציר</label>
+        <textarea style={{...inputStyle, height: '100px'}} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+
+        <button 
+          onClick={() => saveMutation.mutate(formData)} 
+          style={{ width: '100%', padding: '18px', background: '#e50914', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', marginTop: '20px' }}
+        >
+          {saveMutation.isLoading ? "מפרסם..." : "פרסם תוכן ב-ZOVEX"}
         </button>
       </div>
     </div>
   );
 }
 
-const inputStyle = { width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' };
+const labelStyle = { display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' };
+const inputStyle = { width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #333', background: '#0a0a0a', color: '#fff', boxSizing: 'border-box' };
