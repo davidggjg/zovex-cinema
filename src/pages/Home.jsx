@@ -1,130 +1,126 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { Play, Search, Loader2, Send } from "lucide-react";
+import { Play, Search, Send } from "lucide-react";
 
-export default function Home({ onMovieSelect }) {
+export default function Home({ movies, onMovieSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("הכל");
 
-  // 1. משיכת כל הסרטים
-  const { data: movies, isLoading } = useQuery({
-    queryKey: ["movies"],
-    queryFn: () => base44.entities.Movie.list("-created_date"),
-  });
+  // משיכת הקטגוריות מהסרטים הקיימים שלך
+  const dynamicCategories = movies 
+    ? ["הכל", ...new Set(movies.map(m => m.category).filter(Boolean))] 
+    : ["הכל"];
 
-  // 2. יצירת רשימת קטגוריות אוטומטית מהסרטים שהוספת (כדי שיופיעו הקטגוריות שלך)
-  const categories = ["הכל", ...new Set(movies?.map(m => m.category).filter(Boolean))];
-
-  // 3. סינון הסרטים לפי חיפוש ולפי הקטגוריה שנבחרה
+  // סינון הסרטים
   const filteredMovies = movies?.filter(movie => {
     const matchesSearch = movie.title?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "הכל" || movie.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handlePlay = (movie) => {
-    if (typeof onMovieSelect === 'function') {
-      onMovieSelect(movie);
-    }
-  };
-
-  if (isLoading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fff' }}>
-      <Loader2 className="animate-spin" size={40} color="#e50914" />
-    </div>
-  );
-
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', direction: 'rtl', fontFamily: 'sans-serif' }}>
       
       {/* סרגל עליון: לוגו וחיפוש מעוגל */}
-      <nav style={{ padding: '20px 5% 10px 5%', background: '#fff', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #eee' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h1 style={{ color: '#e50914', fontSize: '35px', fontWeight: '900', margin: 0 }}>ZOVEX</h1>
-          
-          <div style={{ 
-            display: 'flex', alignItems: 'center', gap: '12px', background: '#f5f5f5', 
-            padding: '10px 25px', borderRadius: '50px', width: '350px', border: '1px solid #eee' 
-          }}>
-            <Search size={20} color="#999" />
-            <input 
-              type="text" placeholder="חיפוש סרט..." value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ background: 'none', border: 'none', outline: 'none', width: '100%', fontSize: '16px' }} 
-            />
+      <header style={{ padding: '15px 20px', position: 'sticky', top: 0, background: '#fff', zIndex: 100 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ 
+              display: 'flex', alignItems: 'center', gap: '10px', background: '#f5f5f5', 
+              padding: '8px 15px', borderRadius: '50px', border: '1px solid #eee' 
+            }}>
+              <Search size={18} color="#999" />
+              <input 
+                type="text" 
+                placeholder="חיפוש סרט..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ background: 'none', border: 'none', outline: 'none', width: '100%', fontSize: '14px' }} 
+              />
+            </div>
           </div>
+          <h1 style={{ color: '#e50914', fontSize: '28px', fontWeight: '900', margin: '0 0 0 15px' }}>ZOVEX</h1>
         </div>
 
-        {/* הקטגוריות האמיתיות שלך - עכשיו הן מגיבות ללחיצה! */}
-        <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
-          {categories.map((cat) => (
+        {/* שורת הקטגוריות שלך - שורה נפרדת מתחת לחיפוש */}
+        <div style={{ 
+          display: 'flex', gap: '20px', overflowX: 'auto', padding: '10px 0', 
+          scrollbarWidth: 'none', borderBottom: '1px solid #eee' 
+        }}>
+          {dynamicCategories.map((cat) => (
             <span 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               style={{ 
-                cursor: 'pointer', 
-                fontSize: '18px', 
-                fontWeight: 'bold',
+                cursor: 'pointer', fontSize: '16px', fontWeight: '800', whiteSpace: 'nowrap',
                 color: selectedCategory === cat ? '#e50914' : '#333',
-                borderBottom: selectedCategory === cat ? '3px solid #e50914' : 'none',
-                paddingBottom: '5px',
-                whiteSpace: 'nowrap'
+                borderBottom: selectedCategory === cat ? '2px solid #e50914' : 'none',
+                paddingBottom: '5px'
               }}
             >
               {cat}
             </span>
           ))}
         </div>
-      </nav>
+      </header>
 
-      {/* תצוגת הסרטים לפי התמונה שלך */}
-      <div style={{ padding: '20px 5%' }}>
+      {/* תצוגת הסרטים - 2 סרטים בכל שורה (בדיוק כמו בתמונה) */}
+      <main style={{ padding: '20px' }}>
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-          gap: '30px' 
+          gridTemplateColumns: '1fr 1fr', 
+          gap: '20px' 
         }}>
           {filteredMovies?.map((movie) => (
-            <div key={movie.id} style={{ textAlign: 'center' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>{movie.title}</h3>
+            <div key={movie.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
               
-              <div style={{ borderRadius: '15px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', marginBottom: '15px' }}>
+              {/* כותרת הסרט */}
+              <h3 style={{ fontSize: '16px', fontWeight: '800', textAlign: 'center', margin: 0 }}>
+                {movie.title}
+              </h3>
+              
+              {/* תמונת הסרט - לחיצה עליה פותחת את התיאור/נגן */}
+              <div 
+                onClick={() => onMovieSelect(movie)}
+                style={{ cursor: 'pointer', borderRadius: '15px', overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
+              >
                 <img 
                   src={movie.thumbnail_url} 
-                  style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} 
+                  alt={movie.title}
+                  style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} 
                 />
               </div>
 
+              {/* הכפתור האדום המודגש */}
               <button 
-                onClick={() => handlePlay(movie)}
+                onClick={() => onMovieSelect(movie)}
                 style={{
-                  width: '100%', background: '#e50914', color: '#fff', border: 'none',
-                  padding: '14px', fontSize: '20px', fontWeight: '900', borderRadius: '10px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                  cursor: 'pointer'
+                  background: '#e50914', color: '#fff', border: 'none',
+                  padding: '12px', fontSize: '18px', fontWeight: '900', borderRadius: '10px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  cursor: 'pointer', boxShadow: '0 4px 12px rgba(229, 9, 20, 0.3)'
                 }}
               >
-                צפייה ישירה <Play fill="white" size={22} />
+                <Play fill="white" size={18} /> צפייה ישירה
               </button>
             </div>
           ))}
         </div>
-      </div>
+      </main>
 
-      {/* כפתור טלגרם צף */}
-      <div 
-        onClick={() => window.open('https://t.me/ZOVE8', '_blank')}
+      {/* כפתור טלגרם צף שעובד עם הקישור שלך */}
+      <a 
+        href="https://t.me/ZOVE8" 
+        target="_blank" 
+        rel="noopener noreferrer"
         style={{
-          position: 'fixed', bottom: '30px', left: '30px', background: '#24A1DE',
+          position: 'fixed', bottom: '25px', left: '25px', background: '#24A1DE',
           width: '60px', height: '60px', borderRadius: '50%', display: 'flex',
           alignItems: 'center', justifyContent: 'center', color: '#fff',
-          boxShadow: '0 5px 15px rgba(0,0,0,0.2)', cursor: 'pointer', zIndex: 1000
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)', zIndex: 1000, textDecoration: 'none'
         }}
       >
         <Send size={30} fill="white" />
-      </div>
-
+      </a>
     </div>
   );
 }
