@@ -5,19 +5,32 @@ import { Play, Search, Loader2, Send } from "lucide-react";
 
 export default function Home({ onMovieSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("הכל");
 
-  // משיכת הסרטים מה-Database שלך
+  // 1. משיכת כל הסרטים
   const { data: movies, isLoading } = useQuery({
     queryKey: ["movies"],
     queryFn: () => base44.entities.Movie.list("-created_date"),
   });
 
-  const filteredMovies = movies?.filter(movie => 
-    movie.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 2. יצירת רשימת קטגוריות אוטומטית מהסרטים שהוספת (כדי שיופיעו הקטגוריות שלך)
+  const categories = ["הכל", ...new Set(movies?.map(m => m.category).filter(Boolean))];
+
+  // 3. סינון הסרטים לפי חיפוש ולפי הקטגוריה שנבחרה
+  const filteredMovies = movies?.filter(movie => {
+    const matchesSearch = movie.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "הכל" || movie.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handlePlay = (movie) => {
+    if (typeof onMovieSelect === 'function') {
+      onMovieSelect(movie);
+    }
+  };
 
   if (isLoading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#fff' }}>
       <Loader2 className="animate-spin" size={40} color="#e50914" />
     </div>
   );
@@ -25,81 +38,88 @@ export default function Home({ onMovieSelect }) {
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', direction: 'rtl', fontFamily: 'sans-serif' }}>
       
-      {/* סרגל עליון - לוגו וחיפוש */}
-      <nav style={{ padding: '20px 5% 10px 5%', background: '#fff' }}>
+      {/* סרגל עליון: לוגו וחיפוש מעוגל */}
+      <nav style={{ padding: '20px 5% 10px 5%', background: '#fff', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #eee' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h1 style={{ color: '#e50914', fontSize: '35px', fontWeight: '900', margin: 0 }}>ZOVEX</h1>
           
-          {/* חיפוש מעוגל */}
           <div style={{ 
             display: 'flex', alignItems: 'center', gap: '12px', background: '#f5f5f5', 
-            padding: '12px 25px', borderRadius: '50px', width: '400px', border: '1px solid #eee' 
+            padding: '10px 25px', borderRadius: '50px', width: '350px', border: '1px solid #eee' 
           }}>
             <Search size={20} color="#999" />
             <input 
-              type="text" placeholder="חפש סרט או סדרה..." value={searchTerm}
+              type="text" placeholder="חיפוש סרט..." value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ background: 'none', border: 'none', outline: 'none', width: '100%', fontSize: '16px' }} 
             />
           </div>
         </div>
 
-        {/* קטגוריות - שורה מתחת לחיפוש */}
-        <div style={{ display: 'flex', gap: '30px', fontSize: '18px', fontWeight: 'bold', borderBottom: '1px solid #f0f0f0', paddingBottom: '15px' }}>
-          <span style={{ cursor: 'pointer', color: '#e50914', borderBottom: '3px solid #e50914' }}>ראשי</span>
-          <span style={{ cursor: 'pointer', color: '#333' }}>סדרות</span>
-          <span style={{ cursor: 'pointer', color: '#333' }}>סרטים</span>
+        {/* הקטגוריות האמיתיות שלך - עכשיו הן מגיבות ללחיצה! */}
+        <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+          {categories.map((cat) => (
+            <span 
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              style={{ 
+                cursor: 'pointer', 
+                fontSize: '18px', 
+                fontWeight: 'bold',
+                color: selectedCategory === cat ? '#e50914' : '#333',
+                borderBottom: selectedCategory === cat ? '3px solid #e50914' : 'none',
+                paddingBottom: '5px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {cat}
+            </span>
+          ))}
         </div>
       </nav>
 
-      {/* תצוגת הסרטים */}
-      <div style={{ padding: '40px 5%' }}>
+      {/* תצוגת הסרטים לפי התמונה שלך */}
+      <div style={{ padding: '20px 5%' }}>
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
           gap: '30px' 
         }}>
           {filteredMovies?.map((movie) => (
-            <div key={movie.id} style={{ 
-              background: '#fff', borderRadius: '12px', overflow: 'hidden', 
-              boxShadow: '0 5px 15px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0'
-            }}>
-              {/* תמונת הסרט - לחיצה עליה פותחת את הסרט */}
-              <div style={{ cursor: 'pointer' }} onClick={() => onMovieSelect(movie)}>
-                <img src={movie.thumbnail_url} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+            <div key={movie.id} style={{ textAlign: 'center' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>{movie.title}</h3>
+              
+              <div style={{ borderRadius: '15px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', marginBottom: '15px' }}>
+                <img 
+                  src={movie.thumbnail_url} 
+                  style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} 
+                />
               </div>
 
-              <div style={{ padding: '15px' }}>
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 'bold' }}>{movie.title}</h3>
-                
-                {/* כפתור צפייה ישירה - מגיב ללחיצה */}
-                <button 
-                  onClick={() => onMovieSelect(movie)}
-                  style={{
-                    width: '100%', background: '#e50914', color: '#fff', border: 'none',
-                    padding: '12px', fontSize: '17px', fontWeight: 'bold', borderRadius: '8px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                    cursor: 'pointer', transition: '0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#b30710'}
-                  onMouseOut={(e) => e.currentTarget.style.background = '#e50914'}
-                >
-                  <Play fill="white" size={18} /> צפייה ישירה
-                </button>
-              </div>
+              <button 
+                onClick={() => handlePlay(movie)}
+                style={{
+                  width: '100%', background: '#e50914', color: '#fff', border: 'none',
+                  padding: '14px', fontSize: '20px', fontWeight: '900', borderRadius: '10px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                  cursor: 'pointer'
+                }}
+              >
+                צפייה ישירה <Play fill="white" size={22} />
+              </button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* כפתור טלגרם צף - למטה בצד שמאל */}
+      {/* כפתור טלגרם צף */}
       <div 
-        onClick={() => window.open('https://t.me/YOUR_CHANNEL', '_blank')} // תחליף לקישור שלך
+        onClick={() => window.open('https://t.me/ZOVE8', '_blank')}
         style={{
-          position: 'fixed', bottom: '30px', left: '30px', background: '#0088cc', // צבע טלגרם
+          position: 'fixed', bottom: '30px', left: '30px', background: '#24A1DE',
           width: '60px', height: '60px', borderRadius: '50%', display: 'flex',
           alignItems: 'center', justifyContent: 'center', color: '#fff',
-          boxShadow: '0 5px 20px rgba(0,0,0,0.2)', cursor: 'pointer', zIndex: 1000
+          boxShadow: '0 5px 15px rgba(0,0,0,0.2)', cursor: 'pointer', zIndex: 1000
         }}
       >
         <Send size={30} fill="white" />
