@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { Search, X, Play, ChevronLeft, Send } from "lucide-react";
+import { Search, X, Play, ChevronLeft, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -101,11 +101,19 @@ export default function Home() {
           </div>
         ) : (
           <div className="home-view">
+            {/* שורת הקטגוריות שהייתה חסרה */}
             <div className="category-strip">
               {categories.map(cat => (
-                <button key={cat} className={activeCat === cat ? 'active' : ''} onClick={() => setActiveCat(cat)}>{cat}</button>
+                <button 
+                  key={cat} 
+                  className={activeCat === cat ? 'active' : ''} 
+                  onClick={() => setActiveCat(cat)}
+                >
+                  {cat}
+                </button>
               ))}
             </div>
+
             <div className="items-grid">
               {filteredItems.map((item) => (
                 <div key={item.id} className="movie-card" onClick={() => { setCurrent(item); setView('detail'); window.scrollTo(0,0); }}>
@@ -118,7 +126,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* כפתור תמיכה צף בולט במיוחד */}
+      {/* כפתור תמיכה צף - ללא שינוי */}
       <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" className="fab-support">
         <div className="fab-content">
           <div className="fab-icon-box">
@@ -160,70 +168,28 @@ const CSS = `
   .search-bar { background: #E8E8ED; padding: 10px 15px; border-radius: 12px; display: flex; align-items: center; width: 220px; }
   .search-bar input { background: none; border: none; outline: none; margin-right: 10px; width: 100%; font-size: 14px; }
 
+  .category-strip { display: flex; gap: 10px; padding: 20px 5%; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .category-strip::-webkit-scrollbar { display: none; }
+  .category-strip button { padding: 8px 20px; border-radius: 20px; border: none; background: #FFF; cursor: pointer; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.2s; }
+  .category-strip button.active { background: var(--blue); color: #FFF; }
+
   .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; padding: 0 5% 50px; }
   .movie-card { cursor: pointer; transition: 0.3s ease; }
   .card-thumb { position: relative; aspect-ratio: 2/3; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
   .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
   .series-tag { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.8); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+  .movie-card h4 { margin-top: 10px; font-size: 14px; text-align: center; font-weight: 700; }
 
-  /* עיצוב כפתור צף חדש ובולט */
   .fab-support { position: fixed; bottom: 30px; left: 30px; text-decoration: none; z-index: 2000; }
-  .fab-content { 
-    display: flex; 
-    align-items: center; 
-    background: #0071E3; 
-    padding: 8px; 
-    border-radius: 50px; 
-    box-shadow: 0 15px 35px rgba(0,113,227,0.4); 
-    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-    max-width: 56px; 
-    overflow: hidden;
-    border: 2px solid white;
-  }
+  .fab-content { display: flex; align-items: center; background: #0071E3; padding: 8px; border-radius: 50px; box-shadow: 0 15px 35px rgba(0,113,227,0.4); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 56px; overflow: hidden; border: 2px solid white; }
   .fab-support:hover .fab-content { max-width: 250px; padding-right: 20px; }
-  
-  .fab-icon-box { 
-    width: 40px; 
-    height: 40px; 
-    background: white; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    flex-shrink: 0; 
-    position: relative;
-    z-index: 2;
-  }
+  .fab-icon-box { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; z-index: 2; }
   .fab-emoji { font-size: 22px; }
-
-  .fab-text { 
-    color: white; 
-    font-size: 15px; 
-    font-weight: 800; 
-    margin-left: 12px; 
-    opacity: 0; 
-    transition: 0.3s; 
-    white-space: nowrap;
-  }
+  .fab-text { color: white; font-size: 15px; font-weight: 800; margin-left: 12px; opacity: 0; transition: 0.3s; white-space: nowrap; }
   .fab-support:hover .fab-text { opacity: 1; }
+  .pulse-effect { position: absolute; width: 100%; height: 100%; background: white; border-radius: 50%; opacity: 0.8; animation: fab-pulse 2s infinite; z-index: -1; }
+  @keyframes fab-pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }
 
-  /* אפקט דופק בולט סביב האימוג'י */
-  .pulse-effect { 
-    position: absolute; 
-    width: 100%; 
-    height: 100%; 
-    background: white; 
-    border-radius: 50%; 
-    opacity: 0.8; 
-    animation: fab-pulse 2s infinite; 
-    z-index: -1; 
-  }
-  @keyframes fab-pulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(2.2); opacity: 0; }
-  }
-
-  /* שאר העיצוב */
   .detail-view { background: #FFF; min-height: 100vh; position: relative; }
   .back-btn { position: absolute; top: 20px; right: 20px; z-index: 100; background: #FFF; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
   .hero-banner { width: 100%; height: 45vh; background: #000; }
