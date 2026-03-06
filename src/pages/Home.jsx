@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Play, Search, Loader2, MessageCircle } from "lucide-react";
+import { Play, Search, Loader2, Send } from "lucide-react";
 
 export default function Home({ onMovieSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // שליפת הנתונים מהשרת שלך
+  // משיכת הסרטים מה-Database שלך
   const { data: movies, isLoading } = useQuery({
     queryKey: ["movies"],
     queryFn: () => base44.entities.Movie.list("-created_date"),
@@ -25,70 +25,66 @@ export default function Home({ onMovieSelect }) {
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', direction: 'rtl', fontFamily: 'sans-serif' }}>
       
-      {/* סרגל עליון - עיצוב מעוגל ויוקרתי */}
-      <nav style={{ 
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-        padding: '15px 5%', borderBottom: '1px solid #f0f0f0', position: 'sticky', top: 0, background: '#fff', zIndex: 100 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-          <h1 style={{ color: '#e50914', fontSize: '32px', fontWeight: '900', margin: 0, letterSpacing: '-1px' }}>ZOVEX</h1>
-          <div style={{ display: 'flex', gap: '25px', fontSize: '16px', fontWeight: '600', color: '#333' }}>
-            <span style={{ cursor: 'pointer', color: '#e50914' }}>ראשי</span>
-            <span style={{ cursor: 'pointer' }}>סדרות</span>
-            <span style={{ cursor: 'pointer' }}>סרטים</span>
+      {/* סרגל עליון - לוגו וחיפוש */}
+      <nav style={{ padding: '20px 5% 10px 5%', background: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <h1 style={{ color: '#e50914', fontSize: '35px', fontWeight: '900', margin: 0 }}>ZOVEX</h1>
+          
+          {/* חיפוש מעוגל */}
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: '12px', background: '#f5f5f5', 
+            padding: '12px 25px', borderRadius: '50px', width: '400px', border: '1px solid #eee' 
+          }}>
+            <Search size={20} color="#999" />
+            <input 
+              type="text" placeholder="חפש סרט או סדרה..." value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ background: 'none', border: 'none', outline: 'none', width: '100%', fontSize: '16px' }} 
+            />
           </div>
         </div>
-        
-        {/* חיפוש מעוגל ויפה */}
-        <div style={{ 
-          display: 'flex', alignItems: 'center', gap: '12px', background: '#f5f5f5', 
-          padding: '10px 20px', borderRadius: '50px', width: '350px', border: '1px solid #eee' 
-        }}>
-          <Search size={20} color="#999" />
-          <input 
-            type="text" placeholder="מה תרצו לראות היום?" value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ background: 'none', border: 'none', outline: 'none', width: '100%', fontSize: '15px' }} 
-          />
+
+        {/* קטגוריות - שורה מתחת לחיפוש */}
+        <div style={{ display: 'flex', gap: '30px', fontSize: '18px', fontWeight: 'bold', borderBottom: '1px solid #f0f0f0', paddingBottom: '15px' }}>
+          <span style={{ cursor: 'pointer', color: '#e50914', borderBottom: '3px solid #e50914' }}>ראשי</span>
+          <span style={{ cursor: 'pointer', color: '#333' }}>סדרות</span>
+          <span style={{ cursor: 'pointer', color: '#333' }}>סרטים</span>
         </div>
       </nav>
 
-      {/* גוף הדף - רשימת סרטים בכרטיסים נקיים */}
+      {/* תצוגת הסרטים */}
       <div style={{ padding: '40px 5%' }}>
-        <h2 style={{ fontSize: '26px', marginBottom: '30px', fontWeight: '800' }}>הוספו לאחרונה</h2>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '35px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
+          gap: '30px' 
+        }}>
           {filteredMovies?.map((movie) => (
             <div key={movie.id} style={{ 
-              background: '#fff', borderRadius: '15px', overflow: 'hidden', 
-              boxShadow: '0 10px 25px rgba(0,0,0,0.05)', transition: '0.3s' 
+              background: '#fff', borderRadius: '12px', overflow: 'hidden', 
+              boxShadow: '0 5px 15px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0'
             }}>
-              <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => onMovieSelect(movie)}>
+              {/* תמונת הסרט - לחיצה עליה פותחת את הסרט */}
+              <div style={{ cursor: 'pointer' }} onClick={() => onMovieSelect(movie)}>
                 <img src={movie.thumbnail_url} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
-                <div style={{ 
-                  position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', 
-                  display: 'flex', alignItems: 'flex-end', padding: '15px' 
-                }}>
-                   <span style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold' }}>{movie.title}</span>
-                </div>
               </div>
 
-              <div style={{ padding: '20px' }}>
-                <p style={{ fontSize: '15px', color: '#666', marginBottom: '20px', height: '45px', overflow: 'hidden' }}>
-                  {movie.description}
-                </p>
-
-                {/* הכפתור האדום הענק - צפייה ישירה */}
+              <div style={{ padding: '15px' }}>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', fontWeight: 'bold' }}>{movie.title}</h3>
+                
+                {/* כפתור צפייה ישירה - מגיב ללחיצה */}
                 <button 
                   onClick={() => onMovieSelect(movie)}
                   style={{
                     width: '100%', background: '#e50914', color: '#fff', border: 'none',
-                    padding: '15px', fontSize: '19px', fontWeight: '900', borderRadius: '10px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                    cursor: 'pointer', boxShadow: '0 5px 15px rgba(229, 9, 20, 0.3)'
+                    padding: '12px', fontSize: '17px', fontWeight: 'bold', borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    cursor: 'pointer', transition: '0.2s'
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#b30710'}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#e50914'}
                 >
-                  <Play fill="white" size={22} /> צפייה ישירה
+                  <Play fill="white" size={18} /> צפייה ישירה
                 </button>
               </div>
             </div>
@@ -96,14 +92,17 @@ export default function Home({ onMovieSelect }) {
         </div>
       </div>
 
-      {/* כפתור צף (WhatsApp/Support) בצד שמאל למטה */}
-      <div style={{
-        position: 'fixed', bottom: '30px', left: '30px', background: '#e50914',
-        width: '60px', height: '60px', borderRadius: '50%', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', color: '#fff',
-        boxShadow: '0 5px 20px rgba(0,0,0,0.2)', cursor: 'pointer', zIndex: 1000
-      }}>
-        <MessageCircle size={30} />
+      {/* כפתור טלגרם צף - למטה בצד שמאל */}
+      <div 
+        onClick={() => window.open('https://t.me/YOUR_CHANNEL', '_blank')} // תחליף לקישור שלך
+        style={{
+          position: 'fixed', bottom: '30px', left: '30px', background: '#0088cc', // צבע טלגרם
+          width: '60px', height: '60px', borderRadius: '50%', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', color: '#fff',
+          boxShadow: '0 5px 20px rgba(0,0,0,0.2)', cursor: 'pointer', zIndex: 1000
+        }}
+      >
+        <Send size={30} fill="white" />
       </div>
 
     </div>
