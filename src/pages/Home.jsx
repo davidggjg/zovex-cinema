@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
-import { Search, X, Play, ChevronLeft, HelpCircle } from "lucide-react";
+import { Search, X, Play, ChevronLeft, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -118,14 +118,14 @@ export default function Home() {
         )}
       </main>
 
-      {/* כפתור תמיכה צף משופר */}
+      {/* כפתור תמיכה צף בולט במיוחד */}
       <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" className="fab-support">
         <div className="fab-content">
-          <span className="fab-text">🚀 בקשת סרטים ותמיכה</span>
-          <div className="fab-icon">
-            <HelpCircle size={26} color="white" />
-            <div className="pulse-ring"></div>
+          <div className="fab-icon-box">
+             <span className="fab-emoji">🚀</span>
+             <div className="pulse-effect"></div>
           </div>
+          <span className="fab-text">בקשת סרטים ותמיכה</span>
         </div>
       </a>
 
@@ -166,19 +166,61 @@ const CSS = `
   .card-thumb img { width: 100%; height: 100%; object-fit: cover; }
   .series-tag { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.8); color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
 
-  /* כפתור תמיכה צף - עיצוב חדש */
+  /* עיצוב כפתור צף חדש ובולט */
   .fab-support { position: fixed; bottom: 30px; left: 30px; text-decoration: none; z-index: 2000; }
-  .fab-content { display: flex; align-items: center; background: #1c1c1e; padding: 6px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 52px; overflow: hidden; white-space: nowrap; }
-  .fab-support:hover .fab-content { max-width: 300px; background: var(--blue); padding-right: 20px; }
-  .fab-icon { background: var(--blue); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
-  .fab-text { color: white; font-size: 14px; font-weight: 800; margin-left: 12px; opacity: 0; transition: 0.3s; }
+  .fab-content { 
+    display: flex; 
+    align-items: center; 
+    background: #0071E3; 
+    padding: 8px; 
+    border-radius: 50px; 
+    box-shadow: 0 15px 35px rgba(0,113,227,0.4); 
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    max-width: 56px; 
+    overflow: hidden;
+    border: 2px solid white;
+  }
+  .fab-support:hover .fab-content { max-width: 250px; padding-right: 20px; }
+  
+  .fab-icon-box { 
+    width: 40px; 
+    height: 40px; 
+    background: white; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    flex-shrink: 0; 
+    position: relative;
+    z-index: 2;
+  }
+  .fab-emoji { font-size: 22px; }
+
+  .fab-text { 
+    color: white; 
+    font-size: 15px; 
+    font-weight: 800; 
+    margin-left: 12px; 
+    opacity: 0; 
+    transition: 0.3s; 
+    white-space: nowrap;
+  }
   .fab-support:hover .fab-text { opacity: 1; }
 
-  /* אנימציית דופק */
-  .pulse-ring { position: absolute; width: 100%; height: 100%; background: var(--blue); border-radius: 50%; opacity: 0.6; animation: pulse 2s infinite; z-index: -1; }
-  @keyframes pulse {
-    0% { transform: scale(1); opacity: 0.6; }
-    100% { transform: scale(1.8); opacity: 0; }
+  /* אפקט דופק בולט סביב האימוג'י */
+  .pulse-effect { 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    background: white; 
+    border-radius: 50%; 
+    opacity: 0.8; 
+    animation: fab-pulse 2s infinite; 
+    z-index: -1; 
+  }
+  @keyframes fab-pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.2); opacity: 0; }
   }
 
   /* שאר העיצוב */
