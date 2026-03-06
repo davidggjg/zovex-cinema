@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Send, Play, ArrowRight } from "lucide-react";
+import { Search, Send, Play, ArrowRight, X } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
@@ -10,7 +10,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("הכל");
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [playing, setPlaying] = useState(false);
+  const [playerOpen, setPlayerOpen] = useState(false);
 
   useEffect(() => {
     Movie.list().then(data => {
@@ -33,16 +33,6 @@ export default function Home() {
     });
   }, [movies, searchTerm, selectedCategory]);
 
-  const openMovie = (movie) => {
-    setSelectedMovie(movie);
-    setPlaying(false);
-  };
-
-  const goBack = () => {
-    setSelectedMovie(null);
-    setPlaying(false);
-  };
-
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#fff" }}>
@@ -55,34 +45,47 @@ export default function Home() {
     );
   }
 
+  // מסך נגן מלא
+  if (playerOpen && selectedMovie) {
+    return (
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <button
+          onClick={() => { setPlayerOpen(false); }}
+          style={{ position: "absolute", top: "15px", right: "15px", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", borderRadius: "50%", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}
+        >
+          <X size={24} />
+        </button>
+        <p style={{ color: "#aaa", fontSize: "16px", marginBottom: "15px", fontFamily: "Arial" }}>{selectedMovie.title}</p>
+        <video
+          controls
+          autoPlay
+          style={{ width: "100%", maxHeight: "80vh" }}
+          src={selectedMovie.video_url}
+        />
+      </div>
+    );
+  }
+
+  // דף סרט
   if (selectedMovie) {
     return (
       <div style={{ background: "#111", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#fff" }}>
 
         <button
-          onClick={goBack}
+          onClick={() => setSelectedMovie(null)}
           style={{ position: "fixed", top: "15px", right: "15px", zIndex: 100, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", borderRadius: "50%", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
         >
           <ArrowRight size={22} />
         </button>
 
-        {playing ? (
-          <video
-            controls
-            autoPlay
-            style={{ width: "100%", maxHeight: "55vh", background: "#000", display: "block" }}
-            src={selectedMovie.video_url}
+        <div style={{ position: "relative" }}>
+          <img
+            src={selectedMovie.thumbnail_url}
+            alt={selectedMovie.title}
+            style={{ width: "100%", height: "55vw", maxHeight: "400px", objectFit: "cover", display: "block" }}
           />
-        ) : (
-          <div style={{ position: "relative" }}>
-            <img
-              src={selectedMovie.thumbnail_url}
-              alt={selectedMovie.title}
-              style={{ width: "100%", height: "55vw", maxHeight: "400px", objectFit: "cover", display: "block" }}
-            />
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "120px", background: "linear-gradient(transparent, #111)" }} />
-          </div>
-        )}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "120px", background: "linear-gradient(transparent, #111)" }} />
+        </div>
 
         <div style={{ padding: "20px" }}>
           <h1 style={{ fontSize: "22px", fontWeight: 900, margin: "0 0 10px 0", color: "#fff" }}>
@@ -102,7 +105,7 @@ export default function Home() {
           )}
 
           <button
-            onClick={() => setPlaying(true)}
+            onClick={() => setPlayerOpen(true)}
             style={{ marginTop: "25px", width: "100%", background: "#e50914", color: "#fff", border: "none", padding: "16px", fontSize: "18px", fontWeight: "bold", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", cursor: "pointer", boxShadow: "0 4px 20px rgba(229,9,20,0.4)" }}
           >
             <Play fill="white" size={22} /> לצפייה עכשיו
@@ -113,6 +116,7 @@ export default function Home() {
     );
   }
 
+  // דף בית
   return (
     <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif" }}>
 
@@ -151,7 +155,7 @@ export default function Home() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             {filteredMovies.map(movie => (
-              <div key={movie.id} onClick={() => openMovie(movie)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div key={movie.id} onClick={() => setSelectedMovie(movie)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: "8px" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: "bold", textAlign: "center", margin: 0, color: "#111", lineHeight: "1.3", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                   {movie.title}
                 </h3>
