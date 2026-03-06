@@ -1,97 +1,171 @@
-import React, { useState } from "react";
-import { Play, Search, Send } from "lucide-react";
+```jsx
+import React, { useState, useMemo } from "react";
+import { Search, Send, Play } from "lucide-react";
 
 export default function Home({ movies, onMovieSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("הכל");
 
-  // אם movies לא קיים או ריק, נציג הודעה פשוטה כדי שלא יהיה מסך לבן
+  const categories = useMemo(() => {
+    if (!movies) return ["הכל"];
+    return ["הכל", ...new Set(movies.map(m => m.category).filter(Boolean))];
+  }, [movies]);
+
+  const filteredMovies = useMemo(() => {
+    if (!movies || !Array.isArray(movies)) return [];
+    return movies.filter(movie => {
+      const title = movie.title || "";
+      const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === "הכל" || movie.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [movies, searchTerm, selectedCategory]);
+
   if (!movies) {
     return (
-      <div style={{ padding: '50px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-        <h1 style={{ color: '#e50914' }}>ZOVEX</h1>
-        <p>מתחבר לשרת... אם זה לוקח זמן, בדוק את פאנל הניהול.</p>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#fff" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 50, height: 50, border: "5px solid #eee", borderTop: "5px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 15px" }} />
+          <p dir="rtl" style={{ color: "#999", fontFamily: "Arial" }}>טוען סרטים...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // סינון פשוט רק לפי חיפוש
-  const filtered = movies.filter(m => 
-    m.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div style={{ background: '#ffffff', minHeight: '100vh', direction: 'rtl', fontFamily: 'sans-serif' }}>
-      
-      {/* סרגל עליון */}
-      <header style={{ padding: '15px', borderBottom: '1px solid #eee', background: '#fff' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <h1 style={{ color: '#e50914', fontSize: '24px', fontWeight: '900', margin: 0 }}>ZOVEX</h1>
-          
-          <div style={{ 
-            display: 'flex', alignItems: 'center', gap: '10px', background: '#f0f0f0', 
-            padding: '8px 15px', borderRadius: '50px', flex: 1 
+    <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif" }}>
+
+      <header style={{
+        padding: "15px 15px 0 15px",
+        position: "sticky", top: 0,
+        background: "#fff",
+        zIndex: 100,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "15px" }}>
+          <h1 style={{ color: "#e50914", fontSize: "28px", fontWeight: 900, margin: 0, letterSpacing: "-1px", flexShrink: 0 }}>
+            ZOVEX
+          </h1>
+          <div style={{
+            flex: 1, display: "flex", alignItems: "center", gap: "10px",
+            background: "#f5f5f5", padding: "10px 16px",
+            borderRadius: "50px", border: "1px solid #eee"
           }}>
-            <Search size={18} color="#999" />
-            <input 
-              type="text" 
-              placeholder="חיפוש סרט..." 
+            <Search size={17} color="#aaa" />
+            <input
+              type="text"
+              placeholder="חפש סרט או סדרה..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ background: 'none', border: 'none', outline: 'none', width: '100%' }} 
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                background: "none", border: "none", outline: "none",
+                width: "100%", fontSize: "15px", color: "#333"
+              }}
             />
+            {searchTerm && (
+              <span onClick={() => setSearchTerm("")} style={{ cursor: "pointer", color: "#aaa", fontSize: "18px", lineHeight: 1 }}>×</span>
+            )}
           </div>
+        </div>
+
+        <div style={{
+          display: "flex", gap: "22px",
+          overflowX: "auto", paddingBottom: "12px",
+          whiteSpace: "nowrap",
+          scrollbarWidth: "none", msOverflowStyle: "none"
+        }}>
+          {categories.map(cat => (
+            <span
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              style={{
+                cursor: "pointer", fontSize: "15px", fontWeight: "bold",
+                color: selectedCategory === cat ? "#e50914" : "#666",
+                borderBottom: selectedCategory === cat ? "3px solid #e50914" : "3px solid transparent",
+                paddingBottom: "6px", transition: "all 0.2s"
+              }}
+            >
+              {cat}
+            </span>
+          ))}
         </div>
       </header>
 
-      {/* רשימת סרטים - 2 בשורה */}
-      <main style={{ padding: '15px' }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '15px' 
-        }}>
-          {filtered.map((movie) => (
-            <div key={movie.id} style={{ marginBottom: '10px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 'bold', textAlign: 'center', marginBottom: '8px' }}>
-                {movie.title}
-              </h3>
-              
-              <div 
-                onClick={() => onMovieSelect?.(movie)}
-                style={{ cursor: 'pointer', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-              >
-                <img 
-                  src={movie.thumbnail_url} 
-                  style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }} 
-                />
+      <main style={{ padding: "20px 15px 100px 15px" }}>
+        {filteredMovies.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
+            <p style={{ fontSize: "18px" }}>😕 לא נמצאו תוצאות</p>
+            <p style={{ fontSize: "14px" }}>נסה מילת חיפוש אחרת</p>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+            {filteredMovies.map(movie => (
+              <div key={movie.id} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <h3 style={{
+                  fontSize: "14px", fontWeight: "bold",
+                  textAlign: "center", margin: 0, color: "#111",
+                  lineHeight: "1.3",
+                  overflow: "hidden", display: "-webkit-box",
+                  WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                }}>
+                  {movie.title}
+                </h3>
+                <div
+                  onClick={() => onMovieSelect(movie)}
+                  style={{
+                    cursor: "pointer", borderRadius: "12px",
+                    overflow: "hidden", aspectRatio: "2/3",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+                    position: "relative", background: "#f0f0f0"
+                  }}
+                >
+                  <img
+                    src={movie.thumbnail_url}
+                    alt={movie.title}
+                    loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={e => { e.target.src = "https://via.placeholder.com/200x300?text=ZOVEX"; }}
+                  />
+                </div>
+                <button
+                  onClick={() => onMovieSelect(movie)}
+                  style={{
+                    background: "linear-gradient(135deg, #e50914, #b20710)",
+                    color: "#fff", border: "none",
+                    padding: "11px", fontSize: "15px", fontWeight: "bold",
+                    borderRadius: "10px",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(229,9,20,0.35)",
+                    transition: "transform 0.1s"
+                  }}
+                >
+                  <Play fill="white" size={16} /> צפייה ישירה
+                </button>
               </div>
-
-              <button 
-                onClick={() => onMovieSelect?.(movie)}
-                style={{
-                  marginTop: '10px', width: '100%', background: '#e50914', color: '#fff', 
-                  border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
-                }}
-              >
-                <Play size={16} fill="white" /> צפייה ישירה
-              </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
 
-      {/* טלגרם */}
-      <a 
-        href="https://t.me/ZOVE8" 
+      <a
+        href="https://t.me/ZOVE8"
+        target="_blank"
+        rel="noreferrer"
         style={{
-          position: 'fixed', bottom: '20px', left: '20px', background: '#24A1DE',
-          width: '50px', height: '50px', borderRadius: '50%', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+          position: "fixed", bottom: "25px", left: "25px",
+          background: "#24A1DE",
+          width: "58px", height: "58px", borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#fff", boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+          zIndex: 1000, textDecoration: "none"
         }}
       >
-        <Send size={24} />
+        <Send size={28} fill="white" />
       </a>
+
     </div>
   );
 }
+```
