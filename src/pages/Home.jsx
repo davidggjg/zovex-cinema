@@ -1,16 +1,20 @@
-```jsx
 import React, { useState, useMemo } from "react";
 import { Search, Send, Play } from "lucide-react";
+
+// הוצאת ה-CSS מחוץ לרינדור כדי למנוע שגיאות תחביר ב-Base44
+const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
 
 export default function Home({ movies, onMovieSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("הכל");
 
+  // חישוב קטגוריות רק כשמערך הסרטים משתנה
   const categories = useMemo(() => {
     if (!movies) return ["הכל"];
     return ["הכל", ...new Set(movies.map(m => m.category).filter(Boolean))];
   }, [movies]);
 
+  // סינון סרטים אופטימלי
   const filteredMovies = useMemo(() => {
     if (!movies || !Array.isArray(movies)) return [];
     return movies.filter(movie => {
@@ -21,14 +25,19 @@ export default function Home({ movies, onMovieSelect }) {
     });
   }, [movies, searchTerm, selectedCategory]);
 
+  // מסך טעינה במידה והנתונים עוד לא הגיעו מהשרת
   if (!movies) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#fff" }}>
+        <style>{spinnerStyle}</style>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 50, height: 50, border: "5px solid #eee", borderTop: "5px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 15px" }} />
-          <p dir="rtl" style={{ color: "#999", fontFamily: "Arial" }}>טוען סרטים...</p>
+          <div style={{ 
+            width: 50, height: 50, border: "5px solid #f3f3f3", 
+            borderTop: "5px solid #e50914", borderRadius: "50%", 
+            animation: "spin 1s linear infinite", margin: "0 auto 15px" 
+          }} />
+          <p dir="rtl" style={{ color: "#999", fontFamily: "Arial", fontSize: "16px" }}>טוען את ZOVEX...</p>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -36,15 +45,16 @@ export default function Home({ movies, onMovieSelect }) {
   return (
     <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif" }}>
 
+      {/* Header: לוגו וחיפוש */}
       <header style={{
-        padding: "15px 15px 0 15px",
+        padding: "15px 15px 5px 15px",
         position: "sticky", top: 0,
         background: "#fff",
         zIndex: 100,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
+        boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "15px" }}>
-          <h1 style={{ color: "#e50914", fontSize: "28px", fontWeight: 900, margin: 0, letterSpacing: "-1px", flexShrink: 0 }}>
+          <h1 style={{ color: "#e50914", fontSize: "28px", fontWeight: 900, margin: 0, flexShrink: 0 }}>
             ZOVEX
           </h1>
           <div style={{
@@ -64,14 +74,18 @@ export default function Home({ movies, onMovieSelect }) {
               }}
             />
             {searchTerm && (
-              <span onClick={() => setSearchTerm("")} style={{ cursor: "pointer", color: "#aaa", fontSize: "18px", lineHeight: 1 }}>×</span>
+              <span
+                onClick={() => setSearchTerm("")}
+                style={{ cursor: "pointer", color: "#aaa", fontSize: "18px", padding: "0 5px" }}
+              >×</span>
             )}
           </div>
         </div>
 
+        {/* תפריט קטגוריות נגלל */}
         <div style={{
           display: "flex", gap: "22px",
-          overflowX: "auto", paddingBottom: "12px",
+          overflowX: "auto", paddingBottom: "10px",
           whiteSpace: "nowrap",
           scrollbarWidth: "none", msOverflowStyle: "none"
         }}>
@@ -83,7 +97,7 @@ export default function Home({ movies, onMovieSelect }) {
                 cursor: "pointer", fontSize: "15px", fontWeight: "bold",
                 color: selectedCategory === cat ? "#e50914" : "#666",
                 borderBottom: selectedCategory === cat ? "3px solid #e50914" : "3px solid transparent",
-                paddingBottom: "6px", transition: "all 0.2s"
+                paddingBottom: "5px", transition: "all 0.2s"
               }}
             >
               {cat}
@@ -92,32 +106,36 @@ export default function Home({ movies, onMovieSelect }) {
         </div>
       </header>
 
+      {/* גריד סרטים - 2 בשורה */}
       <main style={{ padding: "20px 15px 100px 15px" }}>
         {filteredMovies.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
             <p style={{ fontSize: "18px" }}>😕 לא נמצאו תוצאות</p>
-            <p style={{ fontSize: "14px" }}>נסה מילת חיפוש אחרת</p>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
             {filteredMovies.map(movie => (
               <div key={movie.id} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                
+                {/* כותרת מוגבלת ל-2 שורות */}
                 <h3 style={{
                   fontSize: "14px", fontWeight: "bold",
                   textAlign: "center", margin: 0, color: "#111",
-                  lineHeight: "1.3",
+                  lineHeight: "1.3", height: "36px",
                   overflow: "hidden", display: "-webkit-box",
                   WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
                 }}>
                   {movie.title}
                 </h3>
+
+                {/* פוסטר עם הגנה לתמונות שבורות */}
                 <div
                   onClick={() => onMovieSelect(movie)}
                   style={{
                     cursor: "pointer", borderRadius: "12px",
                     overflow: "hidden", aspectRatio: "2/3",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-                    position: "relative", background: "#f0f0f0"
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    background: "#f0f0f0"
                   }}
                 >
                   <img
@@ -125,9 +143,11 @@ export default function Home({ movies, onMovieSelect }) {
                     alt={movie.title}
                     loading="lazy"
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    onError={e => { e.target.src = "https://via.placeholder.com/200x300?text=ZOVEX"; }}
+                    onError={e => { e.target.src = "https://via.placeholder.com/200x300?text=אין+תמונה"; }}
                   />
                 </div>
+
+                {/* כפתור צפייה אדום */}
                 <button
                   onClick={() => onMovieSelect(movie)}
                   style={{
@@ -137,8 +157,7 @@ export default function Home({ movies, onMovieSelect }) {
                     borderRadius: "10px",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
                     cursor: "pointer",
-                    boxShadow: "0 4px 12px rgba(229,9,20,0.35)",
-                    transition: "transform 0.1s"
+                    boxShadow: "0 4px 10px rgba(229,9,20,0.3)"
                   }}
                 >
                   <Play fill="white" size={16} /> צפייה ישירה
@@ -149,6 +168,7 @@ export default function Home({ movies, onMovieSelect }) {
         )}
       </main>
 
+      {/* כפתור טלגרם צף */}
       <a
         href="https://t.me/ZOVE8"
         target="_blank"
@@ -156,16 +176,15 @@ export default function Home({ movies, onMovieSelect }) {
         style={{
           position: "fixed", bottom: "25px", left: "25px",
           background: "#24A1DE",
-          width: "58px", height: "58px", borderRadius: "50%",
+          width: "55px", height: "55px", borderRadius: "50%",
           display: "flex", alignItems: "center", justifyContent: "center",
           color: "#fff", boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
           zIndex: 1000, textDecoration: "none"
         }}
       >
-        <Send size={28} fill="white" />
+        <Send size={26} fill="white" />
       </a>
 
     </div>
   );
 }
-```
