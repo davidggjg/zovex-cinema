@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Send, Play, ArrowRight, X, Plus, Trash2, Film, Hash, Loader2, CheckCircle, AlertCircle, Edit2, Save } from "lucide-react";
+import { Search, Send, Play, ArrowRight, X, Plus, Trash2, Film, Hash, Loader2, CheckCircle, AlertCircle, Edit2, Save, Sparkles } from "lucide-react";
 import { Movie } from "@/entities/Movie";
-import { UploadFile } from "@/integrations/Core";
+import { uploadFile } from "@/integrations/core";
+import { createCompletion } from "@/integrations/Core";
 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
 const SECRET_TRIGGER = "ZovexAdmin2026";
 const PIN_CODE = "123456";
 const LETTER_CODE = "ZOVIX";
-
 const CATEGORIES = ["סרטים", "סדרות", "סרטי 2026", "מצוירים"];
 
 export default function Home() {
@@ -31,9 +31,13 @@ export default function Home() {
   const [editingMovie, setEditingMovie] = useState(null);
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
-  const [uploadingNew, setUploadingNew] = useState(false);
-  const [uploadingEdit, setUploadingEdit] = useState(false);
+  const [uploadingThumb, setUploadingThumb] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingEditThumb, setUploadingEditThumb] = useState(false);
+  const [uploadingEditVideo, setUploadingEditVideo] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [generatingEditDesc, setGeneratingEditDesc] = useState(false);
 
   useEffect(() => { loadMovies(); }, []);
 
@@ -61,17 +65,45 @@ export default function Home() {
     }
   };
 
-  const handleImageUpload = async (file, isEdit = false) => {
+  const handleUploadThumb = async (file, isEdit = false) => {
     if (!file) return;
-    if (isEdit) setUploadingEdit(true);
-    else { setUploadingNew(true); setPreviewUrl(URL.createObjectURL(file)); }
+    if (isEdit) setUploadingEditThumb(true);
+    else { setUploadingThumb(true); setPreviewUrl(URL.createObjectURL(file)); }
     try {
-      const { file_url } = await UploadFile({ file });
-      if (isEdit) setEditData(p => ({ ...p, thumbnail_url: file_url }));
-      else setFormData(p => ({ ...p, thumbnail_url: file_url }));
+      const { url } = await uploadFile(file);
+      if (isEdit) setEditData(p => ({ ...p, thumbnail_url: url }));
+      else setFormData(p => ({ ...p, thumbnail_url: url }));
     } catch { setFormStatus({ type: "error", message: "שגיאה בהעלאת תמונה" }); }
-    if (isEdit) setUploadingEdit(false);
-    else setUploadingNew(false);
+    if (isEdit) setUploadingEditThumb(false);
+    else setUploadingThumb(false);
+  };
+
+  const handleUploadVideo = async (file, isEdit = false) => {
+    if (!file) return;
+    if (isEdit) setUploadingEditVideo(true);
+    else setUploadingVideo(true);
+    try {
+      const { url } = await uploadFile(file);
+      if (isEdit) setEditData(p => ({ ...p, video_url: url }));
+      else setFormData(p => ({ ...p, video_url: url }));
+    } catch { setFormStatus({ type: "error", message: "שגיאה בהעלאת וידאו" }); }
+    if (isEdit) setUploadingEditVideo(false);
+    else setUploadingVideo(false);
+  };
+
+  const handleGenerateDesc = async (title, isEdit = false) => {
+    if (!title) return;
+    if (isEdit) setGeneratingEditDesc(true);
+    else setGeneratingDesc(true);
+    try {
+      const result = await createCompletion({
+        prompt: `כתוב תקציר מעניין ושיווקי בעברית לסרט או סדרה בשם: "${title}". התקציר צריך להיות בין 2-3 משפטים, מזמין לצפייה ומקצועי.`
+      });
+      if (isEdit) setEditData(p => ({ ...p, description: result }));
+      else setFormData(p => ({ ...p, description: result }));
+    } catch {}
+    if (isEdit) setGeneratingEditDesc(false);
+    else setGeneratingDesc(false);
   };
 
   const handleAddMovie = async () => {
@@ -79,14 +111,18 @@ export default function Home() {
       setFormStatus({ type: "error", message: "חובה למלא שם, קטגוריה ותמונה" });
       return;
     }
+    if (uploadingThumb || uploadingVideo) {
+      setFormStatus({ type: "error", message: "המתן לסיום ההעלאה..." });
+      return;
+    }
     setAdding(true);
     try {
       await Movie.create(formData);
       setFormData({ title: "", thumbnail_url: "", category: CATEGORIES[0], video_url: "", description: "" });
       setPreviewUrl("");
-      setFormStatus({ type: "success", message: "הסרט נוסף בהצלחה!" });
+      setFormStatus({ type: "success", message: "נוסף בהצלחה!" });
       loadMovies();
-    } catch { setFormStatus({ type: "error", message: "שגיאה בהוספת הסרט" }); }
+    } catch { setFormStatus({ type: "error", message: "שגיאה בהוספה" }); }
     setAdding(false);
     setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
   };
@@ -178,8 +214,6 @@ export default function Home() {
         </div>
 
         <div style={{ maxWidth: "900px", margin: "0 auto", display: "grid", gap: "30px" }}>
-
-          {/* טופס הוספה */}
           <section style={{ background: "#fff", padding: "25px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
             <h2 style={{ fontSize: "20px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
               <Plus size={20} color="#e50914" /> הוספת תוכן חדש
@@ -205,27 +239,32 @@ export default function Home() {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", gridColumn: "span 2" }}>
-                <label style={{ fontSize: "14px", fontWeight: "bold", color: "#555" }}>תמונה</label>
-                <input type="file" accept="image/*" onChange={e => handleImageUpload(e.target.files[0])} style={{ fontSize: "14px" }} />
-                {uploadingNew && <p style={{ color: "#aaa", fontSize: "13px" }}>מעלה תמונה...</p>}
-                {previewUrl && <img src={previewUrl} style={{ width: "100px", height: "150px", objectFit: "cover", borderRadius: "8px", marginTop: "8px" }} alt="תצוגה מקדימה" />}
+                <label style={{ fontSize: "14px", fontWeight: "bold", color: "#555" }}>תמונה מהטלפון</label>
+                <input type="file" accept="image/*" onChange={e => handleUploadThumb(e.target.files[0])} style={{ fontSize: "14px" }} />
+                {uploadingThumb && <p style={{ color: "#aaa", fontSize: "13px" }}>⏳ מעלה תמונה...</p>}
+                {previewUrl && <img src={previewUrl} style={{ width: "80px", height: "120px", objectFit: "cover", borderRadius: "8px", marginTop: "6px" }} alt="תצוגה מקדימה" />}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", gridColumn: "span 2" }}>
-                <label style={{ fontSize: "14px", fontWeight: "bold", color: "#555" }}>קישור וידאו</label>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "#f5f5f5", padding: "10px 15px", borderRadius: "8px", border: "1px solid #eee" }}>
-                  <Play size={16} color="#aaa" />
-                  <input style={{ background: "none", border: "none", outline: "none", width: "100%", fontSize: "14px" }} value={formData.video_url} onChange={e => setFormData({ ...formData, video_url: e.target.value })} placeholder="https://example.com/video.mp4" />
+                <label style={{ fontSize: "14px", fontWeight: "bold", color: "#555" }}>וידאו מהטלפון</label>
+                <input type="file" accept="video/*" onChange={e => handleUploadVideo(e.target.files[0])} style={{ fontSize: "14px" }} />
+                {uploadingVideo && <p style={{ color: "#aaa", fontSize: "13px" }}>⏳ מעלה וידאו... (זה יכול לקחת כמה דקות)</p>}
+                {formData.video_url && !uploadingVideo && <p style={{ color: "#4CAF50", fontSize: "13px" }}>✅ וידאו הועלה בהצלחה</p>}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", gridColumn: "span 2" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <label style={{ fontSize: "14px", fontWeight: "bold", color: "#555" }}>תיאור</label>
+                  <button onClick={() => handleGenerateDesc(formData.title)} disabled={generatingDesc || !formData.title} style={{ background: "none", border: "1px solid #e50914", color: "#e50914", borderRadius: "6px", padding: "4px 10px", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                    {generatingDesc ? <Loader2 size={12} /> : <Sparkles size={12} />}
+                    {generatingDesc ? "מייצר..." : "✨ ייצר עם AI"}
+                  </button>
                 </div>
+                <textarea style={{ background: "#f5f5f5", border: "1px solid #eee", borderRadius: "8px", padding: "10px 15px", fontSize: "14px", outline: "none", resize: "vertical", minHeight: "80px", fontFamily: "Arial" }} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="תיאור קצר של הסרט..." />
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", gridColumn: "span 2" }}>
-                <label style={{ fontSize: "14px", fontWeight: "bold", color: "#555" }}>תיאור</label>
-                <textarea style={{ background: "#f5f5f5", border: "1px solid #eee", borderRadius: "8px", padding: "10px 15px", fontSize: "14px", outline: "none", resize: "vertical", minHeight: "80px", fontFamily: "Arial" }} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="תיאור קצר..." />
-              </div>
-
-              <button onClick={handleAddMovie} disabled={adding || uploadingNew} style={{ gridColumn: "span 2", background: "#e50914", color: "#fff", border: "none", padding: "14px", borderRadius: "10px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                {adding ? <Loader2 size={20} /> : "הוסף למערכת"}
+              <button onClick={handleAddMovie} disabled={adding || uploadingThumb || uploadingVideo} style={{ gridColumn: "span 2", background: "#e50914", color: "#fff", border: "none", padding: "14px", borderRadius: "10px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                {adding ? <Loader2 size={20} /> : "פרסם למערכת"}
               </button>
             </div>
 
@@ -237,7 +276,6 @@ export default function Home() {
             )}
           </section>
 
-          {/* רשימת סרטים לפי קטגוריות */}
           {Object.entries(moviesByCategory).map(([cat, catMovies]) => (
             <section key={cat} style={{ background: "#fff", padding: "25px", borderRadius: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
               <h2 style={{ fontSize: "20px", marginBottom: "20px", color: "#e50914" }}>{cat} ({catMovies.length})</h2>
@@ -250,16 +288,34 @@ export default function Home() {
                         <select style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }} value={editData.category || ""} onChange={e => setEditData({ ...editData, category: e.target.value })}>
                           {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                         </select>
-                        <input style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }} value={editData.video_url || ""} onChange={e => setEditData({ ...editData, video_url: e.target.value })} placeholder="קישור וידאו" />
-                        <textarea style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", resize: "vertical", minHeight: "60px", fontFamily: "Arial" }} value={editData.description || ""} onChange={e => setEditData({ ...editData, description: e.target.value })} placeholder="תיאור" />
+
                         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                           <label style={{ fontSize: "13px", color: "#555" }}>החלף תמונה</label>
-                          <input type="file" accept="image/*" onChange={e => handleImageUpload(e.target.files[0], true)} style={{ fontSize: "13px" }} />
-                          {uploadingEdit && <p style={{ color: "#aaa", fontSize: "13px" }}>מעלה...</p>}
+                          <input type="file" accept="image/*" onChange={e => handleUploadThumb(e.target.files[0], true)} style={{ fontSize: "13px" }} />
+                          {uploadingEditThumb && <p style={{ color: "#aaa", fontSize: "13px" }}>⏳ מעלה...</p>}
                           {editData.thumbnail_url && <img src={editData.thumbnail_url} style={{ width: "60px", height: "90px", objectFit: "cover", borderRadius: "6px" }} alt="" />}
                         </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                          <label style={{ fontSize: "13px", color: "#555" }}>החלף וידאו</label>
+                          <input type="file" accept="video/*" onChange={e => handleUploadVideo(e.target.files[0], true)} style={{ fontSize: "13px" }} />
+                          {uploadingEditVideo && <p style={{ color: "#aaa", fontSize: "13px" }}>⏳ מעלה וידאו...</p>}
+                          {editData.video_url && !uploadingEditVideo && <p style={{ color: "#4CAF50", fontSize: "13px" }}>✅ וידאו מוכן</p>}
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <label style={{ fontSize: "13px", color: "#555" }}>תיאור</label>
+                            <button onClick={() => handleGenerateDesc(editData.title, true)} disabled={generatingEditDesc || !editData.title} style={{ background: "none", border: "1px solid #e50914", color: "#e50914", borderRadius: "6px", padding: "3px 8px", fontSize: "11px", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px" }}>
+                              {generatingEditDesc ? <Loader2 size={11} /> : <Sparkles size={11} />}
+                              {generatingEditDesc ? "מייצר..." : "✨ AI"}
+                            </button>
+                          </div>
+                          <textarea style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px", resize: "vertical", minHeight: "60px", fontFamily: "Arial" }} value={editData.description || ""} onChange={e => setEditData({ ...editData, description: e.target.value })} placeholder="תיאור" />
+                        </div>
+
                         <div style={{ display: "flex", gap: "10px" }}>
-                          <button onClick={handleEditSave} disabled={saving} style={{ flex: 1, background: "#e50914", color: "#fff", border: "none", padding: "10px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                          <button onClick={handleEditSave} disabled={saving || uploadingEditThumb || uploadingEditVideo} style={{ flex: 1, background: "#e50914", color: "#fff", border: "none", padding: "10px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                             {saving ? <Loader2 size={16} /> : <><Save size={16} /> שמור</>}
                           </button>
                           <button onClick={() => setEditingMovie(null)} style={{ flex: 1, background: "#eee", color: "#333", border: "none", padding: "10px", borderRadius: "8px", cursor: "pointer" }}>ביטול</button>
