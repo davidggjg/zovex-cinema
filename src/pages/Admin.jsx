@@ -1,194 +1,176 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import Logo from '../components/zovex/Logo';
+import CategoryTabs from '../components/zovex/CategoryTabs';
+import ContentGrid from '../components/zovex/ContentGrid';
+import ContentDetailModal from '../components/zovex/ContentDetailModal';
+import PlayerModal from '../components/zovex/PlayerModal';
+import TMDBSearch from '../components/zovex/admin/TMDBSearch';
+import ContentForm from '../components/zovex/admin/ContentForm';
+import ManageList from '../components/zovex/admin/ManageList';
+import SettingsPanel from '../components/zovex/admin/SettingsPanel';
+import CategoryManager from '../components/zovex/admin/CategoryManager';
+import Toast, { showToast } from '../components/zovex/Toast';
+import { Film, Plus, List, Settings, ArrowRight, Tag } from 'lucide-react';
 
-const Admin = () => {
-  // מצבי מערכת (State)
-  const [data, setData] = useState([]);
-  const [keys, setKeys] = useState({ tmdb: '', gemini: '' });
-  const [activeScreen, setActiveScreen] = useState('browse');
-  const [adminTab, setAdminTab] = useState('הכל');
-  const [status, setStatus] = useState({ msg: '', type: '' });
-  const [tmdbResults, setTmdbResults] = useState([]);
-  
-  // טופס הוספה
-  const [formData, setFormData] = useState({
-    title: '', year: '2026', cat: 'סרטים', desc: '', poster: '', video: ''
+const TABS = [
+  { id: 'browse', label: 'תכנים', icon: Film },
+  { id: 'add', label: 'הוסף', icon: Plus },
+  { id: 'manage', label: 'ניהול', icon: List },
+  { id: 'categories', label: 'קטגוריות', icon: Tag },
+  { id: 'settings', label: 'הגדרות', icon: Settings },
+];
+
+export default function Admin() {
+  const [activeTab, setActiveTab] = useState('browse');
+  const [browseCategory, setBrowseCategory] = useState('הכל');
+  const [tmdbData, setTmdbData] = useState(null);
+  const [editItem, setEditItem] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [playing, setPlaying] = useState(null);
+  const [settings, setSettings] = useState({});
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: items = [] } = useQuery({
+    queryKey: ['admin-content'],
+    queryFn: () => base44.entities.Content.list('-created_date', 500),
+    initialData: [],
   });
 
-  // טעינת נתונים ראשונית
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => base44.entities.Category.list('order', 50),
+    initialData: [],
+  });
+
+  const { data: settingsData = [] } = useQuery({
+    queryKey: ['app-settings'],
+    queryFn: () => base44.entities.AppSettings.list(),
+    initialData: [],
+  });
+
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem('zovex_data') || '[]');
-    const savedKeys = JSON.parse(localStorage.getItem('zovex_keys') || '{}');
-    setData(savedData);
-    setKeys(savedKeys);
-  }, []);
+    const s = {};
+    settingsData.forEach(item => {
+      if (item.setting_key === 'tmdb_key') s.tmdb_key = item.setting_value;
+      if (item.setting_key === 'auth_config') {
+        try { Object.assign(s, JSON.parse(item.setting_value)); } catch {}
+      }
+    });
+    setSettings(s);
+  }, [settingsData]);
 
-  // פונקציות עזר
-  const saveToLocal = (newData) => {
-    setData(newData);
-    localStorage.setItem('zovex_data', JSON.stringify(newData));
+  const refreshContent = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['admin-content'] });
+    queryClient.invalidateQueries({ queryKey: ['content'] });
+  }, [queryClient]);
+
+  const refreshCategories = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+  }, [queryClient]);
+
+  const filteredBrowse = browseCategory === 'הכל' ? items : items.filter(c => c.category === browseCategory);
+
+  const handleEdit = (item) => {
+    setEditItem(item);
+    setTmdbData(null);
+    setActiveTab('add');
+    showToast('✏️ ערוך ושמור');
   };
 
-  const handleSaveItem = () => {
-    if (!formData.title || !formData.video) {
-      showStatus('⚠️ שם ולינק וידאו חובה', 'err');
-      return;
-    }
-    const newItem = { ...formData, id: Date.now(), isNew: formData.cat === 'חדש 2026' };
-    const updatedData = [newItem, ...data];
-    saveToLocal(updatedData);
-    setFormData({ title: '', year: '2026', cat: 'סרטים', desc: '', poster: '', video: '' });
-    showStatus('✅ נשמר בהצלחה!', 'ok');
+  const handleSaved = () => {
+    refreshContent();
+    setEditItem(null);
+    setTmdbData(null);
   };
-
-  const deleteItem = (id) => {
-    if (window.confirm('למחוק את התוכן?')) {
-      const updatedData = data.filter(item => item.id !== id);
-      saveToLocal(updatedData);
-    }
-  };
-
-  const showStatus = (msg, type) => {
-    setStatus({ msg, type });
-    setTimeout(() => setStatus({ msg: '', type: '' }), 3000);
-  };
-
-  const exportData = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'zovex_backup.json';
-    a.click();
-  };
-
-  // רינדור רשימת התכנים (Browse)
-  const filteredData = adminTab === 'הכל' ? data : data.filter(item => item.cat === adminTab);
 
   return (
-    <div className="admin-container" style={{ direction: 'rtl', backgroundColor: '#F5F5F7', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ padding: '16px 20px', background: '#fff', borderBottom: '1px solid #d2d2d7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: '24px', fontWeight: '900', color: '#0071e3' }}>ZOVEX <span style={{ fontSize: '12px', color: '#6e6e73' }}>Admin</span></div>
-        <button onClick={() => window.location.href = '/'} style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid #d2d2d7', cursor: 'pointer' }}>יציאה</button>
+    <div className="min-h-screen bg-[var(--zovex-bg)]" dir="rtl">
+      {/* Top bar */}
+      <div className="bg-[rgba(245,245,247,0.9)] backdrop-blur-[20px] border-b border-[var(--zovex-border)] px-5 py-4 flex items-center justify-between">
+        <Logo subtitle="Admin" />
+        <button
+          onClick={() => navigate(createPageUrl('Home'))}
+          className="bg-[var(--zovex-surface2)] text-[var(--zovex-muted)] border-[1.5px] border-[var(--zovex-border)] rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-1.5 hover:border-[var(--zovex-accent)] transition-colors"
+        >
+          <ArrowRight className="w-3.5 h-3.5" /> יציאה
+        </button>
       </div>
 
-      {/* Navigation */}
-      <div style={{ display: 'flex', background: 'rgba(245,245,247,0.9)', borderBottom: '1px solid #d2d2d7', sticky: 'top' }}>
-        {['browse', 'add', 'manage', 'settings'].map((tab) => (
-          <div 
-            key={tab}
-            onClick={() => setActiveScreen(tab)}
-            style={{ 
-              flex: 1, padding: '14px', textAlign: 'center', cursor: 'pointer', 
-              color: activeScreen === tab ? '#0071e3' : '#6e6e73',
-              borderBottom: activeScreen === tab ? '2px solid #0071e3' : '2px solid transparent',
-              fontWeight: '700', fontSize: '13px'
-            }}
+      {/* Nav tabs */}
+      <div className="bg-[rgba(245,245,247,0.9)] backdrop-blur-[20px] border-b border-[var(--zovex-border)] sticky top-0 z-10 flex overflow-x-auto hide-scrollbar">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 min-w-[64px] py-3 text-center text-[10px] font-bold border-b-2 transition-colors ${
+              activeTab === tab.id
+                ? 'text-[var(--zovex-accent)] border-[var(--zovex-accent)]'
+                : 'text-[var(--zovex-muted)] border-transparent'
+            }`}
           >
-            {tab === 'browse' && '🎬 תכנים'}
-            {tab === 'add' && '➕ הוסף'}
-            {tab === 'manage' && '📋 ניהול'}
-            {tab === 'settings' && '⚙️ הגדרות'}
-          </div>
+            <tab.icon className="w-4 h-4 mx-auto mb-0.5" />
+            {tab.label}
+          </button>
         ))}
       </div>
 
-      <div style={{ padding: '16px' }}>
-        {/* Screen: Browse */}
-        {activeScreen === 'browse' && (
+      {/* Content */}
+      <div className="p-4 pb-24">
+        {/* Browse */}
+        {activeTab === 'browse' && (
           <div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '15px', overflowX: 'auto' }}>
-              {['הכל', 'סרטים', 'סדרות', 'מצוירים', 'חדש 2026'].map(t => (
-                <button 
-                  key={t}
-                  onClick={() => setAdminTab(t)}
-                  style={{ 
-                    padding: '6px 16px', borderRadius: '20px', border: '1px solid #d2d2d7',
-                    background: adminTab === t ? '#0071e3' : '#fff',
-                    color: adminTab === t ? '#fff' : '#6e6e73', cursor: 'pointer'
-                  }}
-                >{t}</button>
-              ))}
+            <div className="mb-4">
+              <CategoryTabs active={browseCategory} onChange={setBrowseCategory} categories={categories} size="small" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
-              {filteredData.map(item => (
-                <div key={item.id} style={{ borderRadius: '12px', overflow: 'hidden', background: '#fff', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-                  <img src={item.poster} alt="" style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
-                  <div style={{ padding: '8px', fontSize: '12px', fontWeight: 'bold' }}>{item.title}</div>
-                </div>
-              ))}
-            </div>
+            <ContentGrid items={filteredBrowse} onItemClick={setSelected} />
           </div>
         )}
 
-        {/* Screen: Add Item */}
-        {activeScreen === 'add' && (
-          <div style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ marginBottom: '15px' }}>הוספת תוכן חדש</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input type="text" placeholder="שם הסרט/סדרה" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} style={inputStyle} />
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input type="number" placeholder="שנה" value={formData.year} onChange={e => setFormData({...formData, year: e.target.value})} style={{...inputStyle, flex: 1}} />
-                <select value={formData.cat} onChange={e => setFormData({...formData, cat: e.target.value})} style={{...inputStyle, flex: 1}}>
-                  <option>סרטים</option>
-                  <option>סדרות</option>
-                  <option>מצוירים</option>
-                  <option>חדש 2026</option>
-                </select>
-              </div>
-              <textarea placeholder="תיאור" value={formData.desc} onChange={e => setFormData({...formData, desc: e.target.value})} style={{...inputStyle, height: '80px'}} />
-              <input type="text" placeholder="קישור לפוסטר (URL)" value={formData.poster} onChange={e => setFormData({...formData, poster: e.target.value})} style={inputStyle} />
-              <input type="text" placeholder="קישור וידאו (m3u8/mp4)" value={formData.video} onChange={e => setFormData({...formData, video: e.target.value})} style={inputStyle} />
-              <button onClick={handleSaveItem} style={{ background: '#34c759', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>💾 שמור תוכן</button>
-              {status.msg && <div style={{ padding: '10px', borderRadius: '8px', fontSize: '13px', backgroundColor: status.type === 'ok' ? '#f0fff4' : '#fff5f5', color: status.type === 'ok' ? 'green' : 'red', border: '1px solid' }}>{status.msg}</div>}
-            </div>
+        {/* Add / Edit */}
+        {activeTab === 'add' && (
+          <div>
+            <TMDBSearch tmdbKey={settings.tmdb_key} onSelect={(d) => { setTmdbData(d); setEditItem(null); }} />
+            <ContentForm
+              tmdbData={tmdbData}
+              editItem={editItem}
+              categories={categories}
+              onSaved={handleSaved}
+            />
           </div>
         )}
 
-        {/* Screen: Manage */}
-        {activeScreen === 'manage' && (
-          <div style={{ background: '#fff', padding: '15px', borderRadius: '16px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '15px' }}>ניהול תכנים ({data.length})</div>
-            {data.map(item => (
-              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid #eee' }}>
-                <img src={item.poster} alt="" style={{ width: '40px', height: '55px', borderRadius: '6px', objectFit: 'cover' }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{item.title}</div>
-                  <div style={{ fontSize: '11px', color: '#6e6e73' }}>{item.year} • {item.cat}</div>
-                </div>
-                <button onClick={() => deleteItem(item.id)} style={{ padding: '5px 10px', color: 'red', border: '1px solid red', borderRadius: '6px', background: 'none', cursor: 'pointer' }}>מחק</button>
-              </div>
-            ))}
-          </div>
+        {/* Manage */}
+        {activeTab === 'manage' && (
+          <ManageList items={items} onEdit={handleEdit} onRefresh={refreshContent} />
         )}
 
-        {/* Screen: Settings */}
-        {activeScreen === 'settings' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ background: '#fff', padding: '15px', borderRadius: '16px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>מפתחות API</div>
-              <input type="password" placeholder="TMDB API Key" value={keys.tmdb} onChange={e => setKeys({...keys, tmdb: e.target.value})} style={inputStyle} />
-              <button onClick={() => { localStorage.setItem('zovex_keys', JSON.stringify(keys)); alert('נשמר!'); }} style={{ width: '100%', marginTop: '10px', padding: '10px', background: '#0071e3', color: '#fff', borderRadius: '10px', border: 'none' }}>שמור מפתחות</button>
-            </div>
-            <div style={{ background: '#fff', padding: '15px', borderRadius: '16px' }}>
-              <button onClick={exportData} style={{ width: '100%', padding: '10px', background: '#f0f0f5', border: '1px solid #d2d2d7', borderRadius: '10px', marginBottom: '10px' }}>📤 ייצא גיבוי JSON</button>
-              <button onClick={() => { if(window.confirm('למחוק הכל?')) saveToLocal([]); }} style={{ width: '100%', padding: '10px', background: '#fff5f5', color: 'red', border: '1px solid red', borderRadius: '10px' }}>🗑 נקה את כל הנתונים</button>
-            </div>
-          </div>
+        {/* Categories */}
+        {activeTab === 'categories' && (
+          <CategoryManager categories={categories} onRefresh={refreshCategories} />
+        )}
+
+        {/* Settings */}
+        {activeTab === 'settings' && (
+          <SettingsPanel settings={settings} onSettingsChange={setSettings} items={items} onRefresh={refreshContent} />
         )}
       </div>
+
+      {/* Detail */}
+      {selected && (
+        <ContentDetailModal
+          item={selected}
+          onClose={() => setSelected(null)}
+          onPlay={(item) => { setSelected(null); setPlaying(item); }}
+        />
+      )}
+
+      {playing && <PlayerModal item={playing} onClose={() => setPlaying(null)} />}
+      <Toast />
     </div>
   );
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: '10px',
-  border: '1.5px solid #d2d2d7',
-  fontSize: '14px',
-  outline: 'none',
-  boxSizing: 'border-box'
-};
-
-export default Admin;
+}
