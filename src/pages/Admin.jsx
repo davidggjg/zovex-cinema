@@ -7,7 +7,7 @@ import { createCompletion } from "@/integrations/Core";
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
 const SECRET_TRIGGER = "ZovexAdmin2026";
 const PIN_CODE = "123456";
-const LETTER_CODE = "ZOVEX";
+const LETTER_CODE = "ZOVIX";
 const CATEGORIES = ["סרטים", "סדרות", "סרטי 2026", "מצוירים"];
 
 export default function Home() {
