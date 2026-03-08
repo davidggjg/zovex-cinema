@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -124,6 +124,7 @@ export default function Home() {
   });
   const [categories, setCategories] = useState([]);
   const [newCat, setNewCat] = useState("");
+  const [manageQ, setManageQ] = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => { loadMovies(); }, []);
@@ -550,32 +551,27 @@ export default function Home() {
               </div>
             </div>
           )}
-          {adminTab === "manage" && (() => {
-            const [manageQ, setManageQ] = React.useState("");
-            const filteredSeries = existingSeriesNames.filter(n => n.toLowerCase().includes(manageQ.toLowerCase()));
-            const filteredMovies = movies.filter(m => !m.series_name && (m.title || "").toLowerCase().includes(manageQ.toLowerCase()));
-            return (
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F5", borderRadius: 12, padding: "9px 12px", marginBottom: 14, border: "1.5px solid #d2d2d7" }}>
-                  <Search size={15} color="#aaa" />
-                  <input value={manageQ} onChange={e => setManageQ(e.target.value)} placeholder="חפש סדרה או סרט..." style={{ background: "none", border: "none", outline: "none", flex: 1, fontSize: 13, fontFamily: "inherit" }} />
-                  {manageQ && <span onClick={() => setManageQ("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 16 }}>✕</span>}
-                </div>
-                <div style={{ fontSize: 12, color: "#6e6e73", marginBottom: 10 }}>תכנים ({movies.length})</div>
-                {filteredSeries.length > 0 && (
-                  <div style={{ marginBottom: 12, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" }}>
-                    <div style={{ padding: "10px 16px", background: "#e8f0fe", fontSize: 13, fontWeight: 800, color: "#0071e3" }}>סדרות</div>
-                    {filteredSeries.map(serName => (
-                      <AdminSeriesSection key={serName} serName={serName} episodes={seriesMap[serName].episodes} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
-                    ))}
-                  </div>
-                )}
-                {filteredMovies.length > 0 && (
-                  <AdminCategorySection catName="סרטים" items={filteredMovies} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
-                )}
+          {adminTab === "manage" && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F5", borderRadius: 12, padding: "9px 12px", marginBottom: 14, border: "1.5px solid #d2d2d7" }}>
+                <Search size={15} color="#aaa" />
+                <input value={manageQ} onChange={e => setManageQ(e.target.value)} placeholder="חפש סדרה או סרט..." style={{ background: "none", border: "none", outline: "none", flex: 1, fontSize: 13, fontFamily: "inherit" }} />
+                {manageQ && <span onClick={() => setManageQ("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 16 }}>✕</span>}
               </div>
-            );
-          })()}
+              <div style={{ fontSize: 12, color: "#6e6e73", marginBottom: 10 }}>תכנים ({movies.length})</div>
+              {existingSeriesNames.filter(n => n.toLowerCase().includes(manageQ.toLowerCase())).length > 0 && (
+                <div style={{ marginBottom: 12, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" }}>
+                  <div style={{ padding: "10px 16px", background: "#e8f0fe", fontSize: 13, fontWeight: 800, color: "#0071e3" }}>סדרות</div>
+                  {existingSeriesNames.filter(n => n.toLowerCase().includes(manageQ.toLowerCase())).map(serName => (
+                    <AdminSeriesSection key={serName} serName={serName} episodes={seriesMap[serName].episodes} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
+                  ))}
+                </div>
+              )}
+              {movies.filter(m => !m.series_name && (m.title || "").toLowerCase().includes(manageQ.toLowerCase())).length > 0 && (
+                <AdminCategorySection catName="סרטים" items={movies.filter(m => !m.series_name && (m.title || "").toLowerCase().includes(manageQ.toLowerCase()))} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
+              )}
+            </div>
+          )}
           {adminTab === "categories" && (
             <div style={cardStyle}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>ניהול קטגוריות</div>
