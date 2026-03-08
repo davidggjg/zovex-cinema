@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -217,6 +217,14 @@ export default function Home() {
     if (!form.title || !form.category) { setFormStatus({ type: "error", message: "שם וקטגוריה חובה" }); return; }
     setSaving(true);
     const info = extractVideoInfo(videoUrlInput);
+    // auto episode number: find next available in series+season
+    let autoEpNum = Number(form.episode_number) || null;
+    if (isSeries && !editingMovie && !autoEpNum) {
+      const serName = form.series_name || form.title;
+      const seasonN = Number(form.season_number) || 1;
+      const existing = movies.filter(m => m.series_name === serName && (m.season_number || 1) === seasonN).map(m => m.episode_number || 0);
+      autoEpNum = existing.length > 0 ? Math.max(...existing) + 1 : 1;
+    }
     const payload = {
       title: form.title, description: form.description,
       thumbnail_url: form.thumbnail_url, category: form.category,
@@ -224,7 +232,7 @@ export default function Home() {
       video_id: info.video_id, type: info.type, video_url: videoUrlInput,
       series_name: isSeries ? (form.series_name || form.title) : null,
       season_number: isSeries ? (Number(form.season_number) || 1) : null,
-      episode_number: isSeries ? (Number(form.episode_number) || null) : null,
+      episode_number: isSeries ? (autoEpNum) : null,
       episode_title: isSeries ? form.episode_title : null,
     };
     try {
@@ -274,7 +282,7 @@ export default function Home() {
       else if (type === "streamable") fullUrl = `https://streamable.com/${vid}`;
       else if (type === "rumble") fullUrl = `https://rumble.com/embed/${vid}`;
       else if (type === "archive") fullUrl = `https://archive.org/details/${vid}`;
-      else if (type === "kan") fullUrl = `https://www.kan.org.il/item/?itemId=${vid}`;
+      else if (type === "kan") fullUrl = `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
       else fullUrl = vid;
     }
     setVideoUrlInput(fullUrl);
