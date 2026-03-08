@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -568,16 +568,19 @@ export default function Home() {
             </div>
           )}
           {adminTab === "settings" && (
-            <div style={cardStyle}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>הגדרות</div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>
-                  TMDB API Key <span style={{ color: tmdbKey ? "#34c759" : "#ff3b30", fontWeight: 400 }}>{tmdbKey ? "מוגדר" : "לא מוגדר"}</span>
-                </label>
-                <input type="password" value={tmdbKey} onChange={e => setTmdbKey(e.target.value)} placeholder="32 תווים..." dir="ltr" style={inp} />
+            <div>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>הגדרות</div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>
+                    TMDB API Key <span style={{ color: tmdbKey ? "#34c759" : "#ff3b30", fontWeight: 400 }}>{tmdbKey ? "מוגדר" : "לא מוגדר"}</span>
+                  </label>
+                  <input type="password" value={tmdbKey} onChange={e => setTmdbKey(e.target.value)} placeholder="32 תווים..." dir="ltr" style={inp} />
+                </div>
+                <button onClick={() => { try { localStorage.setItem("zovex_tmdb_key", tmdbKey); } catch {} setFormStatus({ type: "success", message: "נשמר!" }); setTimeout(() => setFormStatus({ type: "", message: "" }), 2000); }} style={{ width: "100%", background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>שמור מפתח</button>
+                {formStatus.message && <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: "#f0fff4", color: "#1a7a3a" }}>{formStatus.message}</div>}
               </div>
-              <button onClick={() => { try { localStorage.setItem("zovex_tmdb_key", tmdbKey); } catch {} setFormStatus({ type: "success", message: "נשמר!" }); setTimeout(() => setFormStatus({ type: "", message: "" }), 2000); }} style={{ width: "100%", background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>שמור מפתח</button>
-              {formStatus.message && <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: "#f0fff4", color: "#1a7a3a" }}>{formStatus.message}</div>}
+              <MergeSeriesPanel movies={movies} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} />
             </div>
           )}
         </div>
@@ -719,6 +722,71 @@ export default function Home() {
       <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ position: "fixed", bottom: 24, left: 24, background: "#24A1DE", width: 56, height: 56, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(0,0,0,.2)", zIndex: 1000, textDecoration: "none" }}>
         <Send size={26} fill="white" />
       </a>
+    </div>
+  );
+}
+
+
+function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot }) {
+  const [merging, setMerging] = useState(false);
+  const [mergeStatus, setMergeStatus] = useState({ type: "", message: "" });
+  const [sourceSeries, setSourceSeries] = useState("");
+  const [targetSeries, setTargetSeries] = useState("");
+  const [targetSeason, setTargetSeason] = useState("2");
+
+  const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
+
+  const handleMerge = async () => {
+    if (!sourceSeries || !targetSeries) { setMergeStatus({ type: "error", message: "בחר סדרת מקור ויעד" }); return; }
+    if (sourceSeries === targetSeries) { setMergeStatus({ type: "error", message: "מקור ויעד זהים" }); return; }
+    const toMerge = movies.filter(m => m.series_name === sourceSeries);
+    if (!window.confirm(`למזג ${toMerge.length} פרקים מ"${sourceSeries}" לעונה ${targetSeason} של "${targetSeries}"?`)) return;
+    setMerging(true);
+    let done = 0;
+    for (const ep of toMerge) {
+      try {
+        await Movie.update(ep.id, { series_name: targetSeries, season_number: Number(targetSeason) });
+        done++;
+      } catch {}
+    }
+    setMergeStatus({ type: "success", message: `עודכנו ${done} פרקים בהצלחה!` });
+    setMerging(false);
+    loadMovies();
+    setTimeout(() => setMergeStatus({ type: "", message: "" }), 4000);
+  };
+
+  return (
+    <div style={{ ...cardStyle, border: "2px solid #ff9500" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#ff9500" }}>
+        {dot} מיזוג סדרות
+      </div>
+      <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 12 }}>העבר כל פרקי סדרה אחת לתוך עונה של סדרה אחרת</div>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>סדרת מקור (שתועבר)</label>
+        <select value={sourceSeries} onChange={e => setSourceSeries(e.target.value)} style={inp}>
+          <option value="">בחר סדרה...</option>
+          {seriesNames.map(n => <option key={n} value={n}>{n} ({movies.filter(m => m.series_name === n).length} פרקים)</option>)}
+        </select>
+      </div>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>סדרת יעד (שתקלוט)</label>
+        <select value={targetSeries} onChange={e => setTargetSeries(e.target.value)} style={inp}>
+          <option value="">בחר סדרה...</option>
+          {seriesNames.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>עונה ביעד</label>
+        <input type="number" min="1" value={targetSeason} onChange={e => setTargetSeason(e.target.value)} style={inp} />
+      </div>
+      <button onClick={handleMerge} disabled={merging} style={{ width: "100%", background: "#ff9500", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", opacity: merging ? 0.6 : 1 }}>
+        {merging ? "ממזג..." : "מזג סדרות"}
+      </button>
+      {mergeStatus.message && (
+        <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: mergeStatus.type === "success" ? "#f0fff4" : "#fff5f5", color: mergeStatus.type === "success" ? "#1a7a3a" : "#ff3b30" }}>
+          {mergeStatus.message}
+        </div>
+      )}
     </div>
   );
 }
