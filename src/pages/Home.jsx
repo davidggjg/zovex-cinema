@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -97,7 +97,6 @@ export default function Home() {
   const [selectedSeries, setSelectedSeries] = useState(null);
   const [openSeasons, setOpenSeasons] = useState({});
   const [playerMovie, setPlayerMovie] = useState(null);
-
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -123,10 +122,7 @@ export default function Home() {
     year: String(new Date().getFullYear()),
     series_name: "", season_number: "", episode_number: "", episode_title: ""
   });
-  const [categories, setCategories] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("zovex_cats") || "null") || []; }
-    catch { return []; }
-  });
+  const [categories, setCategories] = useState([]);
   const [newCat, setNewCat] = useState("");
   const fileInputRef = useRef(null);
 
@@ -140,6 +136,15 @@ export default function Home() {
   useEffect(() => {
     if (searchTerm === SECRET_TRIGGER) { setSearchTerm(""); setShowAdminLogin(true); }
   }, [searchTerm]);
+
+  useEffect(() => {
+    if (movies.length === 0) return;
+    const saved = (() => { try { return JSON.parse(localStorage.getItem("zovex_cats") || "null"); } catch { return null; } })();
+    if (saved && saved.length > 0) { setCategories(saved); return; }
+    const fromMovies = [...new Set(movies.map(m => m.category).filter(Boolean))];
+    setCategories(fromMovies);
+    try { localStorage.setItem("zovex_cats", JSON.stringify(fromMovies)); } catch {}
+  }, [movies]);
 
   const saveCats = (c) => {
     setCategories(c);
@@ -185,7 +190,7 @@ export default function Home() {
       setForm(p => ({ ...p, thumbnail_url: file_url }));
       setPosterPreview(file_url);
     } catch {
-      setFormStatus({ type: "error", message: "❌ שגיאה בהעלאת תמונה" });
+      setFormStatus({ type: "error", message: "שגיאה בהעלאת תמונה" });
     }
     setUploading(false);
   };
@@ -198,7 +203,7 @@ export default function Home() {
   };
 
   const generateAI = async () => {
-    if (!form.title) { setFormStatus({ type: "error", message: "⚠️ הכנס שם קודם" }); return; }
+    if (!form.title) { setFormStatus({ type: "error", message: "הכנס שם קודם" }); return; }
     setAiLoading(true);
     try {
       const { InvokeLLM } = await import("@/integrations/Core");
@@ -209,7 +214,7 @@ export default function Home() {
   };
 
   const handleSave = async () => {
-    if (!form.title || !form.category) { setFormStatus({ type: "error", message: "⚠️ שם וקטגוריה חובה" }); return; }
+    if (!form.title || !form.category) { setFormStatus({ type: "error", message: "שם וקטגוריה חובה" }); return; }
     setSaving(true);
     const info = extractVideoInfo(videoUrlInput);
     const payload = {
@@ -225,15 +230,15 @@ export default function Home() {
     try {
       if (editingMovie) {
         await Movie.update(editingMovie.id, payload);
-        setFormStatus({ type: "success", message: "✅ עודכן!" });
+        setFormStatus({ type: "success", message: "עודכן!" });
       } else {
         await Movie.create(payload);
-        setFormStatus({ type: "success", message: "✅ נשמר!" });
+        setFormStatus({ type: "success", message: "נשמר!" });
       }
       resetForm(); loadMovies();
       setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
     } catch {
-      setFormStatus({ type: "error", message: "❌ שגיאה בשמירה" });
+      setFormStatus({ type: "error", message: "שגיאה בשמירה" });
     }
     setSaving(false);
   };
@@ -314,12 +319,10 @@ export default function Home() {
   }, [movies, searchTerm, selectedCategory, seriesMap]);
 
   const allItems = [...filteredItems.series, ...filteredItems.movies];
-
   const inp = { width: "100%", background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
   const cardStyle = { background: "#fff", borderRadius: 16, padding: 18, marginBottom: 14, boxShadow: "0 4px 20px rgba(0,0,0,.07)" };
   const dot = <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#0071e3", display: "inline-block", marginLeft: 8, flexShrink: 0 }} />;
 
-  // ── Loading ──
   if (loading) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#fff" }}>
       <style>{spinnerStyle}</style>
@@ -330,180 +333,124 @@ export default function Home() {
     </div>
   );
 
-  // ── Admin Login ──
   if (showAdminLogin) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#111", fontFamily: "Arial", direction: "rtl" }}>
       <div style={{ background: "#1e1e1e", padding: 40, borderRadius: 20, width: 320, boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
-        <h2 style={{ color: "#e50914", textAlign: "center", marginBottom: 28, fontSize: 22 }}>🔐 כניסת מנהל</h2>
+        <h2 style={{ color: "#e50914", textAlign: "center", marginBottom: 28, fontSize: 22 }}>כניסת מנהל</h2>
         <div style={{ marginBottom: 16 }}>
           <label style={{ color: "#aaa", fontSize: 13, display: "block", marginBottom: 7 }}>קוד PIN</label>
-          <input type="password" inputMode="numeric" value={pinInput} onChange={e => setPinInput(e.target.value)} placeholder="הזן קוד PIN"
-            style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #333", background: "#2a2a2a", color: "#fff", fontSize: 16, outline: "none", boxSizing: "border-box" }} />
+          <input type="password" inputMode="numeric" value={pinInput} onChange={e => setPinInput(e.target.value)} placeholder="קוד PIN" style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #333", background: "#2a2a2a", color: "#fff", fontSize: 16, outline: "none", boxSizing: "border-box" }} />
         </div>
         <div style={{ marginBottom: 22 }}>
           <label style={{ color: "#aaa", fontSize: 13, display: "block", marginBottom: 7 }}>קוד אותיות</label>
-          <input type="password" value={letterInput} onChange={e => setLetterInput(e.target.value.toUpperCase())} placeholder="הזן קוד אותיות"
-            style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #333", background: "#2a2a2a", color: "#fff", fontSize: 16, outline: "none", boxSizing: "border-box" }} />
+          <input type="password" value={letterInput} onChange={e => setLetterInput(e.target.value.toUpperCase())} placeholder="קוד אותיות" style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid #333", background: "#2a2a2a", color: "#fff", fontSize: 16, outline: "none", boxSizing: "border-box" }} />
         </div>
         {loginError && <p style={{ color: "#ff4d4d", textAlign: "center", marginBottom: 14, fontSize: 14 }}>{loginError}</p>}
         <button onClick={() => {
           if (pinInput === PIN_CODE && letterInput === LETTER_CODE) {
             setShowAdminLogin(false); setShowAdmin(true); setPinInput(""); setLetterInput(""); setLoginError("");
-          } else { setLoginError("קודים שגויים. נסה שוב."); }
+          } else { setLoginError("קודים שגויים."); }
         }} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 14, borderRadius: 10, fontSize: 16, fontWeight: "bold", cursor: "pointer" }}>כניסה</button>
-        <button onClick={() => { setShowAdminLogin(false); setPinInput(""); setLetterInput(""); }}
-          style={{ width: "100%", background: "none", color: "#666", border: "none", padding: 10, marginTop: 8, cursor: "pointer", fontSize: 14 }}>ביטול</button>
+        <button onClick={() => { setShowAdminLogin(false); setPinInput(""); setLetterInput(""); }} style={{ width: "100%", background: "none", color: "#666", border: "none", padding: 10, marginTop: 8, cursor: "pointer", fontSize: 14 }}>ביטול</button>
       </div>
     </div>
   );
 
-  // ── Admin Panel ──
   if (showAdmin) {
     const grouped = {};
     movies.forEach(m => { const c = m.category || "ללא קטגוריה"; if (!grouped[c]) grouped[c] = []; grouped[c].push(m); });
-
     return (
       <div style={{ background: "#F5F5F7", minHeight: "100vh", direction: "rtl", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif" }}>
         <style>{spinnerStyle}</style>
-
         <div style={{ background: "rgba(245,245,247,.94)", backdropFilter: "blur(20px)", borderBottom: "1px solid #d2d2d7", padding: "13px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 30 }}>
-          <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 2, background: "linear-gradient(135deg,#0071e3,#5e5ce6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            ZOVEX <span style={{ fontSize: 11, WebkitTextFillColor: "#6e6e73", fontWeight: 400 }}>Admin</span>
-          </div>
-          <button onClick={() => setShowAdmin(false)} style={{ background: "#F0F0F5", color: "#6e6e73", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>← יציאה</button>
+          <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 2 }}>ZOVEX Admin</div>
+          <button onClick={() => setShowAdmin(false)} style={{ background: "#F0F0F5", color: "#6e6e73", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>יציאה</button>
         </div>
-
-        <div style={{ background: "rgba(245,245,247,.94)", backdropFilter: "blur(20px)", borderBottom: "1px solid #d2d2d7", display: "flex", overflowX: "auto", position: "sticky", top: 50, zIndex: 20 }}>
-          {[["browse","🎬 סרטים"],["add","➕ הוסף"],["manage","📋 ניהול"],["categories","🏷️ קטגוריות"],["settings","⚙️ הגדרות"]].map(([id, label]) => (
-            <button key={id} onClick={() => setAdminTab(id)}
-              style={{ flex: 1, minWidth: 58, padding: "11px 3px", fontSize: 10, fontWeight: 700, color: adminTab === id ? "#0071e3" : "#6e6e73", background: "none", border: "none", borderBottom: `2px solid ${adminTab === id ? "#0071e3" : "transparent"}`, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-              {label}
-            </button>
+        <div style={{ background: "rgba(245,245,247,.94)", borderBottom: "1px solid #d2d2d7", display: "flex", overflowX: "auto", position: "sticky", top: 50, zIndex: 20 }}>
+          {[["browse","סרטים"],["add","הוסף"],["manage","ניהול"],["categories","קטגוריות"],["settings","הגדרות"]].map(([id, label]) => (
+            <button key={id} onClick={() => setAdminTab(id)} style={{ flex: 1, minWidth: 58, padding: "11px 3px", fontSize: 11, fontWeight: 700, color: adminTab === id ? "#0071e3" : "#6e6e73", background: "none", border: "none", borderBottom: `2px solid ${adminTab === id ? "#0071e3" : "transparent"}`, cursor: "pointer", fontFamily: "inherit" }}>{label}</button>
           ))}
         </div>
-
         <div style={{ padding: 14, paddingBottom: 80 }}>
-
-          {/* ── סרטים ── */}
           {adminTab === "browse" && (
             <div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
                 {["הכל", ...categories].map(cat => (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)}
-                    style={{ background: selectedCategory === cat ? "#0071e3" : "#fff", border: "1.5px solid", borderColor: selectedCategory === cat ? "#0071e3" : "#d2d2d7", color: selectedCategory === cat ? "#fff" : "#6e6e73", borderRadius: 20, padding: "5px 13px", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>
-                    {cat}
-                  </button>
+                  <button key={cat} onClick={() => setSelectedCategory(cat)} style={{ background: selectedCategory === cat ? "#0071e3" : "#fff", border: "1.5px solid", borderColor: selectedCategory === cat ? "#0071e3" : "#d2d2d7", color: selectedCategory === cat ? "#fff" : "#6e6e73", borderRadius: 20, padding: "5px 13px", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>{cat}</button>
                 ))}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
                 {(selectedCategory === "הכל" ? movies : movies.filter(m => m.category === selectedCategory)).map(movie => (
-                  <div key={movie.id} onClick={() => startEdit(movie)}
-                    style={{ position: "relative", borderRadius: 14, overflow: "hidden", aspectRatio: "2/3", background: "#d0d0d0", boxShadow: "0 4px 16px rgba(0,0,0,.1)", cursor: "pointer" }}>
+                  <div key={movie.id} onClick={() => startEdit(movie)} style={{ position: "relative", borderRadius: 14, overflow: "hidden", aspectRatio: "2/3", background: "#d0d0d0", cursor: "pointer" }}>
                     {movie.thumbnail_url && <img src={movie.thumbnail_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} />}
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,.85))", padding: "18px 8px 8px" }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{movie.title}</div>
-                      <div style={{ fontSize: 9, color: "rgba(255,255,255,.6)", marginTop: 1 }}>{movie.series_name ? `📺 ${movie.series_name}` : movie.category}</div>
+                      <div style={{ fontSize: 9, color: "rgba(255,255,255,.6)" }}>{movie.series_name ? movie.series_name : movie.category}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* ── הוסף ── */}
           {adminTab === "add" && (
             <div>
-              {/* TMDB */}
               <div style={cardStyle}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center" }}>{dot}חיפוש TMDB אוטומטי</div>
                 <div style={{ position: "relative" }}>
-                  <input value={tmdbQuery} onChange={e => setTmdbQuery(e.target.value)}
-                    placeholder={tmdbKey ? "🔍 חפש שם סרט / סדרה..." : "⚠️ הכנס TMDB Key בהגדרות"}
-                    disabled={!tmdbKey} style={inp} />
+                  <input value={tmdbQuery} onChange={e => setTmdbQuery(e.target.value)} placeholder={tmdbKey ? "חפש שם סרט / סדרה..." : "הכנס TMDB Key בהגדרות"} disabled={!tmdbKey} style={inp} />
                   {tmdbLoading && <Loader2 size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", animation: "spin .6s linear infinite", color: "#0071e3" }} />}
                 </div>
                 {tmdbResults.length > 0 && (
                   <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 7, maxHeight: 280, overflowY: "auto" }}>
                     {tmdbResults.map((x, i) => (
-                      <div key={i} onClick={() => selectTMDB(x)}
-                        style={{ display: "flex", gap: 10, background: "#F5F5F7", borderRadius: 12, padding: 10, cursor: "pointer", border: "1.5px solid #d2d2d7", alignItems: "flex-start" }}>
-                        {x.poster_path
-                          ? <img src={`https://image.tmdb.org/t/p/w92${x.poster_path}`} style={{ width: 40, height: 56, borderRadius: 7, objectFit: "cover", flexShrink: 0 }} alt="" />
-                          : <div style={{ width: 40, height: 56, borderRadius: 7, background: "#d2d2d7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🎬</div>
-                        }
+                      <div key={i} onClick={() => selectTMDB(x)} style={{ display: "flex", gap: 10, background: "#F5F5F7", borderRadius: 12, padding: 10, cursor: "pointer", border: "1.5px solid #d2d2d7", alignItems: "flex-start" }}>
+                        {x.poster_path ? <img src={`https://image.tmdb.org/t/p/w92${x.poster_path}`} style={{ width: 40, height: 56, borderRadius: 7, objectFit: "cover", flexShrink: 0 }} alt="" /> : <div style={{ width: 40, height: 56, borderRadius: 7, background: "#d2d2d7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>?</div>}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 700 }}>{x.title || x.name}</div>
-                          <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 1 }}>{(x.release_date || x.first_air_date || "").slice(0, 4)} · {x.media_type === "tv" ? "📺 סדרה" : "🎬 סרט"}</div>
-                          <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{x.overview}</div>
+                          <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 1 }}>{(x.release_date || x.first_air_date || "").slice(0, 4)} - {x.media_type === "tv" ? "סדרה" : "סרט"}</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* טופס */}
               <div style={cardStyle}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center" }}>{dot}{editingMovie ? "עריכת תוכן" : "פרטי התוכן"}</div>
-
-                {/* סוג תוכן */}
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>סוג תוכן</label>
                   <div style={{ display: "flex", gap: 8 }}>
-                    {[["movie", "🎬 סרט"], ["series", "📺 סדרה"]].map(([v, l]) => (
-                      <button key={v} onClick={() => { setIsSeries(v === "series"); setShowExistingSeries(false); }}
-                        style={{ flex: 1, borderRadius: 12, padding: "10px 0", fontSize: 13, fontWeight: 700, border: "1.5px solid", cursor: "pointer", fontFamily: "inherit", borderColor: (v === "series") === isSeries ? "#0071e3" : "#d2d2d7", background: (v === "series") === isSeries ? "#0071e3" : "#F0F0F5", color: (v === "series") === isSeries ? "#fff" : "#6e6e73" }}>
-                        {l}
-                      </button>
+                    {[["movie", "סרט"], ["series", "סדרה"]].map(([v, l]) => (
+                      <button key={v} onClick={() => { setIsSeries(v === "series"); setShowExistingSeries(false); }} style={{ flex: 1, borderRadius: 12, padding: "10px 0", fontSize: 13, fontWeight: 700, border: "1.5px solid", cursor: "pointer", fontFamily: "inherit", borderColor: (v === "series") === isSeries ? "#0071e3" : "#d2d2d7", background: (v === "series") === isSeries ? "#0071e3" : "#F0F0F5", color: (v === "series") === isSeries ? "#fff" : "#6e6e73" }}>{l}</button>
                     ))}
                   </div>
                 </div>
-
-                {/* אם סדרה — אפשרות לבחור סדרה קיימת */}
                 {isSeries && existingSeriesNames.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
-                    <button onClick={() => setShowExistingSeries(!showExistingSeries)}
-                      style={{ width: "100%", background: "#F5F5F7", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "11px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between", color: "#0071e3" }}>
-                      <span>📂 הוסף לסדרה קיימת</span>
+                    <button onClick={() => setShowExistingSeries(!showExistingSeries)} style={{ width: "100%", background: "#F5F5F7", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "11px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between", color: "#0071e3" }}>
+                      <span>הוסף לסדרה קיימת</span>
                       {showExistingSeries ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                     {showExistingSeries && (
                       <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto", background: "#F5F5F7", borderRadius: 12, padding: 10 }}>
                         {existingSeriesNames.map(name => (
-                          <div key={name} onClick={() => {
-                            const s = seriesMap[name];
-                            setForm(p => ({ ...p, series_name: name, category: s.category || p.category, thumbnail_url: s.thumbnail_url || p.thumbnail_url }));
-                            setPosterPreview(s.thumbnail_url || "");
-                            setShowExistingSeries(false);
-                          }}
-                            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#fff", borderRadius: 10, cursor: "pointer", border: "1.5px solid #d2d2d7" }}>
-                            {seriesMap[name]?.thumbnail_url
-                              ? <img src={seriesMap[name].thumbnail_url} style={{ width: 30, height: 42, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} alt="" onError={e => e.target.style.display = "none"} />
-                              : <div style={{ width: 30, height: 42, borderRadius: 6, background: "#e0e0e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>📺</div>
-                            }
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 700 }}>{name}</div>
-                              <div style={{ fontSize: 10, color: "#6e6e73" }}>{seriesMap[name]?.episodes?.length || 0} פרקים</div>
-                            </div>
+                          <div key={name} onClick={() => { const s = seriesMap[name]; setForm(p => ({ ...p, series_name: name, category: s.category || p.category, thumbnail_url: s.thumbnail_url || p.thumbnail_url })); setPosterPreview(s.thumbnail_url || ""); setShowExistingSeries(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#fff", borderRadius: 10, cursor: "pointer", border: "1.5px solid #d2d2d7" }}>
+                            {seriesMap[name]?.thumbnail_url ? <img src={seriesMap[name].thumbnail_url} style={{ width: 30, height: 42, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} alt="" /> : <div style={{ width: 30, height: 42, borderRadius: 6, background: "#e0e0e0" }} />}
+                            <div style={{ fontSize: 13, fontWeight: 700 }}>{name}</div>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
                 )}
-
-                {/* שם */}
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>{isSeries ? "שם הפרק" : "שם הסרט"}</label>
-                  <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder={isSeries ? "שם הפרק..." : "שם הסרט..."} style={inp} />
+                  <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} style={inp} />
                 </div>
-
-                {/* שדות סדרה */}
                 {isSeries && (
                   <div style={{ background: "#F5F5F7", borderRadius: 12, padding: 12, marginBottom: 12 }}>
                     <div style={{ marginBottom: 10 }}>
                       <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>שם הסדרה</label>
-                      <input value={form.series_name} onChange={e => setForm(p => ({ ...p, series_name: e.target.value }))} placeholder="שם הסדרה..." style={inp} />
+                      <input value={form.series_name} onChange={e => setForm(p => ({ ...p, series_name: e.target.value }))} style={inp} />
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                       <div>
@@ -516,17 +463,15 @@ export default function Home() {
                       </div>
                     </div>
                     <div style={{ marginTop: 10 }}>
-                      <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>שם הפרק (אופציונלי)</label>
-                      <input value={form.episode_title} onChange={e => setForm(p => ({ ...p, episode_title: e.target.value }))} placeholder="שם הפרק..." style={inp} />
+                      <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>שם הפרק</label>
+                      <input value={form.episode_title} onChange={e => setForm(p => ({ ...p, episode_title: e.target.value }))} style={inp} />
                     </div>
                   </div>
                 )}
-
-                {/* שנה + קטגוריה */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
                   <div>
                     <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>שנה</label>
-                    <input type="number" value={form.year} onChange={e => setForm(p => ({ ...p, year: e.target.value }))} placeholder="2026" style={inp} />
+                    <input type="number" value={form.year} onChange={e => setForm(p => ({ ...p, year: e.target.value }))} style={inp} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>קטגוריה</label>
@@ -536,126 +481,87 @@ export default function Home() {
                     </select>
                   </div>
                 </div>
-
-                {/* תיאור */}
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>תיאור</label>
-                  <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="תיאור..." rows={3}
-                    style={{ ...inp, resize: "none", minHeight: 72 }} />
+                  <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inp, resize: "none", minHeight: 72 }} />
                 </div>
-
-                {/* תמונה */}
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 8, fontWeight: 700 }}>תמונת פוסטר</label>
                   <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <div style={{ width: 56, height: 78, borderRadius: 10, background: "#F0F0F5", border: "1.5px solid #d2d2d7", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-                      onClick={() => fileInputRef.current?.click()}>
-                      {posterPreview
-                        ? <img src={posterPreview} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" onError={() => setPosterPreview("")} />
-                        : <Upload size={20} color="#6e6e73" />
-                      }
+                    <div style={{ width: 56, height: 78, borderRadius: 10, background: "#F0F0F5", border: "1.5px solid #d2d2d7", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => fileInputRef.current?.click()}>
+                      {posterPreview ? <img src={posterPreview} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" onError={() => setPosterPreview("")} /> : <Upload size={20} color="#6e6e73" />}
                     </div>
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                        style={{ background: "transparent", color: "#0071e3", border: "1.5px solid #0071e3", borderRadius: 12, padding: "11px 0", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: uploading ? 0.6 : 1 }}>
-                        {uploading ? <Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> : <Upload size={14} />}
-                        {uploading ? "מעלה..." : "העלה מהטלפון / קבצים"}
-                      </button>
-                      {posterPreview && <div style={{ fontSize: 11, color: "#34c759", textAlign: "center" }}>✅ תמונה נטענה</div>}
-                    </div>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ flex: 1, background: "transparent", color: "#0071e3", border: "1.5px solid #0071e3", borderRadius: 12, padding: "11px 0", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                      {uploading ? "מעלה..." : "העלה תמונה"}
+                    </button>
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleUploadPoster} />
                 </div>
-
-                {/* וידאו */}
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>
                     קישור וידאו
-                    {videoUrlInput && <span style={{ color: "#0071e3", fontWeight: 400, marginRight: 6, fontSize: 10 }}>· {extractVideoInfo(videoUrlInput).type}</span>}
+                    {videoUrlInput && <span style={{ color: "#0071e3", fontWeight: 400, marginRight: 6, fontSize: 10 }}> - {extractVideoInfo(videoUrlInput).type}</span>}
                   </label>
-                  <input value={videoUrlInput} onChange={e => setVideoUrlInput(e.target.value)}
-                    placeholder="YouTube / Drive / Dailymotion / Rumble / כאן 11 / mp4..." dir="ltr" style={inp} />
-                  <div style={{ marginTop: 4, fontSize: 10, color: "#6e6e73" }}>תומך: YouTube, Drive, Vimeo, Dailymotion, Streamable, Rumble, Archive, כאן 11, mp4</div>
+                  <input value={videoUrlInput} onChange={e => setVideoUrlInput(e.target.value)} placeholder="YouTube / Drive / Dailymotion / Rumble / mp4..." dir="ltr" style={inp} />
                 </div>
-
-                {/* כפתורים */}
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={generateAI} disabled={aiLoading}
-                    style={{ flex: 1, background: "#34c759", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: aiLoading ? 0.6 : 1 }}>
-                    {aiLoading ? <Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> : "✨"} AI תיאור
+                  <button onClick={generateAI} disabled={aiLoading} style={{ flex: 1, background: "#34c759", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                    {aiLoading ? <Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> : "AI תיאור"}
                   </button>
-                  <button onClick={handleSave} disabled={saving}
-                    style={{ flex: 1, background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, boxShadow: "0 4px 12px rgba(0,113,227,.3)", opacity: saving ? 0.6 : 1 }}>
-                    {saving ? <Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> : "💾"} {editingMovie ? "עדכן" : "שמור"}
+                  <button onClick={handleSave} disabled={saving} style={{ flex: 1, background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                    {saving ? <Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> : editingMovie ? "עדכן" : "שמור"}
                   </button>
                 </div>
                 {editingMovie && (
                   <button onClick={resetForm} style={{ width: "100%", marginTop: 8, background: "#F0F0F5", color: "#6e6e73", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>ביטול עריכה</button>
                 )}
                 {formStatus.message && (
-                  <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, borderRight: `3px solid ${formStatus.type === "success" ? "#34c759" : "#ff3b30"}`, background: formStatus.type === "success" ? "#f0fff4" : "#fff5f5", color: formStatus.type === "success" ? "#1a7a3a" : "#ff3b30" }}>
+                  <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: formStatus.type === "success" ? "#f0fff4" : "#fff5f5", color: formStatus.type === "success" ? "#1a7a3a" : "#ff3b30" }}>
                     {formStatus.message}
                   </div>
                 )}
               </div>
             </div>
           )}
-
-          {/* ── ניהול ── */}
           {adminTab === "manage" && (
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center" }}>{dot}תכנים ({movies.length})</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>תכנים ({movies.length})</div>
               {Object.entries(grouped).map(([cat, items]) => (
                 <AdminCategorySection key={cat} catName={cat} items={items} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
               ))}
             </div>
           )}
-
-          {/* ── קטגוריות ── */}
           {adminTab === "categories" && (
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center" }}>{dot}ניהול קטגוריות</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>ניהול קטגוריות</div>
               <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                <input value={newCat} onChange={e => setNewCat(e.target.value)} placeholder="שם קטגוריה חדשה..."
+                <input value={newCat} onChange={e => setNewCat(e.target.value)} placeholder="קטגוריה חדשה..."
                   onKeyDown={e => { if (e.key === "Enter" && newCat.trim()) { saveCats([...categories, newCat.trim()]); setNewCat(""); } }}
                   style={{ ...inp, flex: 1 }} />
-                <button onClick={() => { if (newCat.trim()) { saveCats([...categories, newCat.trim()]); setNewCat(""); } }}
-                  style={{ background: "#0071e3", color: "#fff", border: "none", borderRadius: 10, padding: "0 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>+ הוסף</button>
+                <button onClick={() => { if (newCat.trim()) { saveCats([...categories, newCat.trim()]); setNewCat(""); } }} style={{ background: "#0071e3", color: "#fff", border: "none", borderRadius: 10, padding: "0 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>הוסף</button>
               </div>
               {categories.length === 0 && <p style={{ color: "#6e6e73", fontSize: 13, textAlign: "center" }}>אין קטגוריות עדיין</p>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {categories.map((cat, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#F5F5F7", borderRadius: 10, padding: "10px 14px" }}>
                     <span style={{ fontSize: 14, fontWeight: 600 }}>{cat}</span>
-                    <button onClick={() => saveCats(categories.filter((_, j) => j !== i))}
-                      style={{ background: "none", border: "none", color: "#ff3b30", cursor: "pointer", fontSize: 20, lineHeight: 1 }}>×</button>
+                    <button onClick={() => saveCats(categories.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#ff3b30", cursor: "pointer", fontSize: 20 }}>x</button>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* ── הגדרות ── */}
           {adminTab === "settings" && (
             <div style={cardStyle}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center" }}>{dot}מפתחות API</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>הגדרות</div>
               <div style={{ marginBottom: 12 }}>
                 <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>
-                  TMDB API Key <span style={{ color: tmdbKey ? "#34c759" : "#ff3b30", fontWeight: 400 }}>{tmdbKey ? "✓ מוגדר" : "לא מוגדר"}</span>
+                  TMDB API Key <span style={{ color: tmdbKey ? "#34c759" : "#ff3b30", fontWeight: 400 }}>{tmdbKey ? "מוגדר" : "לא מוגדר"}</span>
                 </label>
                 <input type="password" value={tmdbKey} onChange={e => setTmdbKey(e.target.value)} placeholder="32 תווים..." dir="ltr" style={inp} />
               </div>
-              <button onClick={() => {
-                try { localStorage.setItem("zovex_tmdb_key", tmdbKey); } catch {}
-                setFormStatus({ type: "success", message: "✅ נשמר!" });
-                setTimeout(() => setFormStatus({ type: "", message: "" }), 2000);
-              }} style={{ width: "100%", background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(0,113,227,.3)" }}>
-                💾 שמור מפתחות
-              </button>
+              <button onClick={() => { try { localStorage.setItem("zovex_tmdb_key", tmdbKey); } catch {} setFormStatus({ type: "success", message: "נשמר!" }); setTimeout(() => setFormStatus({ type: "", message: "" }), 2000); }} style={{ width: "100%", background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>שמור מפתח</button>
               {formStatus.message && <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: "#f0fff4", color: "#1a7a3a" }}>{formStatus.message}</div>}
-              <div style={{ marginTop: 12, fontSize: 11, color: "#6e6e73", lineHeight: 2 }}>
-                🔑 TMDB: <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer" style={{ color: "#0071e3" }}>themoviedb.org</a> → API Key (v3 auth)
-              </div>
             </div>
           )}
         </div>
@@ -663,7 +569,6 @@ export default function Home() {
     );
   }
 
-  // ── Player ──
   if (playerMovie) return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
       <style>{spinnerStyle}</style>
@@ -675,7 +580,6 @@ export default function Home() {
     </div>
   );
 
-  // ── Series Detail ──
   if (selectedSeries) {
     const series = seriesMap[selectedSeries];
     const episodes = series?.episodes || [];
@@ -683,8 +587,7 @@ export default function Home() {
     return (
       <div style={{ background: "#111", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#fff" }}>
         <style>{spinnerStyle}</style>
-        <button onClick={() => { setSelectedSeries(null); setOpenSeasons({}); }}
-          style={{ position: "fixed", top: 15, right: 15, zIndex: 100, background: "rgba(0,0,0,.7)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={() => { setSelectedSeries(null); setOpenSeasons({}); }} style={{ position: "fixed", top: 15, right: 15, zIndex: 100, background: "rgba(0,0,0,.7)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <ArrowRight size={22} />
         </button>
         <div style={{ position: "relative" }}>
@@ -696,18 +599,15 @@ export default function Home() {
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
             {series?.category && <span style={{ background: "#e50914", color: "#fff", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: "bold" }}>{series.category}</span>}
             <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{episodes.length} פרקים</span>
-            <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{seasonNums.length} עונות</span>
           </div>
           {series?.description && <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: "0 0 20px" }}>{series.description}</p>}
-
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {seasonNums.map(season => {
               const seasonEps = episodes.filter(e => (e.season_number || 1) === season).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
               const isOpen = openSeasons[season] !== false;
               return (
                 <div key={season} style={{ background: "#1a1a1a", borderRadius: 14, overflow: "hidden", border: "1px solid #2a2a2a" }}>
-                  <button onClick={() => setOpenSeasons(p => ({ ...p, [season]: !isOpen }))}
-                    style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", color: "#fff", fontFamily: "Arial" }}>
+                  <button onClick={() => setOpenSeasons(p => ({ ...p, [season]: !isOpen }))} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", color: "#fff", fontFamily: "Arial" }}>
                     <span style={{ fontSize: 15, fontWeight: 700 }}>עונה {season}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 12, color: "#888" }}>{seasonEps.length} פרקים</span>
@@ -715,13 +615,12 @@ export default function Home() {
                     </div>
                   </button>
                   {isOpen && seasonEps.map((ep, i) => (
-                    <div key={ep.id} onClick={() => setPlayerMovie(ep)}
-                      style={{ display: "flex", gap: 12, padding: "12px 16px", borderTop: "1px solid #252525", cursor: "pointer", alignItems: "center" }}>
+                    <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 16px", borderTop: "1px solid #252525", cursor: "pointer", alignItems: "center" }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e50914", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Play size={16} fill="white" color="white" />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>פרק {ep.episode_number || i + 1}{ep.episode_title ? ` — ${ep.episode_title}` : ""}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700 }}>פרק {ep.episode_number || i + 1}{ep.episode_title ? " - " + ep.episode_title : ""}</div>
                         <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{ep.title}</div>
                       </div>
                     </div>
@@ -735,7 +634,6 @@ export default function Home() {
     );
   }
 
-  // ── Movie Detail ──
   if (selectedMovie) return (
     <div style={{ background: "#111", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#fff" }}>
       <button onClick={() => setSelectedMovie(null)} style={{ position: "fixed", top: 15, right: 15, zIndex: 100, background: "rgba(0,0,0,.7)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
@@ -752,14 +650,13 @@ export default function Home() {
           {selectedMovie.year && <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{selectedMovie.year}</span>}
         </div>
         {selectedMovie.description && <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: "0 0 20px" }}>{selectedMovie.description}</p>}
-        <button onClick={() => setPlayerMovie(selectedMovie)} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 16, fontSize: 17, fontWeight: "bold", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", boxShadow: "0 4px 20px rgba(229,9,20,.4)" }}>
+        <button onClick={() => setPlayerMovie(selectedMovie)} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 16, fontSize: 17, fontWeight: "bold", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer" }}>
           <Play fill="white" size={20} /> לצפייה עכשיו
         </button>
       </div>
     </div>
   );
 
-  // ── Home ──
   return (
     <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif" }}>
       <style>{spinnerStyle}</style>
@@ -768,24 +665,21 @@ export default function Home() {
           <h1 style={{ color: "#e50914", fontSize: 26, fontWeight: 900, margin: 0, flexShrink: 0 }}>ZOVEX</h1>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#f5f5f5", padding: "9px 14px", borderRadius: 50, border: "1px solid #eee" }}>
             <Search size={16} color="#aaa" />
-            <input type="text" placeholder="חפש סרט או סדרה..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              style={{ background: "none", border: "none", outline: "none", width: "100%", fontSize: 15, color: "#333" }} />
-            {searchTerm && <span onClick={() => setSearchTerm("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 18 }}>×</span>}
+            <input type="text" placeholder="חפש סרט או סדרה..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ background: "none", border: "none", outline: "none", width: "100%", fontSize: 15, color: "#333" }} />
+            {searchTerm && <span onClick={() => setSearchTerm("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 18 }}>x</span>}
           </div>
         </div>
         <div style={{ display: "flex", gap: 20, overflowX: "auto", paddingBottom: 11, whiteSpace: "nowrap", scrollbarWidth: "none" }}>
           {allCategories.map(cat => (
-            <span key={cat} onClick={() => setSelectedCategory(cat)}
-              style={{ cursor: "pointer", fontSize: 14, fontWeight: "bold", color: selectedCategory === cat ? "#e50914" : "#666", borderBottom: selectedCategory === cat ? "3px solid #e50914" : "3px solid transparent", paddingBottom: 5, transition: "all .2s", flexShrink: 0 }}>
+            <span key={cat} onClick={() => setSelectedCategory(cat)} style={{ cursor: "pointer", fontSize: 14, fontWeight: "bold", color: selectedCategory === cat ? "#e50914" : "#666", borderBottom: selectedCategory === cat ? "3px solid #e50914" : "3px solid transparent", paddingBottom: 5, flexShrink: 0 }}>
               {cat}
             </span>
           ))}
         </div>
       </header>
-
       <main style={{ padding: "18px 14px 100px" }}>
         {allItems.length === 0
-          ? <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}><p style={{ fontSize: 18 }}>😕 לא נמצאו תוצאות</p></div>
+          ? <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}><p style={{ fontSize: 18 }}>לא נמצאו תוצאות</p></div>
           : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
               {allItems.map((item) => {
@@ -793,18 +687,11 @@ export default function Home() {
                 const title = isSer ? item.name : item.title;
                 const thumb = item.thumbnail_url;
                 return (
-                  <div key={isSer ? `s-${item.name}` : item.id}
-                    onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)}
-                    style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7 }}>
-                    <h3 style={{ fontSize: 13, fontWeight: "bold", textAlign: "center", margin: 0, color: "#111", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                      {title}
-                    </h3>
+                  <div key={isSer ? "s-" + item.name : item.id} onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7 }}>
+                    <h3 style={{ fontSize: 13, fontWeight: "bold", textAlign: "center", margin: 0, color: "#111", lineHeight: 1.3 }}>{title}</h3>
                     <div style={{ borderRadius: 12, overflow: "hidden", aspectRatio: "2/3", boxShadow: "0 4px 12px rgba(0,0,0,.12)", background: "#e8e8e8", position: "relative" }}>
-                      {thumb
-                        ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
-                        : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>🎬</div>
-                      }
-                      {isSer && <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.65)", borderRadius: 8, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 700 }}>📺 סדרה</div>}
+                      {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>?</div>}
+                      {isSer && <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.65)", borderRadius: 8, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 700 }}>סדרה</div>}
                     </div>
                   </div>
                 );
@@ -813,9 +700,7 @@ export default function Home() {
           )
         }
       </main>
-
-      <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer"
-        style={{ position: "fixed", bottom: 24, left: 24, background: "#24A1DE", width: 56, height: 56, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(0,0,0,.2)", zIndex: 1000, textDecoration: "none" }}>
+      <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ position: "fixed", bottom: 24, left: 24, background: "#24A1DE", width: 56, height: 56, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(0,0,0,.2)", zIndex: 1000, textDecoration: "none" }}>
         <Send size={26} fill="white" />
       </a>
     </div>
@@ -824,30 +709,25 @@ export default function Home() {
 
 function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(true);
-  const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
+  const sp = `@keyframes spin { to { transform: rotate(360deg); } }`;
   return (
     <div style={{ marginBottom: 12, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" }}>
-      <style>{spinnerStyle}</style>
+      <style>{sp}</style>
       <button onClick={() => setOpen(!open)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#F0F0F5", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
         <span style={{ fontSize: 14, fontWeight: 700 }}>{catName} <span style={{ color: "#6e6e73", fontWeight: 400, fontSize: 12 }}>({items.length})</span></span>
         {open ? <ChevronUp size={16} color="#6e6e73" /> : <ChevronDown size={16} color="#6e6e73" />}
       </button>
       {open && items.map(item => (
         <div key={item.id} style={{ display: "flex", gap: 10, padding: 12, alignItems: "center", borderTop: "1px solid #F5F5F7" }}>
-          {item.thumbnail_url
-            ? <img src={item.thumbnail_url} style={{ width: 36, height: 52, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} alt="" onError={e => e.target.style.display = "none"} />
-            : <div style={{ width: 36, height: 52, borderRadius: 8, background: "#F0F0F5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 16 }}>🎬</div>
-          }
+          {item.thumbnail_url ? <img src={item.thumbnail_url} style={{ width: 36, height: 52, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} alt="" onError={e => e.target.style.display = "none"} /> : <div style={{ width: 36, height: 52, borderRadius: 8, background: "#F0F0F5", flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-            <div style={{ fontSize: 10, color: "#6e6e73", marginTop: 2 }}>
-              {item.series_name ? `📺 ${item.series_name} · ע${item.season_number || 1} פ${item.episode_number || "?"}` : `${item.year || ""} · ${item.type || ""}`}
-            </div>
+            <div style={{ fontSize: 10, color: "#6e6e73", marginTop: 2 }}>{item.series_name ? item.series_name + " e" + (item.season_number || 1) + "p" + (item.episode_number || "?") : (item.year || "") + " " + (item.type || "")}</div>
           </div>
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-            <button onClick={() => onEdit(item)} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>✏️</button>
+            <button onClick={() => onEdit(item)} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>edit</button>
             <button onClick={() => onDelete(item.id)} disabled={deleting === item.id} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>
-              {deleting === item.id ? <Loader2 size={13} style={{ animation: "spin .6s linear infinite" }} /> : "🗑️"}
+              {deleting === item.id ? <Loader2 size={13} style={{ animation: "spin .6s linear infinite" }} /> : "del"}
             </button>
           </div>
         </div>
