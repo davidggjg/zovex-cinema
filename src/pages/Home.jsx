@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -526,9 +526,17 @@ export default function Home() {
           {adminTab === "manage" && (
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>תכנים ({movies.length})</div>
-              {Object.entries(grouped).map(([cat, items]) => (
-                <AdminCategorySection key={cat} catName={cat} items={items} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
-              ))}
+              {existingSeriesNames.length > 0 && (
+                <div style={{ marginBottom: 12, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" }}>
+                  <div style={{ padding: "10px 16px", background: "#e8f0fe", fontSize: 13, fontWeight: 800, color: "#0071e3" }}>סדרות</div>
+                  {existingSeriesNames.map(serName => (
+                    <AdminSeriesSection key={serName} serName={serName} episodes={seriesMap[serName].episodes} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
+                  ))}
+                </div>
+              )}
+              {movies.filter(m => !m.series_name).length > 0 && (
+                <AdminCategorySection catName="סרטים" items={movies.filter(m => !m.series_name)} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
+              )}
             </div>
           )}
           {adminTab === "categories" && (
@@ -707,6 +715,33 @@ export default function Home() {
   );
 }
 
+function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
+  const [open, setOpen] = useState(false);
+  const sorted = [...episodes].sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
+  return (
+    <div style={{ borderTop: "1px solid #F5F5F7" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+        <span style={{ fontSize: 13, fontWeight: 700 }}>{serName} <span style={{ color: "#6e6e73", fontWeight: 400, fontSize: 11 }}>({episodes.length} פרקים)</span></span>
+        {open ? <ChevronUp size={15} color="#6e6e73" /> : <ChevronDown size={15} color="#6e6e73" />}
+      </button>
+      {open && sorted.map(ep => (
+        <div key={ep.id} style={{ display: "flex", gap: 10, padding: "10px 16px", alignItems: "center", borderTop: "1px solid #F5F5F7", background: "#fafafa" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700 }}>ע{ep.season_number || 1} פ{ep.episode_number || "?"}{ep.episode_title ? " - " + ep.episode_title : ""}</div>
+            <div style={{ fontSize: 10, color: "#6e6e73", marginTop: 1 }}>{ep.title}</div>
+          </div>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            <button onClick={() => onEdit(ep)} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 14 }}>✏️</button>
+            <button onClick={() => onDelete(ep.id)} disabled={deleting === ep.id} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 14 }}>
+              {deleting === ep.id ? <Loader2 size={13} style={{ animation: "spin .6s linear infinite" }} /> : "🗑️"}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(true);
   const sp = `@keyframes spin { to { transform: rotate(360deg); } }`;
@@ -722,12 +757,12 @@ function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
           {item.thumbnail_url ? <img src={item.thumbnail_url} style={{ width: 36, height: 52, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} alt="" onError={e => e.target.style.display = "none"} /> : <div style={{ width: 36, height: 52, borderRadius: 8, background: "#F0F0F5", flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-            <div style={{ fontSize: 10, color: "#6e6e73", marginTop: 2 }}>{item.series_name ? item.series_name + " e" + (item.season_number || 1) + "p" + (item.episode_number || "?") : (item.year || "") + " " + (item.type || "")}</div>
+            <div style={{ fontSize: 10, color: "#6e6e73", marginTop: 2 }}>{item.year || ""} {item.type || ""}</div>
           </div>
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-            <button onClick={() => onEdit(item)} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>edit</button>
-            <button onClick={() => onDelete(item.id)} disabled={deleting === item.id} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>
-              {deleting === item.id ? <Loader2 size={13} style={{ animation: "spin .6s linear infinite" }} /> : "del"}
+            <button onClick={() => onEdit(item)} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 14 }}>✏️</button>
+            <button onClick={() => onDelete(item.id)} disabled={deleting === item.id} style={{ background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 14 }}>
+              {deleting === item.id ? <Loader2 size={13} style={{ animation: "spin .6s linear infinite" }} /> : "🗑️"}
             </button>
           </div>
         </div>
