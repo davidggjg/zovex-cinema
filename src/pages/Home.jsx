@@ -449,16 +449,20 @@ export default function Home() {
                 </div>
                 {isSeries && existingSeriesNames.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
-                    <button onClick={() => setShowExistingSeries(!showExistingSeries)} style={{ width: "100%", background: "#F5F5F7", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "11px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between", color: "#0071e3" }}>
-                      <span>הוסף לסדרה קיימת</span>
-                      {showExistingSeries ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    <button onClick={() => setShowExistingSeries(!showExistingSeries)} style={{ width: "100%", background: form.series_name && existingSeriesNames.includes(form.series_name) ? "#e8f4ff" : "#F5F5F7", border: `1.5px solid ${form.series_name && existingSeriesNames.includes(form.series_name) ? "#0071e3" : "#d2d2d7"}`, borderRadius: 12, padding: "11px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "space-between", color: "#0071e3" }}>
+                      <span>{form.series_name && existingSeriesNames.includes(form.series_name) ? form.series_name : "הוסף לסדרה קיימת"}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {form.series_name && existingSeriesNames.includes(form.series_name) && <span style={{ fontSize: 10, color: "#6e6e73", fontWeight: 400 }}>החלף</span>}
+                        {showExistingSeries ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
                     </button>
                     {showExistingSeries && (
                       <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto", background: "#F5F5F7", borderRadius: 12, padding: 10 }}>
                         {existingSeriesNames.map(name => (
-                          <div key={name} onClick={() => { const s = seriesMap[name]; setForm(p => ({ ...p, series_name: name, category: s.category || p.category, thumbnail_url: s.thumbnail_url || p.thumbnail_url })); setPosterPreview(s.thumbnail_url || ""); setShowExistingSeries(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#fff", borderRadius: 10, cursor: "pointer", border: "1.5px solid #d2d2d7" }}>
+                          <div key={name} onClick={() => { const s = seriesMap[name]; setForm(p => ({ ...p, series_name: name, category: s.category || p.category, thumbnail_url: s.thumbnail_url || p.thumbnail_url })); setPosterPreview(s.thumbnail_url || ""); setShowExistingSeries(false); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: form.series_name === name ? "#e8f4ff" : "#fff", borderRadius: 10, cursor: "pointer", border: `1.5px solid ${form.series_name === name ? "#0071e3" : "#d2d2d7"}` }}>
                             {seriesMap[name]?.thumbnail_url ? <img src={seriesMap[name].thumbnail_url} style={{ width: 30, height: 42, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} alt="" /> : <div style={{ width: 30, height: 42, borderRadius: 6, background: "#e0e0e0" }} />}
                             <div style={{ fontSize: 13, fontWeight: 700 }}>{name}</div>
+                            {form.series_name === name && <span style={{ marginRight: "auto", fontSize: 16 }}>✓</span>}
                           </div>
                         ))}
                       </div>
@@ -485,10 +489,7 @@ export default function Home() {
                         <input type="number" min="1" value={form.episode_number} onChange={e => setForm(p => ({ ...p, episode_number: e.target.value }))} placeholder="1" style={inp} />
                       </div>
                     </div>
-                    <div style={{ marginTop: 10 }}>
-                      <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>כותרת הפרק (אופציונלי, למשל: "הבריחה")</label>
-                      <input value={form.episode_title} onChange={e => setForm(p => ({ ...p, episode_title: e.target.value }))} placeholder='למשל: "הבריחה" (לא חובה)' style={inp} />
-                    </div>
+
                   </div>
                 )}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
