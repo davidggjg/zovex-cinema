@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -688,11 +688,11 @@ export default function Home() {
                 const thumb = item.thumbnail_url;
                 return (
                   <div key={isSer ? "s-" + item.name : item.id} onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7 }}>
-                    <h3 style={{ fontSize: 13, fontWeight: "bold", textAlign: "center", margin: 0, color: "#111", lineHeight: 1.3 }}>{title}</h3>
                     <div style={{ borderRadius: 12, overflow: "hidden", aspectRatio: "2/3", boxShadow: "0 4px 12px rgba(0,0,0,.12)", background: "#e8e8e8", position: "relative" }}>
                       {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>?</div>}
                       {isSer && <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.65)", borderRadius: 8, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 700 }}>סדרה</div>}
                     </div>
+                    <h3 style={{ fontSize: 13, fontWeight: "bold", textAlign: "center", margin: 0, color: "#111", lineHeight: 1.3 }}>{title}</h3>
                   </div>
                 );
               })}
