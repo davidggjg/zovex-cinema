@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -258,6 +258,20 @@ export default function Home() {
     setDeleting(null);
   };
 
+  const updateSeriesThumbnail = async (seriesName, thumbnailUrl) => {
+    if (!seriesName || !thumbnailUrl) return;
+    const toUpdate = movies.filter(m => m.series_name === seriesName);
+    setSaving(true);
+    let done = 0;
+    for (const ep of toUpdate) {
+      try { await Movie.update(ep.id, { thumbnail_url: thumbnailUrl }); done++; } catch {}
+    }
+    setFormStatus({ type: "success", message: `תמונה עודכנה ל-${done} פרקים!` });
+    loadMovies();
+    setSaving(false);
+    setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
+  };
+
   const startEdit = (movie) => {
     setEditingMovie(movie);
     setIsSeries(!!movie.series_name);
@@ -504,6 +518,11 @@ export default function Home() {
                     </button>
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleUploadPoster} />
+                  {isSeries && editingMovie && form.thumbnail_url && (
+                    <button type="button" onClick={() => updateSeriesThumbnail(form.series_name || editingMovie.series_name, form.thumbnail_url)} style={{ marginTop: 8, width: "100%", background: "#ff9500", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                      🖼️ עדכן תמונה לכל הסדרה
+                    </button>
+                  )}
                 </div>
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>
@@ -531,22 +550,32 @@ export default function Home() {
               </div>
             </div>
           )}
-          {adminTab === "manage" && (
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>תכנים ({movies.length})</div>
-              {existingSeriesNames.length > 0 && (
-                <div style={{ marginBottom: 12, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" }}>
-                  <div style={{ padding: "10px 16px", background: "#e8f0fe", fontSize: 13, fontWeight: 800, color: "#0071e3" }}>סדרות</div>
-                  {existingSeriesNames.map(serName => (
-                    <AdminSeriesSection key={serName} serName={serName} episodes={seriesMap[serName].episodes} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
-                  ))}
+          {adminTab === "manage" && (() => {
+            const [manageQ, setManageQ] = React.useState("");
+            const filteredSeries = existingSeriesNames.filter(n => n.toLowerCase().includes(manageQ.toLowerCase()));
+            const filteredMovies = movies.filter(m => !m.series_name && (m.title || "").toLowerCase().includes(manageQ.toLowerCase()));
+            return (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F5", borderRadius: 12, padding: "9px 12px", marginBottom: 14, border: "1.5px solid #d2d2d7" }}>
+                  <Search size={15} color="#aaa" />
+                  <input value={manageQ} onChange={e => setManageQ(e.target.value)} placeholder="חפש סדרה או סרט..." style={{ background: "none", border: "none", outline: "none", flex: 1, fontSize: 13, fontFamily: "inherit" }} />
+                  {manageQ && <span onClick={() => setManageQ("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 16 }}>✕</span>}
                 </div>
-              )}
-              {movies.filter(m => !m.series_name).length > 0 && (
-                <AdminCategorySection catName="סרטים" items={movies.filter(m => !m.series_name)} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
-              )}
-            </div>
-          )}
+                <div style={{ fontSize: 12, color: "#6e6e73", marginBottom: 10 }}>תכנים ({movies.length})</div>
+                {filteredSeries.length > 0 && (
+                  <div style={{ marginBottom: 12, background: "#fff", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" }}>
+                    <div style={{ padding: "10px 16px", background: "#e8f0fe", fontSize: 13, fontWeight: 800, color: "#0071e3" }}>סדרות</div>
+                    {filteredSeries.map(serName => (
+                      <AdminSeriesSection key={serName} serName={serName} episodes={seriesMap[serName].episodes} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
+                    ))}
+                  </div>
+                )}
+                {filteredMovies.length > 0 && (
+                  <AdminCategorySection catName="סרטים" items={filteredMovies} onEdit={startEdit} onDelete={handleDelete} deleting={deleting} />
+                )}
+              </div>
+            );
+          })()}
           {adminTab === "categories" && (
             <div style={cardStyle}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>ניהול קטגוריות</div>
@@ -580,7 +609,7 @@ export default function Home() {
                 <button onClick={() => { try { localStorage.setItem("zovex_tmdb_key", tmdbKey); } catch {} setFormStatus({ type: "success", message: "נשמר!" }); setTimeout(() => setFormStatus({ type: "", message: "" }), 2000); }} style={{ width: "100%", background: "#0071e3", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>שמור מפתח</button>
                 {formStatus.message && <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: "#f0fff4", color: "#1a7a3a" }}>{formStatus.message}</div>}
               </div>
-              <MergeSeriesPanel movies={movies} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} />
+              <MergeSeriesPanel movies={movies} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} MovieEntity={Movie} />
             </div>
           )}
         </div>
@@ -727,7 +756,7 @@ export default function Home() {
 }
 
 
-function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot }) {
+function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [merging, setMerging] = useState(false);
   const [mergeStatus, setMergeStatus] = useState({ type: "", message: "" });
   const [sourceSeries, setSourceSeries] = useState("");
@@ -745,7 +774,7 @@ function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot }) {
     let done = 0;
     for (const ep of toMerge) {
       try {
-        await Movie.update(ep.id, { series_name: targetSeries, season_number: Number(targetSeason) });
+        await MovieEntity.update(ep.id, { series_name: targetSeries, season_number: Number(targetSeason) });
         done++;
       } catch {}
     }
