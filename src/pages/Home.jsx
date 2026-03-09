@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -638,6 +638,7 @@ export default function Home() {
     const series = seriesMap[selectedSeries];
     const episodes = series?.episodes || [];
     const seasonNums = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
+    const firstSeason = seasonNums[0];
     return (
       <div style={{ background: "#111", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#fff" }}>
         <style>{spinnerStyle}</style>
@@ -653,23 +654,24 @@ export default function Home() {
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
             {series?.category && <span style={{ background: "#e50914", color: "#fff", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: "bold" }}>{series.category}</span>}
             <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{episodes.length} פרקים</span>
+            <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{seasonNums.length} עונות</span>
           </div>
           {series?.description && <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: "0 0 20px" }}>{series.description}</p>}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {seasonNums.map(season => {
               const seasonEps = episodes.filter(e => (e.season_number || 1) === season).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-              const isOpen = openSeasons[season] !== false;
+              const isOpen = season in openSeasons ? openSeasons[season] : season === firstSeason;
               return (
-                <div key={season} style={{ background: "#1a1a1a", borderRadius: 14, overflow: "hidden", border: "1px solid #2a2a2a" }}>
-                  <button onClick={() => setOpenSeasons(p => ({ ...p, [season]: !isOpen }))} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", color: "#fff", fontFamily: "Arial" }}>
-                    <span style={{ fontSize: 15, fontWeight: 700 }}>עונה {season}</span>
+                <div key={season} style={{ borderRadius: 14, overflow: "hidden", border: isOpen ? "2px solid #e50914" : "1px solid #2a2a2a" }}>
+                  <button onClick={() => setOpenSeasons(p => ({ ...p, [season]: !isOpen }))} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: isOpen ? "#1a0000" : "#1a1a1a", border: "none", cursor: "pointer", color: "#fff", fontFamily: "Arial" }}>
+                    <span style={{ fontSize: 15, fontWeight: 900, color: isOpen ? "#e50914" : "#fff" }}>עונה {season}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 12, color: "#888" }}>{seasonEps.length} פרקים</span>
-                      {isOpen ? <ChevronUp size={18} color="#888" /> : <ChevronDown size={18} color="#888" />}
+                      {isOpen ? <ChevronUp size={18} color="#e50914" /> : <ChevronDown size={18} color="#888" />}
                     </div>
                   </button>
                   {isOpen && seasonEps.map((ep, i) => (
-                    <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 16px", borderTop: "1px solid #252525", cursor: "pointer", alignItems: "center" }}>
+                    <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 16px", borderTop: "1px solid #252525", cursor: "pointer", alignItems: "center", background: "#111" }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e50914", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Play size={16} fill="white" color="white" />
                       </div>
@@ -707,6 +709,32 @@ export default function Home() {
         <button onClick={() => setPlayerMovie(selectedMovie)} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 16, fontSize: 17, fontWeight: "bold", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer" }}>
           <Play fill="white" size={20} /> לצפייה עכשיו
         </button>
+        {(() => {
+          const baseName = (selectedMovie.title || "").replace(/\s*\d+$/, "").trim();
+          const sequels = movies.filter(m =>
+            !m.series_name &&
+            m.id !== selectedMovie.id &&
+            (m.title || "").replace(/\s*\d+$/, "").trim() === baseName
+          ).sort((a, b) => (a.year || 0) - (b.year || 0));
+          if (sequels.length === 0) return null;
+          return (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ fontSize: 14, fontWeight: 900, color: "#fff", marginBottom: 12 }}>סרטי המשך</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {sequels.map(s => (
+                  <div key={s.id} onClick={() => setSelectedMovie(s)} style={{ display: "flex", gap: 12, alignItems: "center", background: "#1a1a1a", borderRadius: 12, padding: 10, cursor: "pointer", border: "1px solid #2a2a2a" }}>
+                    {s.thumbnail_url ? <img src={s.thumbnail_url} style={{ width: 48, height: 68, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} alt="" onError={e => e.target.style.display="none"} /> : <div style={{ width: 48, height: 68, borderRadius: 8, background: "#333", flexShrink: 0 }} />}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{s.title}</div>
+                      {s.year && <div style={{ fontSize: 12, color: "#888", marginTop: 3 }}>{s.year}</div>}
+                    </div>
+                    <Play size={18} fill="#e50914" color="#e50914" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
