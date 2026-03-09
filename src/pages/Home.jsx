@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -615,6 +615,7 @@ export default function Home() {
                 {formStatus.message && <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: "#f0fff4", color: "#1a7a3a" }}>{formStatus.message}</div>}
               </div>
               <MergeSeriesPanel movies={movies} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} MovieEntity={Movie} />
+              <FindByTypePanel movies={movies} cardStyle={cardStyle} inp={inp} dot={dot} onEdit={startEdit} />
             </div>
           )}
         </div>
@@ -877,6 +878,78 @@ function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
+  const [selectedSeries, setSelectedSeries] = useState("הכל");
+  const [selectedType, setSelectedType] = useState("drive");
+
+  const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
+
+  const typeLabels = {
+    drive: "Google Drive 🔴",
+    youtube: "YouTube",
+    dailymotion: "Dailymotion",
+    rumble: "Rumble",
+    vimeo: "Vimeo",
+    streamable: "Streamable",
+    archive: "Archive.org",
+    kan: "כאן",
+    okru: "OK.ru",
+    direct: "קישור ישיר",
+  };
+
+  const results = movies.filter(m => {
+    const typeMatch = m.type === selectedType;
+    const seriesMatch = selectedSeries === "הכל" || m.series_name === selectedSeries;
+    return typeMatch && seriesMatch;
+  }).sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
+
+  return (
+    <div style={{ ...cardStyle, border: "2px solid #ff3b30" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#ff3b30" }}>
+        {dot} מצא פרקים לפי סוג קישור
+      </div>
+      <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 12 }}>מצא את כל הפרקים עם סוג קישור מסוים כדי לעדכן אותם</div>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>סדרה</label>
+        <select value={selectedSeries} onChange={e => setSelectedSeries(e.target.value)} style={inp}>
+          <option value="הכל">כל הסדרות והסרטים</option>
+          {seriesNames.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>סוג קישור</label>
+        <select value={selectedType} onChange={e => setSelectedType(e.target.value)} style={inp}>
+          {Object.entries(typeLabels).map(([val, label]) => (
+            <option key={val} value={val}>{label}</option>
+          ))}
+        </select>
+      </div>
+      <div style={{ fontSize: 12, color: "#6e6e73", marginBottom: 10 }}>
+        נמצאו <strong>{results.length}</strong> פרקים
+      </div>
+      {results.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "20px 0", color: "#aaa", fontSize: 13 }}>אין תוצאות</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 350, overflowY: "auto" }}>
+          {results.map(ep => (
+            <div key={ep.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff5f5", borderRadius: 10, padding: "10px 12px", border: "1px solid #ffd0d0" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {ep.series_name ? `ע${ep.season_number || 1} פ${ep.episode_number || "?"} - ` : ""}{ep.title}
+                </div>
+                <div style={{ fontSize: 10, color: "#6e6e73", marginTop: 2 }}>{ep.series_name || ep.category}</div>
+              </div>
+              <button onClick={() => onEdit(ep)} style={{ background: "#ff3b30", color: "#fff", border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, fontWeight: 700, flexShrink: 0, fontFamily: "inherit" }}>
+                ✏️ ערוך
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
