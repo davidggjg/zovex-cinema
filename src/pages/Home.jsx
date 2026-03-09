@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -42,6 +42,10 @@ function extractVideoInfo(url) {
     const parts = url.split("/").filter(Boolean);
     return { type: "kan", video_id: parts[parts.length - 1] };
   }
+  if (url.includes("ok.ru")) {
+    const m = url.match(/ok\.ru\/video\/(\d+)/);
+    return { type: "okru", video_id: m?.[1] || url };
+  }
   return { type: "direct", video_id: url };
 }
 
@@ -80,6 +84,10 @@ function renderPlayer(movie) {
   }
   if (type === "kan" || vid.includes("kan.org")) {
     return <iframe src={`https://www.kan.org.il/General/Embed.aspx?id=${vid}`} style={fr} allowFullScreen allow="autoplay" />;
+  }
+  if (type === "okru" || vid.includes("ok.ru")) {
+    const id = vid.replace(/.*ok\.ru\/video\//, "").split("?")[0];
+    return <iframe src={`https://ok.ru/videoembed/${id}`} style={fr} allowFullScreen allow="autoplay" />;
   }
   if (type === "cloudinary") {
     const cloud = movie.cloudinary_cloud_name || "";
