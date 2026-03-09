@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -638,52 +638,54 @@ export default function Home() {
     const series = seriesMap[selectedSeries];
     const episodes = series?.episodes || [];
     const seasonNums = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
-    const firstSeason = seasonNums[0];
+    const activeSeason = openSeasons._active !== undefined ? openSeasons._active : seasonNums[0];
+    const activeEps = episodes.filter(e => (e.season_number || 1) === activeSeason).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+    const [showSeasonMenu, setShowSeasonMenu] = React.useState(false);
     return (
-      <div style={{ background: "#111", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#fff" }}>
+      <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#111" }}>
         <style>{spinnerStyle}</style>
         <button onClick={() => { setSelectedSeries(null); setOpenSeasons({}); }} style={{ position: "fixed", top: 15, right: 15, zIndex: 100, background: "rgba(0,0,0,.7)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <ArrowRight size={22} />
         </button>
         <div style={{ position: "relative" }}>
           {series?.thumbnail_url && <img src={series.thumbnail_url} alt="" style={{ width: "100%", height: "55vw", maxHeight: 380, objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} />}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 130, background: "linear-gradient(transparent,#111)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 130, background: "linear-gradient(transparent,#fff)" }} />
         </div>
         <div style={{ padding: 20 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 900, margin: "0 0 8px", color: "#fff" }}>{selectedSeries}</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 900, margin: "0 0 8px", color: "#111" }}>{selectedSeries}</h1>
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
             {series?.category && <span style={{ background: "#e50914", color: "#fff", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: "bold" }}>{series.category}</span>}
-            <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{episodes.length} פרקים</span>
-            <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{seasonNums.length} עונות</span>
+            <span style={{ background: "#f0f0f0", color: "#555", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{episodes.length} פרקים</span>
+            <span style={{ background: "#f0f0f0", color: "#555", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{seasonNums.length} עונות</span>
           </div>
-          {series?.description && <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: "0 0 20px" }}>{series.description}</p>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {seasonNums.map(season => {
-              const seasonEps = episodes.filter(e => (e.season_number || 1) === season).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-              const isOpen = season in openSeasons ? openSeasons[season] : season === firstSeason;
-              return (
-                <div key={season} style={{ borderRadius: 14, overflow: "hidden", border: isOpen ? "2px solid #e50914" : "1px solid #2a2a2a" }}>
-                  <button onClick={() => setOpenSeasons(p => ({ ...p, [season]: !isOpen }))} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: isOpen ? "#1a0000" : "#1a1a1a", border: "none", cursor: "pointer", color: "#fff", fontFamily: "Arial" }}>
-                    <span style={{ fontSize: 15, fontWeight: 900, color: isOpen ? "#e50914" : "#fff" }}>עונה {season}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "#888" }}>{seasonEps.length} פרקים</span>
-                      {isOpen ? <ChevronUp size={18} color="#e50914" /> : <ChevronDown size={18} color="#888" />}
-                    </div>
-                  </button>
-                  {isOpen && seasonEps.map((ep, i) => (
-                    <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 16px", borderTop: "1px solid #252525", cursor: "pointer", alignItems: "center", background: "#111" }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#e50914", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <Play size={16} fill="white" color="white" />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>פרק {ep.episode_number || i + 1}{ep.episode_title ? " - " + ep.episode_title : ""}</div>
-                        <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{ep.title}</div>
-                      </div>
-                    </div>
-                  ))}
+          {series?.description && <p style={{ fontSize: 14, lineHeight: 1.8, color: "#444", margin: "0 0 20px" }}>{series.description}</p>}
+          <div style={{ position: "relative", marginBottom: 18 }}>
+            <button onClick={() => setShowSeasonMenu(s => !s)} style={{ display: "flex", alignItems: "center", gap: 10, background: "#111", color: "#fff", border: "none", borderRadius: 10, padding: "12px 18px", fontSize: 15, fontWeight: 900, cursor: "pointer", fontFamily: "inherit", minWidth: 160 }}>
+              <span>עונה {activeSeason}</span>
+              <ChevronDown size={18} color="#fff" />
+            </button>
+            {showSeasonMenu && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#fff", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,.18)", zIndex: 50, minWidth: 160, overflow: "hidden", border: "1px solid #eee" }}>
+                {seasonNums.map(s => (
+                  <div key={s} onClick={() => { setOpenSeasons(p => ({ ...p, _active: s })); setShowSeasonMenu(false); }} style={{ padding: "14px 18px", fontSize: 15, fontWeight: s === activeSeason ? 900 : 500, color: s === activeSeason ? "#e50914" : "#111", cursor: "pointer", background: s === activeSeason ? "#fff5f5" : "#fff", borderBottom: "1px solid #f5f5f5" }}>
+                    עונה {s}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {activeEps.map((ep, i) => (
+              <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid #eee", cursor: "pointer", alignItems: "center" }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: "#e50914", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Play size={18} fill="white" color="white" />
                 </div>
-              );
-            })}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#111" }}>פרק {ep.episode_number || i + 1}{ep.episode_title ? " - " + ep.episode_title : ""}</div>
+                  <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{ep.title}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
