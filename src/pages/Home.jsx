@@ -1,4 +1,4 @@
- import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -133,6 +133,7 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [newCat, setNewCat] = useState("");
   const [manageQ, setManageQ] = useState("");
+  const [showSeasonMenu, setShowSeasonMenu] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => { loadMovies(); }, []);
@@ -640,7 +641,6 @@ export default function Home() {
     const seasonNums = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
     const activeSeason = openSeasons._active !== undefined ? openSeasons._active : seasonNums[0];
     const activeEps = episodes.filter(e => (e.season_number || 1) === activeSeason).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-    const [showSeasonMenu, setShowSeasonMenu] = React.useState(false);
     return (
       <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#111" }}>
         <style>{spinnerStyle}</style>
