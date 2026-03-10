@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -46,6 +46,10 @@ function extractVideoInfo(url) {
     const m = url.match(/ok\.ru\/video\/(\d+)/);
     return { type: "okru", video_id: m?.[1] || url };
   }
+  if (url.includes("t.me")) {
+    const m = url.match(/t\.me\/([^/]+\/\d+)/);
+    return { type: "telegram", video_id: m?.[1] || url };
+  }
   return { type: "direct", video_id: url };
 }
 
@@ -88,6 +92,10 @@ function renderPlayer(movie) {
   if (type === "okru" || vid.includes("ok.ru")) {
     const id = vid.replace(/.*ok\.ru\/video\//, "").split("?")[0];
     return <iframe src={`https://ok.ru/videoembed/${id}`} style={fr} allowFullScreen allow="autoplay" />;
+  }
+  if (type === "telegram" || vid.includes("t.me")) {
+    const id = vid.replace(/.*t\.me\//, "").split("?")[0];
+    return <iframe src={`https://t.me/${id}?embed=1&mode=tme`} style={fr} allowFullScreen allow="autoplay" />;
   }
   if (type === "cloudinary") {
     const cloud = movie.cloudinary_cloud_name || "";
@@ -307,6 +315,8 @@ export default function Home() {
       else if (type === "rumble") fullUrl = `https://rumble.com/embed/${vid}`;
       else if (type === "archive") fullUrl = `https://archive.org/details/${vid}`;
       else if (type === "kan") fullUrl = `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
+      else if (type === "okru") fullUrl = `https://ok.ru/video/${vid}`;
+      else if (type === "telegram") fullUrl = `https://t.me/${vid}`;
       else fullUrl = vid;
     }
     setVideoUrlInput(fullUrl);
