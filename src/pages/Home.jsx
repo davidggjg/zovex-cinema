@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+Import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 
@@ -140,6 +140,8 @@ export default function Home() {
   });
   const [categories, setCategories] = useState([]);
   const [newCat, setNewCat] = useState("");
+  const [editingCat, setEditingCat] = useState(null);
+  const [editingCatVal, setEditingCatVal] = useState("");
   const [manageQ, setManageQ] = useState("");
   const [showSeasonMenu, setShowSeasonMenu] = useState(false);
   const fileInputRef = useRef(null);
@@ -167,6 +169,21 @@ export default function Home() {
   const saveCats = (c) => {
     setCategories(c);
     try { localStorage.setItem("zovex_cats", JSON.stringify(c)); } catch {}
+  };
+
+  const renameCat = async (oldName, newName) => {
+    if (!newName.trim() || newName === oldName) { setEditingCat(null); return; }
+    const updated = categories.map(c => c === oldName ? newName.trim() : c);
+    saveCats(updated);
+    setSaving(true);
+    const toUpdate = movies.filter(m => m.category === oldName);
+    for (const m of toUpdate) {
+      try { await Movie.update(m.id, { category: newName.trim() }); } catch {}
+    }
+    setSaving(false);
+    loadMovies();
+    setEditingCat(null);
+    setEditingCatVal("");
   };
 
   useEffect(() => {
@@ -256,7 +273,16 @@ export default function Home() {
     try {
       if (editingMovie) {
         await Movie.update(editingMovie.id, payload);
-        setFormStatus({ type: "success", message: "עודכן!" });
+        // if category changed on a series episode, update all episodes in that series
+        if (payload.series_name && editingMovie.category !== payload.category) {
+          const seriesEps = movies.filter(m => m.series_name === payload.series_name && m.id !== editingMovie.id);
+          for (const ep of seriesEps) {
+            try { await Movie.update(ep.id, { category: payload.category }); } catch {}
+          }
+          setFormStatus({ type: "success", message: `עודכן! קטגוריה עודכנה לכל הסדרה (${seriesEps.length + 1} פרקים)` });
+        } else {
+          setFormStatus({ type: "success", message: "עודכן!" });
+        }
       } else {
         await Movie.create(payload);
         setFormStatus({ type: "success", message: "נשמר!" });
@@ -604,9 +630,22 @@ export default function Home() {
               {categories.length === 0 && <p style={{ color: "#6e6e73", fontSize: 13, textAlign: "center" }}>אין קטגוריות עדיין</p>}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {categories.map((cat, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#F5F5F7", borderRadius: 10, padding: "10px 14px" }}>
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>{cat}</span>
-                    <button onClick={() => saveCats(categories.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#ff3b30", cursor: "pointer", fontSize: 20 }}>x</button>
+                  <div key={i} style={{ background: "#F5F5F7", borderRadius: 10, padding: "10px 14px" }}>
+                    {editingCat === cat ? (
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <input value={editingCatVal} onChange={e => setEditingCatVal(e.target.value)} autoFocus onKeyDown={e => { if (e.key === "Enter") renameCat(cat, editingCatVal); if (e.key === "Escape") setEditingCat(null); }} style={{ ...inp, flex: 1, padding: "6px 10px" }} />
+                        <button onClick={() => renameCat(cat, editingCatVal)} style={{ background: "#34c759", color: "#fff", border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "inherit" }}>שמור</button>
+                        <button onClick={() => setEditingCat(null)} style={{ background: "#F0F0F5", color: "#6e6e73", border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>ביטול</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{cat}</span>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => { setEditingCat(cat); setEditingCatVal(cat); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>✏️</button>
+                          <button onClick={() => saveCats(categories.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#ff3b30", cursor: "pointer", fontSize: 20 }}>x</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -627,6 +666,7 @@ export default function Home() {
               </div>
               <MergeSeriesPanel movies={movies} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} MovieEntity={Movie} />
               <FindByTypePanel movies={movies} cardStyle={cardStyle} inp={inp} dot={dot} onEdit={startEdit} />
+              <SeriesCategoryPanel movies={movies} categories={categories} saveCats={saveCats} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} MovieEntity={Movie} />
             </div>
           )}
         </div>
@@ -988,6 +1028,85 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardStyle, inp, dot, MovieEntity }) {
+  const [openSeries, setOpenSeries] = useState(null);
+  const [selectedCat, setSelectedCat] = useState("");
+  const [newCatName, setNewCatName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
+
+  const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
+
+  const handleApply = async (seriesName) => {
+    const catToApply = selectedCat === "__new__" ? newCatName.trim() : selectedCat;
+    if (!catToApply) { setStatus({ type: "error", message: "בחר קטגוריה" }); return; }
+    setSaving(true);
+    // add new category if needed
+    if (selectedCat === "__new__" && !categories.includes(catToApply)) {
+      saveCats([...categories, catToApply]);
+    }
+    const eps = movies.filter(m => m.series_name === seriesName);
+    let done = 0;
+    for (const ep of eps) {
+      try { await MovieEntity.update(ep.id, { category: catToApply }); done++; } catch {}
+    }
+    setStatus({ type: "success", message: `עודכנו ${done} פרקים ל"${catToApply}"` });
+    setSaving(false);
+    loadMovies();
+    setOpenSeries(null);
+    setSelectedCat("");
+    setNewCatName("");
+    setTimeout(() => setStatus({ type: "", message: "" }), 3000);
+  };
+
+  return (
+    <div style={{ ...cardStyle, border: "2px solid #34c759" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#34c759" }}>
+        {dot} שינוי קטגוריה לסדרה שלמה
+      </div>
+      <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 12 }}>בחר סדרה ושנה את הקטגוריה שלה בבת אחת</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {seriesNames.map(name => {
+          const currentCat = movies.find(m => m.series_name === name)?.category || "";
+          const isOpen = openSeries === name;
+          return (
+            <div key={name} style={{ borderRadius: 12, overflow: "hidden", border: `1.5px solid ${isOpen ? "#34c759" : "#d2d2d7"}` }}>
+              <button onClick={() => { setOpenSeries(isOpen ? null : name); setSelectedCat(""); setNewCatName(""); }} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: isOpen ? "#f0fff4" : "#fafafa", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>{name}</div>
+                  <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 2 }}>{currentCat || "ללא קטגוריה"} · {movies.filter(m => m.series_name === name).length} פרקים</div>
+                </div>
+                <ChevronDown size={16} color={isOpen ? "#34c759" : "#6e6e73"} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+              </button>
+              {isOpen && (
+                <div style={{ padding: "12px 14px", background: "#fff", borderTop: "1px solid #e8e8e8" }}>
+                  <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 6, fontWeight: 700 }}>בחר קטגוריה</label>
+                  <select value={selectedCat} onChange={e => setSelectedCat(e.target.value)} style={{ ...inp, marginBottom: 10 }}>
+                    <option value="">בחר...</option>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="__new__">+ קטגוריה חדשה</option>
+                  </select>
+                  {selectedCat === "__new__" && (
+                    <input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="שם הקטגוריה החדשה..." style={{ ...inp, marginBottom: 10 }} />
+                  )}
+                  <button onClick={() => handleApply(name)} disabled={saving} style={{ width: "100%", background: "#34c759", color: "#fff", border: "none", borderRadius: 10, padding: 11, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", opacity: saving ? 0.6 : 1 }}>
+                    {saving ? "מעדכן..." : "עדכן קטגוריה לכל הסדרה"}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {status.message && (
+        <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: status.type === "success" ? "#f0fff4" : "#fff5f5", color: status.type === "success" ? "#1a7a3a" : "#ff3b30" }}>
+          {status.message}
         </div>
       )}
     </div>
