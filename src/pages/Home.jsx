@@ -834,8 +834,12 @@ export default function Home() {
           )
         }
       </main>
-      <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ position: "fixed", bottom: 24, left: 24, background: "#24A1DE", width: 56, height: 56, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(0,0,0,.2)", zIndex: 1000, textDecoration: "none" }}>
-        <Send size={26} fill="white" />
+      <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ position: "fixed", bottom: 24, left: 16, background: "#24A1DE", borderRadius: 30, display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", color: "#fff", boxShadow: "0 4px 20px rgba(36,161,222,.45)", zIndex: 1000, textDecoration: "none" }}>
+        <Send size={20} fill="white" />
+        <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "Arial, sans-serif", whiteSpace: "nowrap", lineHeight: 1.3 }}>
+          רוצה להוסיף סרט?<br />
+          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.9 }}>צור קשר כאן</span>
+        </span>
       </a>
     </div>
   );
