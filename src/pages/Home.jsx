@@ -849,6 +849,134 @@ export default function Home() {
 }
 
 
+function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, onEdit }) {
+  const [browsecat, setBrowsecat] = useState("הכל");
+  const [openAdminSeries, setOpenAdminSeries] = useState(null);
+  const [openAdminSeason, setOpenAdminSeason] = useState({});
+  const [showAdminSeasonMenu, setShowAdminSeasonMenu] = useState(false);
+
+  const allCats = ["הכל", ...new Set([...categories, ...movies.map(m => m.category).filter(Boolean)])];
+
+  // series visible in this category
+  const visibleSeries = existingSeriesNames.filter(name => {
+    if (browsecat === "הכל") return true;
+    return seriesMap[name]?.category === browsecat;
+  });
+
+  // standalone movies visible in this category
+  const visibleMovies = movies.filter(m => {
+    if (m.series_name) return false;
+    return browsecat === "הכל" || m.category === browsecat;
+  });
+
+  if (openAdminSeries) {
+    const series = seriesMap[openAdminSeries];
+    const episodes = series?.episodes || [];
+    const seasonNums = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
+    const activeSeason = openAdminSeason[openAdminSeries] ?? seasonNums[0];
+    const activeEps = episodes.filter(e => (e.season_number || 1) === activeSeason).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+
+    return (
+      <div>
+        <button onClick={() => setOpenAdminSeries(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "9px 14px", marginBottom: 14, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, color: "#6e6e73" }}>
+          <ArrowRight size={15} /> חזור
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          {series?.thumbnail_url && <img src={series.thumbnail_url} style={{ width: 44, height: 62, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} alt="" />}
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 900 }}>{openAdminSeries}</div>
+            <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 2 }}>{episodes.length} פרקים · {seasonNums.length} עונות</div>
+          </div>
+        </div>
+        {/* Season selector */}
+        {seasonNums.length > 1 && (
+          <div style={{ position: "relative", marginBottom: 14 }}>
+            <button onClick={() => setShowAdminSeasonMenu(s => !s)} style={{ display: "flex", alignItems: "center", gap: 8, background: "#111", color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit" }}>
+              עונה {activeSeason} <ChevronDown size={15} color="#fff" />
+            </button>
+            {showAdminSeasonMenu && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#fff", borderRadius: 12, boxShadow: "0 8px 30px rgba(0,0,0,.18)", zIndex: 50, minWidth: 140, overflow: "hidden", border: "1px solid #eee" }}>
+                {seasonNums.map(s => (
+                  <div key={s} onClick={() => { setOpenAdminSeason(p => ({ ...p, [openAdminSeries]: s })); setShowAdminSeasonMenu(false); }} style={{ padding: "12px 16px", fontSize: 14, fontWeight: s === activeSeason ? 900 : 500, color: s === activeSeason ? "#e50914" : "#111", cursor: "pointer", background: s === activeSeason ? "#fff5f5" : "#fff", borderBottom: "1px solid #f5f5f5" }}>
+                    עונה {s}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {activeEps.map((ep, i) => (
+            <div key={ep.id} onClick={() => onEdit(ep)} style={{ display: "flex", gap: 12, padding: 12, background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,.06)", cursor: "pointer", alignItems: "center", border: "1.5px solid #f0f0f0" }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: "#0071e3", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 12, fontWeight: 900, color: "#fff" }}>
+                {ep.episode_number || i + 1}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  פרק {ep.episode_number || i + 1}{ep.episode_title ? " - " + ep.episode_title : ""}
+                </div>
+                <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ep.title}</div>
+              </div>
+              <div style={{ fontSize: 11, color: "#0071e3", fontWeight: 700, flexShrink: 0 }}>✏️ ערוך</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+        {allCats.map(cat => (
+          <button key={cat} onClick={() => setBrowsecat(cat)} style={{ background: browsecat === cat ? "#0071e3" : "#fff", border: "1.5px solid", borderColor: browsecat === cat ? "#0071e3" : "#d2d2d7", color: browsecat === cat ? "#fff" : "#6e6e73", borderRadius: 20, padding: "5px 13px", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>{cat}</button>
+        ))}
+      </div>
+      {visibleSeries.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#0071e3", marginBottom: 10, padding: "6px 10px", background: "#e8f0fe", borderRadius: 8 }}>סדרות ({visibleSeries.length})</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+            {visibleSeries.map(name => {
+              const s = seriesMap[name];
+              return (
+                <div key={name} onClick={() => { setOpenAdminSeries(name); setShowAdminSeasonMenu(false); }} style={{ position: "relative", borderRadius: 14, overflow: "hidden", aspectRatio: "2/3", background: "#d0d0d0", cursor: "pointer" }}>
+                  {s?.thumbnail_url && <img src={s.thumbnail_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} />}
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%,rgba(0,0,0,.85))" }} />
+                  <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,113,227,.85)", borderRadius: 6, padding: "2px 7px", fontSize: 9, color: "#fff", fontWeight: 700 }}>סדרה</div>
+                  <div style={{ position: "absolute", bottom: 8, left: 8, right: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{name}</div>
+                    <div style={{ fontSize: 9, color: "rgba(255,255,255,.6)", marginTop: 2 }}>{s?.episodes?.length || 0} פרקים</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {visibleMovies.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#6e6e73", marginBottom: 10, padding: "6px 10px", background: "#F5F5F7", borderRadius: 8 }}>סרטים ({visibleMovies.length})</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+            {visibleMovies.map(movie => (
+              <div key={movie.id} onClick={() => onEdit(movie)} style={{ position: "relative", borderRadius: 14, overflow: "hidden", aspectRatio: "2/3", background: "#d0d0d0", cursor: "pointer" }}>
+                {movie.thumbnail_url && <img src={movie.thumbnail_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} />}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent 40%,rgba(0,0,0,.85))" }} />
+                <div style={{ position: "absolute", bottom: 8, left: 8, right: 8 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{movie.title}</div>
+                  <div style={{ fontSize: 9, color: "rgba(255,255,255,.6)", marginTop: 2 }}>{movie.category}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {visibleSeries.length === 0 && visibleMovies.length === 0 && (
+        <div style={{ textAlign: "center", padding: "40px 0", color: "#aaa", fontSize: 13 }}>אין תכנים בקטגוריה זו</div>
+      )}
+    </div>
+  );
+}
+
 function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [merging, setMerging] = useState(false);
   const [mergeStatus, setMergeStatus] = useState({ type: "", message: "" });
