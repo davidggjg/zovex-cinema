@@ -805,7 +805,15 @@ export default function Home() {
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 11 }}>
           {allCategories.map(cat => (
-            <span key={cat} onClick={() => setSelectedCategory(cat)} style={{ cursor: "pointer", fontSize: 14, fontWeight: "bold", color: selectedCategory === cat ? "#e50914" : "#666", borderBottom: selectedCategory === cat ? "3px solid #e50914" : "3px solid transparent", paddingBottom: 5, flexShrink: 0 }}>
+            <span key={cat} onClick={() => setSelectedCategory(cat)} style={{
+              cursor: "pointer", fontSize: 13, fontWeight: 700,
+              color: selectedCategory === cat ? "#fff" : "#444",
+              background: selectedCategory === cat ? "#e50914" : "#f0f0f0",
+              border: selectedCategory === cat ? "none" : "1px solid #ddd",
+              borderRadius: 50, padding: "6px 16px", flexShrink: 0,
+              boxShadow: selectedCategory === cat ? "0 2px 10px rgba(229,9,20,.35)" : "0 1px 4px rgba(0,0,0,.07)",
+              transition: "all .2s",
+            }}>
               {cat}
             </span>
           ))}
