@@ -441,24 +441,13 @@ export default function Home() {
         </div>
         <div style={{ padding: 14, paddingBottom: 80 }}>
           {adminTab === "browse" && (
-            <div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-                {["הכל", ...categories].map(cat => (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)} style={{ background: selectedCategory === cat ? "#0071e3" : "#fff", border: "1.5px solid", borderColor: selectedCategory === cat ? "#0071e3" : "#d2d2d7", color: selectedCategory === cat ? "#fff" : "#6e6e73", borderRadius: 20, padding: "5px 13px", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>{cat}</button>
-                ))}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
-                {(selectedCategory === "הכל" ? movies : movies.filter(m => m.category === selectedCategory)).map(movie => (
-                  <div key={movie.id} onClick={() => startEdit(movie)} style={{ position: "relative", borderRadius: 14, overflow: "hidden", aspectRatio: "2/3", background: "#d0d0d0", cursor: "pointer" }}>
-                    {movie.thumbnail_url && <img src={movie.thumbnail_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} />}
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,.85))", padding: "18px 8px 8px" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{movie.title}</div>
-                      <div style={{ fontSize: 9, color: "rgba(255,255,255,.6)" }}>{movie.series_name ? movie.series_name : movie.category}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <AdminBrowseTab
+              movies={movies}
+              seriesMap={seriesMap}
+              existingSeriesNames={existingSeriesNames}
+              categories={categories}
+              onEdit={startEdit}
+            />
           )}
           {adminTab === "add" && (
             <div>
