@@ -220,8 +220,8 @@ export default function Home() {
     if (!file) return;
     setUploading(true);
     try {
-      const { uploadFile } = await import("@/integrations/core");
-      const { file_url } = await uploadFile(file);
+      const { base44 } = await import("@/api/base44Client");
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setForm(p => ({ ...p, thumbnail_url: file_url }));
       setPosterPreview(file_url);
     } catch {
