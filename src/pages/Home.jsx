@@ -978,6 +978,126 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
   );
 }
 
+function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
+  const [csvText, setCsvText] = useState("");
+  const [preview, setPreview] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
+  const fileRef = React.useRef(null);
+
+  const COLUMNS = ["title", "video_url", "category", "series_name", "season_number", "episode_number", "thumbnail_url", "description", "year"];
+
+  const parseCSV = (text) => {
+    const lines = text.trim().split("\n").filter(l => l.trim());
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
+    return lines.slice(1).map(line => {
+      // Handle quoted commas
+      const cols = [];
+      let cur = "", inQ = false;
+      for (let c of line) {
+        if (c === '"') inQ = !inQ;
+        else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ""; }
+        else cur += c;
+      }
+      cols.push(cur.trim());
+      const row = {};
+      headers.forEach((h, i) => { row[h] = (cols[i] || "").replace(/^"|"$/g, "").trim(); });
+      return row;
+    }).filter(r => r.title || r.video_url);
+  };
+
+  const handleText = (text) => {
+    setCsvText(text);
+    const rows = parseCSV(text);
+    setPreview(rows.slice(0, 5));
+    setStatus({ type: "", message: "" });
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => handleText(ev.target.result);
+    reader.readAsText(file, "UTF-8");
+  };
+
+  const handleImport = async () => {
+    const rows = parseCSV(csvText);
+    if (!rows.length) { setStatus({ type: "error", message: "אין שורות לייבוא" }); return; }
+    setImporting(true);
+    let done = 0, failed = 0;
+    for (const row of rows) {
+      const info = row.video_url ? extractVideoInfo(row.video_url) : { type: "direct", video_id: "" };
+      const payload = {
+        title: row.title || "",
+        video_id: info.video_id,
+        video_url: row.video_url || "",
+        type: info.type,
+        category: row.category || "",
+        series_name: row.series_name || null,
+        season_number: row.season_number ? Number(row.season_number) : null,
+        episode_number: row.episode_number ? Number(row.episode_number) : null,
+        thumbnail_url: row.thumbnail_url || null,
+        description: row.description || null,
+        year: row.year ? Number(row.year) : null,
+      };
+      try { await MovieEntity.create(payload); done++; } catch { failed++; }
+    }
+    setStatus({ type: "success", message: `✅ יובאו ${done} רשומות${failed ? ` · ${failed} נכשלו` : ""}` });
+    setImporting(false);
+    loadMovies();
+    setCsvText(""); setPreview([]);
+    setTimeout(() => setStatus({ type: "", message: "" }), 5000);
+  };
+
+  return (
+    <div style={{ ...cardStyle, border: "2px solid #5e5ce6" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", color: "#5e5ce6" }}>
+        {dot} ייבוא bulk מ-CSV
+      </div>
+      <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 12, lineHeight: 1.6 }}>
+        העלה קובץ CSV או הדבק טקסט.<br/>
+        עמודות נתמכות: <span style={{ fontFamily: "monospace", fontSize: 10 }}>title, video_url, category, series_name, season_number, episode_number, thumbnail_url, description, year</span>
+      </div>
+      <button onClick={() => fileRef.current?.click()} style={{ width: "100%", background: "#5e5ce6", color: "#fff", border: "none", borderRadius: 12, padding: 11, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 10 }}>
+        📂 העלה קובץ CSV
+      </button>
+      <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={handleFile} />
+      <textarea
+        value={csvText}
+        onChange={e => handleText(e.target.value)}
+        placeholder={"title,video_url,category,series_name,season_number,episode_number\nאווטאר פרק 1,https://drive.google.com/...,סדרות ילדים,אווטאר,1,1"}
+        rows={5}
+        style={{ ...inp, resize: "none", minHeight: 90, fontFamily: "monospace", fontSize: 11, direction: "ltr" }}
+      />
+      {preview.length > 0 && (
+        <div style={{ marginTop: 10, background: "#f5f5f7", borderRadius: 10, padding: 10, fontSize: 11, color: "#333" }}>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>תצוגה מקדימה ({preview.length} שורות ראשונות):</div>
+          {preview.map((r, i) => (
+            <div key={i} style={{ padding: "5px 0", borderBottom: "1px solid #e8e8e8", display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontWeight: 700 }}>{r.title}</span>
+              {r.series_name && <span style={{ color: "#0071e3" }}>📺 {r.series_name} ע{r.season_number} פ{r.episode_number}</span>}
+              {r.category && <span style={{ background: "#e50914", color: "#fff", borderRadius: 8, padding: "1px 7px" }}>{r.category}</span>}
+            </div>
+          ))}
+          <div style={{ marginTop: 6, color: "#6e6e73" }}>סה"כ {parseCSV(csvText).length} שורות לייבוא</div>
+        </div>
+      )}
+      {preview.length > 0 && (
+        <button onClick={handleImport} disabled={importing} style={{ width: "100%", background: importing ? "#aaa" : "#5e5ce6", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: importing ? "default" : "pointer", fontFamily: "inherit", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          {importing ? <><Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> מייבא...</> : `🚀 ייבא ${parseCSV(csvText).length} רשומות`}
+        </button>
+      )}
+      {status.message && (
+        <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: status.type === "success" ? "#f0fff4" : "#fff5f5", color: status.type === "success" ? "#1a7a3a" : "#ff3b30" }}>
+          {status.message}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [merging, setMerging] = useState(false);
   const [mergeStatus, setMergeStatus] = useState({ type: "", message: "" });
