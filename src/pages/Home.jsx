@@ -834,13 +834,19 @@ export default function Home() {
           )
         }
       </main>
-      <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ position: "fixed", bottom: 24, left: 16, background: "#24A1DE", borderRadius: 30, display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", color: "#fff", boxShadow: "0 4px 20px rgba(36,161,222,.45)", zIndex: 1000, textDecoration: "none" }}>
-        <Send size={20} fill="white" />
-        <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "Arial, sans-serif", whiteSpace: "nowrap", lineHeight: 1.3 }}>
-          רוצה להוסיף סרט?<br />
-          <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.9 }}>צור קשר כאן</span>
-        </span>
-      </a>
+      <div style={{ position: "fixed", bottom: 24, left: 16, zIndex: 1000, display: "flex", alignItems: "flex-end", gap: 10 }}>
+        {/* Speech bubble */}
+        <div style={{ background: "#fff", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", boxShadow: "0 4px 18px rgba(0,0,0,.13)", border: "1px solid #eee", maxWidth: 170, direction: "rtl" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#111", fontFamily: "Arial, sans-serif", marginBottom: 2 }}>רוצה להוסיף סרט? 🎬</div>
+          <div style={{ fontSize: 11, color: "#666", fontFamily: "Arial, sans-serif", lineHeight: 1.4 }}>יש בעיה באתר?<br/>דברו איתנו בטלגרם</div>
+          {/* bubble tail */}
+          <div style={{ position: "absolute", bottom: -8, left: 14, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid #fff", filter: "drop-shadow(0 2px 2px rgba(0,0,0,.08))" }} />
+        </div>
+        {/* Telegram button */}
+        <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ background: "#24A1DE", width: 50, height: 50, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(36,161,222,.5)", textDecoration: "none", flexShrink: 0 }}>
+          <Send size={22} fill="white" />
+        </a>
+      </div>
     </div>
   );
 }
