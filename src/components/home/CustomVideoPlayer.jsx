@@ -54,8 +54,8 @@ function buildSrc(movie) {
   if (type === "jellyfin") {
     const server = (movie.jellyfin_server || "").replace(/\/$/, "");
     const apiKey = movie.jellyfin_api_key || "";
-    if (server) {
-      return `${server}/Videos/${vid}/stream.mp4?Static=true&mediaSourceId=${vid}&ApiKey=${apiKey}`;
+    if (server && vid) {
+      return `${server}/web/index.html#!/video?id=${vid}&serverId=&api_key=${apiKey}`;
     }
     return null;
   }
