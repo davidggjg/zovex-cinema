@@ -9,7 +9,7 @@ function formatTime(s) {
 }
 
 function IframePlayer({ movie, onClose }) {
-  const vid = movie.video_id || movie.video_url || "";
+  const vid = (movie.video_id || movie.video_url || "").trim();
   const type = movie.type || "direct";
   const fr = { width: "100%", height: "100%", border: "none" };
   let src = vid;
