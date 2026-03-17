@@ -332,6 +332,7 @@ export default function Home() {
       year: String(movie.year || new Date().getFullYear()),
       series_name: movie.series_name || "", season_number: String(movie.season_number || ""),
       episode_number: String(movie.episode_number || ""), episode_title: movie.episode_title || "",
+      jellyfinServer: movie.jellyfin_server || "", jellyfinApiKey: movie.jellyfin_api_key || "",
     });
     setPosterPreview(movie.thumbnail_url || "");
     let fullUrl = "";
