@@ -1291,6 +1291,93 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
   );
 }
 
+function ExportContentPanel({ movies, cardStyle, dot }) {
+  const handleExport = () => {
+    const lines = [];
+    lines.push("=== ייצוא תוכן מאתר ZOVEX ===");
+    lines.push(`תאריך: ${new Date().toLocaleDateString("he-IL")}`);
+    lines.push("");
+
+    // Group by category
+    const categories = [...new Set(movies.map(m => m.category).filter(Boolean))].sort();
+
+    for (const cat of categories) {
+      lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      lines.push(`📂 קטגוריה: ${cat}`);
+      lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      lines.push("");
+
+      // Series in this category
+      const seriesInCat = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
+      for (const serName of seriesInCat) {
+        lines.push(`📺 סדרה: ${serName}`);
+        const episodes = movies.filter(m => m.series_name === serName && m.category === cat);
+        const seasons = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
+        for (const season of seasons) {
+          lines.push(`  עונה ${season}:`);
+          const eps = episodes.filter(e => (e.season_number || 1) === season).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+          for (const ep of eps) {
+            const link = ep.type === "drive"
+              ? `https://drive.google.com/file/d/${ep.video_id}/view`
+              : ep.type === "youtube"
+              ? `https://www.youtube.com/watch?v=${ep.video_id}`
+              : ep.type === "archive"
+              ? `https://archive.org/details/${ep.video_id}`
+              : ep.video_id;
+            lines.push(`    פרק ${ep.episode_number || "?"}${ep.episode_title ? " - " + ep.episode_title : ""} | ${ep.title}`);
+            lines.push(`    🔗 ${link}`);
+          }
+        }
+        lines.push("");
+      }
+
+      // Standalone movies in this category
+      const standaloneMovies = movies.filter(m => !m.series_name && m.category === cat).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+      for (const movie of standaloneMovies) {
+        const link = movie.type === "drive"
+          ? `https://drive.google.com/file/d/${movie.video_id}/view`
+          : movie.type === "youtube"
+          ? `https://www.youtube.com/watch?v=${movie.video_id}`
+          : movie.type === "archive"
+          ? `https://archive.org/details/${movie.video_id}`
+          : movie.video_id;
+        lines.push(`🎬 ${movie.title}${movie.year ? ` (${movie.year})` : ""}`);
+        lines.push(`   🔗 ${link}`);
+        lines.push("");
+      }
+    }
+
+    lines.push("");
+    lines.push(`סה"כ: ${movies.length} תכנים`);
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `zovex_content_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+  };
+
+  return (
+    <div style={{ ...cardStyle, border: "2px solid #30d158" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", color: "#30d158" }}>
+        {dot} ייצוא כל התוכן לקובץ
+      </div>
+      <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 14, lineHeight: 1.7 }}>
+        מוריד קובץ טקסט מסודר עם כל הסדרות, פרקים, סרטים וקישורים — מחולק לפי קטגוריות ועונות.
+      </div>
+      <button
+        onClick={handleExport}
+        style={{ width: "100%", background: "#30d158", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+      >
+        📥 הורד קובץ קישורים
+      </button>
+      <div style={{ marginTop: 8, fontSize: 10, color: "#aaa", textAlign: "center" }}>
+        {movies.length} תכנים · לא משנה כלום באתר
+      </div>
+    </div>
+  );
+}
+
 function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [openSeries, setOpenSeries] = useState(null);
   const [selectedCat, setSelectedCat] = useState("");
