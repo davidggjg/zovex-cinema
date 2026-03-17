@@ -667,14 +667,7 @@ export default function Home() {
   }
 
   if (playerMovie) return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-      <style>{spinnerStyle}</style>
-      <button onClick={() => setPlayerMovie(null)} style={{ position: "absolute", top: 15, right: 15, background: "rgba(255,255,255,.15)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
-        <X size={24} />
-      </button>
-      <p style={{ color: "#aaa", fontSize: 14, marginBottom: 10, fontFamily: "Arial", padding: "0 55px", textAlign: "center" }}>{playerMovie.title}</p>
-      {renderPlayer(playerMovie)}
-    </div>
+    <CustomVideoPlayer movie={playerMovie} onClose={() => setPlayerMovie(null)} />
   );
 
   if (selectedSeries) {
