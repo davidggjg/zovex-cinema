@@ -270,6 +270,8 @@ export default function Home() {
       thumbnail_url: form.thumbnail_url, category: form.category,
       year: Number(form.year) || new Date().getFullYear(),
       video_id: info.video_id, type: info.type, video_url: videoUrlInput,
+      jellyfin_server: info.type === "jellyfin" ? (form.jellyfinServer || null) : null,
+      jellyfin_api_key: info.type === "jellyfin" ? (form.jellyfinApiKey || null) : null,
       series_name: isSeries ? (form.series_name || form.title) : null,
       season_number: isSeries ? (Number(form.season_number) || 1) : null,
       episode_number: isSeries ? (autoEpNum) : null,
