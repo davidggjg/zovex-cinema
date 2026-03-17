@@ -657,7 +657,7 @@ export default function Home() {
               <MergeSeriesPanel movies={movies} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} MovieEntity={Movie} />
               <FindByTypePanel movies={movies} cardStyle={cardStyle} inp={inp} dot={dot} onEdit={startEdit} />
               <SeriesCategoryPanel movies={movies} categories={categories} saveCats={saveCats} loadMovies={loadMovies} cardStyle={cardStyle} inp={inp} dot={dot} MovieEntity={Movie} />
-              <ExportContentPanel movies={movies} cardStyle={cardStyle} dot={dot} />
+              <ExportContentPanel movies={movies} cardStyle={cardStyle} dot={dot} inp={inp} />
             </div>
           )}
         </div>
