@@ -168,7 +168,7 @@ export default function CustomVideoPlayer({ movie, onClose }) {
 
       <video
         ref={videoRef}
-        src={vid}
+        src={jellyfinUrl || vid}
         autoPlay
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
         onPlay={() => setPlaying(true)}
