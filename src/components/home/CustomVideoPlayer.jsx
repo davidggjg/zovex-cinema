@@ -65,7 +65,7 @@ function buildSrc(movie) {
 
 export default function CustomVideoPlayer({ movie, onClose }) {
   const src = buildSrc(movie);
-  const useVideoTag = movie.type === "jellyfin" || movie.type === "direct";
+  const useVideoTag = movie.type === "direct";
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
