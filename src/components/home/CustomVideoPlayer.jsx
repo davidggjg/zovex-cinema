@@ -166,6 +166,7 @@ export default function CustomVideoPlayer({ movie, onClose }) {
         onPause={() => setPlaying(false)}
         onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
+        onError={() => setVideoError(true)}
         onClick={togglePlay}
       />
 
