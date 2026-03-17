@@ -39,6 +39,10 @@ function extractVideoInfo(url) {
     const m = url.match(/archive\.org\/(?:embed|details)\/([^/?]+)/);
     return { type: "archive", video_id: m?.[1] || url };
   }
+  if (url.includes("stream.mp4") && url.includes("/Videos/")) {
+    const m = url.match(/\/Videos\/([^/]+)\//);
+    return { type: "jellyfin", video_id: m?.[1] || url };
+  }
   if (url.includes("kan.org.il")) {
     const parts = url.split("/").filter(Boolean);
     return { type: "kan", video_id: parts[parts.length - 1] };
