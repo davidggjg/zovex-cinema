@@ -65,7 +65,7 @@ function buildSrc(movie) {
 
 export default function CustomVideoPlayer({ movie, onClose }) {
   const src = buildSrc(movie);
-  const isVideo = src && (src.includes(".mp4") || src.includes("stream.mp4") || movie.type === "jellyfin" || movie.type === "direct");
+  const useVideoTag = movie.type === "jellyfin" || movie.type === "direct";
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
@@ -81,11 +81,12 @@ export default function CustomVideoPlayer({ movie, onClose }) {
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 15, fontFamily: "Arial" }}>
           אין קישור וידאו זמין
         </div>
-      ) : isVideo ? (
+      ) : useVideoTag ? (
         <video
           src={src}
           controls
           autoPlay
+          controlsList="nodownload"
           style={{ flex: 1, width: "100%", background: "#000" }}
         />
       ) : (
