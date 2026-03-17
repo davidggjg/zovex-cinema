@@ -351,6 +351,7 @@ export default function Home() {
       else if (type === "kan") fullUrl = `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
       else if (type === "okru") fullUrl = `https://ok.ru/video/${vid}`;
       else if (type === "telegram") fullUrl = `https://t.me/${vid}`;
+      else if (type === "jellyfin") fullUrl = vid; // store raw item ID
       else fullUrl = vid;
     }
     setVideoUrlInput(fullUrl);
