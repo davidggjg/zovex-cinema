@@ -8,36 +8,82 @@ function formatTime(s) {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
-function IframePlayer({ movie, onClose }) {
+function buildEmbedSrc(movie) {
   const vid = (movie.video_id || movie.video_url || "").trim();
   const type = movie.type || "direct";
-  const fr = { width: "100%", height: "100%", border: "none" };
-  let src = vid;
 
-  if (!vid) {
-    // no source
-  } else if (type === "youtube" || vid.includes("youtube") || vid.includes("youtu.be")) {
-    const id = vid.replace(/.*[?&]v=/, "").replace(/.*youtu\.be\//, "").split("&")[0];
-    src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-  } else if (type === "drive" || vid.includes("drive.google")) {
-    const id = vid.replace(/.*\/d\//, "").replace(/\/.*/, "").split("?")[0];
-    src = `https://drive.google.com/file/d/${id}/preview`;
-  } else if (type === "vimeo" || vid.includes("vimeo")) {
-    const id = vid.replace(/.*vimeo\.com\//, "").split("?")[0];
-    src = `https://player.vimeo.com/video/${id}?autoplay=1`;
-  } else if (type === "dailymotion" || vid.includes("dailymotion")) {
-    const id = vid.replace(/.*video\//, "").split(/[?_]/)[0];
-    src = `https://www.dailymotion.com/embed/video/${id}?autoplay=1`;
-  } else if (type === "streamable" || vid.includes("streamable")) {
-    const id = vid.replace(/.*streamable\.com\//, "").split("?")[0];
-    src = `https://streamable.com/e/${id}?autoplay=1`;
-  } else if (type === "rumble" || vid.includes("rumble")) {
-    const id = vid.replace(/.*rumble\.com\/embed\//, "").replace(/.*rumble\.com\/video\//, "").split(/[/?]/)[0];
-    src = `https://rumble.com/embed/${id}/`;
-  } else if (type === "archive" || vid.includes("archive.org")) {
-    const id = vid.replace(/.*archive\.org\/(?:embed|details)\//, "").split("?")[0];
-    src = `https://archive.org/embed/${id}`;
+  if (!vid) return "";
+
+  if (type === "youtube") {
+    // vid might be just an ID like "dQw4w9WgXcQ" or a full URL
+    let id = vid;
+    if (vid.includes("youtube.com") || vid.includes("youtu.be")) {
+      id = vid.replace(/.*[?&]v=/, "").replace(/.*youtu\.be\//, "").split(/[?&]/)[0];
+    }
+    return `https://www.youtube.com/embed/${id}?autoplay=1`;
   }
+  if (type === "drive") {
+    let id = vid;
+    if (vid.includes("drive.google") || vid.includes("/d/")) {
+      id = vid.replace(/.*\/d\//, "").replace(/\/.*/, "").split("?")[0];
+    }
+    return `https://drive.google.com/file/d/${id}/preview`;
+  }
+  if (type === "vimeo") {
+    let id = vid;
+    if (vid.includes("vimeo.com")) {
+      id = vid.replace(/.*vimeo\.com\//, "").split("?")[0];
+    }
+    return `https://player.vimeo.com/video/${id}?autoplay=1`;
+  }
+  if (type === "dailymotion") {
+    let id = vid;
+    if (vid.includes("dailymotion")) {
+      id = vid.replace(/.*video\//, "").split(/[?_]/)[0];
+    }
+    return `https://www.dailymotion.com/embed/video/${id}?autoplay=1`;
+  }
+  if (type === "streamable") {
+    let id = vid;
+    if (vid.includes("streamable.com")) {
+      id = vid.replace(/.*streamable\.com\//, "").split("?")[0];
+    }
+    return `https://streamable.com/e/${id}?autoplay=1`;
+  }
+  if (type === "rumble") {
+    let id = vid;
+    if (vid.includes("rumble.com")) {
+      id = vid.replace(/.*rumble\.com\/embed\//, "").replace(/.*rumble\.com\/video\//, "").split(/[/?]/)[0];
+    }
+    return `https://rumble.com/embed/${id}/`;
+  }
+  if (type === "archive") {
+    let id = vid;
+    if (vid.includes("archive.org")) {
+      id = vid.replace(/.*archive\.org\/(?:embed|details)\//, "").split("?")[0];
+    }
+    return `https://archive.org/embed/${id}`;
+  }
+  if (type === "kan") {
+    return `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
+  }
+  if (type === "okru") {
+    let id = vid;
+    if (vid.includes("ok.ru")) {
+      id = vid.replace(/.*ok\.ru\/video\//, "").split("?")[0];
+    }
+    return `https://ok.ru/videoembed/${id}`;
+  }
+  if (type === "telegram") {
+    return `https://t.me/${vid}`;
+  }
+
+  // fallback: return vid as-is (could be a direct URL)
+  return vid;
+}
+
+function IframePlayer({ movie, onClose }) {
+  const src = buildEmbedSrc(movie);
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
@@ -45,12 +91,23 @@ function IframePlayer({ movie, onClose }) {
         <X size={24} />
       </button>
       <p style={{ color: "#aaa", fontSize: 13, padding: "52px 55px 6px", textAlign: "center", fontFamily: "Arial", flexShrink: 0 }}>{movie.title}</p>
-      <iframe src={src} style={{ ...fr, flex: 1 }} allowFullScreen allow="autoplay" />
+      {src ? (
+        <iframe
+          src={src}
+          style={{ width: "100%", flex: 1, border: "none" }}
+          allowFullScreen
+          allow="autoplay; encrypted-media"
+        />
+      ) : (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 14, fontFamily: "Arial" }}>
+          לא נמצא קישור וידאו
+        </div>
+      )}
     </div>
   );
 }
 
-export default function CustomVideoPlayer({ movie, onClose }) {
+function DirectVideoPlayer({ movie, onClose }) {
   const videoRef = useRef(null);
   const hideTimer = useRef(null);
   const longPressTimer = useRef(null);
@@ -67,20 +124,12 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const [videoError, setVideoError] = useState(false);
 
   const vid = (movie.video_id || movie.video_url || "").trim();
-  const type = movie.type || "direct";
-
-  // Jellyfin: build stream URL from item ID
   const jellyfinServer = (movie.jellyfin_server || "").replace(/\/$/, "");
   const jellyfinApiKey = movie.jellyfin_api_key || "";
-  const jellyfinUrl = type === "jellyfin" && vid && jellyfinServer
+  const jellyfinUrl = movie.type === "jellyfin" && vid && jellyfinServer
     ? `${jellyfinServer}/Videos/${vid}/stream.mp4?Static=true&mediaSourceId=${vid}&ApiKey=${jellyfinApiKey}`
     : null;
-
-  // Only treat as direct MP4 if it's a full http URL with .mp4, or a Jellyfin stream
-  const isDirectMp4 = !videoError && (
-    jellyfinUrl ||
-    (vid && vid.startsWith("http") && (vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/")))
-  );
+  const videoSrc = jellyfinUrl || vid;
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
@@ -96,7 +145,8 @@ export default function CustomVideoPlayer({ movie, onClose }) {
     };
   }, []);
 
-  if (!isDirectMp4) {
+  // If video errors, fall back to iframe
+  if (videoError) {
     return <IframePlayer movie={movie} onClose={onClose} />;
   }
 
@@ -168,7 +218,7 @@ export default function CustomVideoPlayer({ movie, onClose }) {
 
       <video
         ref={videoRef}
-        src={jellyfinUrl || vid}
+        src={videoSrc}
         autoPlay
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
         onPlay={() => setPlaying(true)}
@@ -179,105 +229,67 @@ export default function CustomVideoPlayer({ movie, onClose }) {
         onClick={togglePlay}
       />
 
-      {/* Tap zones for double-tap skip */}
       <div style={{ position: "absolute", inset: 0, zIndex: 2, display: "flex", pointerEvents: "none" }}>
-        {/* Left zone */}
-        <div
-          style={{ width: "40%", height: "100%", pointerEvents: "auto", cursor: "pointer" }}
-          onClick={() => handleTap("left")}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-        />
-        {/* Center zone */}
+        <div style={{ width: "40%", height: "100%", pointerEvents: "auto", cursor: "pointer" }} onClick={() => handleTap("left")} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
         <div style={{ flex: 1, height: "100%", pointerEvents: "auto" }} onClick={togglePlay} />
-        {/* Right zone */}
-        <div
-          style={{ width: "40%", height: "100%", pointerEvents: "auto", cursor: "pointer" }}
-          onClick={() => handleTap("right")}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-        />
+        <div style={{ width: "40%", height: "100%", pointerEvents: "auto", cursor: "pointer" }} onClick={() => handleTap("right")} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
       </div>
 
-      {/* Skip animations */}
-      {skipAnim === "left" && (
-        <div style={{ position: "absolute", left: "8%", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,.65)", borderRadius: 40, padding: "12px 20px", color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Arial", pointerEvents: "none", zIndex: 5, animation: "fadeOut .7s ease forwards" }}>
-          ◀◀ 10s
-        </div>
-      )}
-      {skipAnim === "right" && (
-        <div style={{ position: "absolute", right: "8%", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,.65)", borderRadius: 40, padding: "12px 20px", color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Arial", pointerEvents: "none", zIndex: 5, animation: "fadeOut .7s ease forwards" }}>
-          10s ▶▶
-        </div>
-      )}
+      {skipAnim === "left" && <div style={{ position: "absolute", left: "8%", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,.65)", borderRadius: 40, padding: "12px 20px", color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Arial", pointerEvents: "none", zIndex: 5, animation: "fadeOut .7s ease forwards" }}>◀◀ 10s</div>}
+      {skipAnim === "right" && <div style={{ position: "absolute", right: "8%", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,.65)", borderRadius: 40, padding: "12px 20px", color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Arial", pointerEvents: "none", zIndex: 5, animation: "fadeOut .7s ease forwards" }}>10s ▶▶</div>}
 
-      {/* Speed indicator */}
-      {speedOn && (
-        <div style={{ position: "absolute", top: "14%", left: "50%", transform: "translateX(-50%)", background: "rgba(229,9,20,.9)", borderRadius: 20, padding: "8px 22px", color: "#fff", fontSize: 17, fontWeight: 900, fontFamily: "Arial", pointerEvents: "none", zIndex: 5 }}>
-          ⚡ מהירות x2
-        </div>
-      )}
+      {speedOn && <div style={{ position: "absolute", top: "14%", left: "50%", transform: "translateX(-50%)", background: "rgba(229,9,20,.9)", borderRadius: 20, padding: "8px 22px", color: "#fff", fontSize: 17, fontWeight: 900, fontFamily: "Arial", pointerEvents: "none", zIndex: 5 }}>⚡ מהירות x2</div>}
 
-      {/* Big play button when paused */}
       {!playing && (
-        <div
-          onClick={togglePlay}
-          style={{ position: "absolute", zIndex: 4, background: "rgba(0,0,0,.55)", borderRadius: "50%", width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
+        <div onClick={togglePlay} style={{ position: "absolute", zIndex: 4, background: "rgba(0,0,0,.55)", borderRadius: "50%", width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <Play size={36} fill="white" color="white" />
         </div>
       )}
 
-      {/* Controls overlay */}
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 3,
-        opacity: showControls ? 1 : 0,
-        transition: "opacity .3s",
-        pointerEvents: showControls ? "auto" : "none",
-        background: "linear-gradient(to bottom, rgba(0,0,0,.55) 0%, transparent 18%, transparent 75%, rgba(0,0,0,.75) 100%)",
-        display: "flex", flexDirection: "column", justifyContent: "space-between"
-      }}>
-        {/* Top bar */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 3, opacity: showControls ? 1 : 0, transition: "opacity .3s", pointerEvents: showControls ? "auto" : "none", background: "linear-gradient(to bottom, rgba(0,0,0,.55) 0%, transparent 18%, transparent 75%, rgba(0,0,0,.75) 100%)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px" }}>
           <div style={{ color: "#fff", fontSize: 14, fontFamily: "Arial", fontWeight: 700, flex: 1, textAlign: "center", marginRight: 44 }}>{movie.title}</div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,.15)", border: "none", color: "#fff", borderRadius: "50%", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
             <X size={22} />
           </button>
         </div>
-
-        {/* Bottom controls */}
         <div style={{ padding: "0 16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* Progress bar */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ color: "rgba(255,255,255,.8)", fontSize: 11, fontFamily: "Arial", minWidth: 36 }}>{formatTime(currentTime)}</span>
-            <div
-              onClick={handleSeek}
-              style={{ flex: 1, height: 4, background: "rgba(255,255,255,.3)", borderRadius: 4, cursor: "pointer", position: "relative" }}
-            >
+            <div onClick={handleSeek} style={{ flex: 1, height: 4, background: "rgba(255,255,255,.3)", borderRadius: 4, cursor: "pointer", position: "relative" }}>
               <div style={{ width: `${progress}%`, height: "100%", background: "#e50914", borderRadius: 4, position: "relative" }}>
                 <div style={{ position: "absolute", right: -6, top: -4, width: 12, height: 12, borderRadius: "50%", background: "#fff", boxShadow: "0 0 4px rgba(0,0,0,.5)" }} />
               </div>
             </div>
             <span style={{ color: "rgba(255,255,255,.8)", fontSize: 11, fontFamily: "Arial", minWidth: 36, textAlign: "right" }}>{formatTime(duration)}</span>
           </div>
-
-          {/* Buttons row */}
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button onClick={togglePlay} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center" }}>
               {playing ? <Pause size={28} fill="white" /> : <Play size={28} fill="white" />}
             </button>
-            <button onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } resetHideTimer(); }}
-              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center" }}>
+            <button onClick={() => { const v = videoRef.current; if (v) { v.muted = !v.muted; setMuted(v.muted); } resetHideTimer(); }} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center" }}>
               {muted ? <VolumeX size={24} /> : <Volume2 size={24} />}
             </button>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,.6)", fontFamily: "Arial", marginRight: "auto" }}>
-              לחץ ×2 לדילוג · לחיצה ארוכה x2
-            </div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,.6)", fontFamily: "Arial", marginRight: "auto" }}>לחץ ×2 לדילוג · לחיצה ארוכה x2</div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+export default function CustomVideoPlayer({ movie, onClose }) {
+  const type = movie.type || "direct";
+  const vid = (movie.video_id || movie.video_url || "").trim();
+
+  // Jellyfin and direct MP4 URLs use the native video player
+  const isDirectVideo =
+    type === "jellyfin" ||
+    (vid && vid.startsWith("http") && /\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(vid));
+
+  if (isDirectVideo) {
+    return <DirectVideoPlayer movie={movie} onClose={onClose} />;
+  }
+
+  return <IframePlayer movie={movie} onClose={onClose} />;
 }
