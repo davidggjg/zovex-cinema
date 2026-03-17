@@ -1334,7 +1334,8 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
             .filter(e => (e.season_number || 1) === season)
             .sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
           for (const ep of eps) {
-            lines.push(`    פרק ${ep.episode_number || "?"}${ep.episode_title ? " - " + ep.episode_title : ""} — ${ep.title || ""}`);
+            const epName = ep.episode_title || ep.title || "";
+            lines.push(`    פרק ${ep.episode_number || "?"} — ${epName}`);
             lines.push(`    🔗 ${getLink(ep)}`);
           }
         }
