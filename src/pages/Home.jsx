@@ -1293,9 +1293,14 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
 
 function ExportContentPanel({ movies, cardStyle, dot }) {
   const handleExport = () => {
+    if (!movies || movies.length === 0) {
+      alert("אין תוכן לייצוא");
+      return;
+    }
     const lines = [];
     lines.push("=== ייצוא תוכן מאתר ZOVEX ===");
     lines.push(`תאריך: ${new Date().toLocaleDateString("he-IL")}`);
+    lines.push(`סה"כ תכנים: ${movies.length}`);
     lines.push("");
 
     // Group by category
