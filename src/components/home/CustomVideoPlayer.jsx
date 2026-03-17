@@ -14,7 +14,9 @@ function IframePlayer({ movie, onClose }) {
   const fr = { width: "100%", height: "100%", border: "none" };
   let src = vid;
 
-  if (type === "youtube" || vid.includes("youtube") || vid.includes("youtu.be")) {
+  if (!vid) {
+    // no source
+  } else if (type === "youtube" || vid.includes("youtube") || vid.includes("youtu.be")) {
     const id = vid.replace(/.*[?&]v=/, "").replace(/.*youtu\.be\//, "").split("&")[0];
     src = `https://www.youtube.com/embed/${id}?autoplay=1`;
   } else if (type === "drive" || vid.includes("drive.google")) {
