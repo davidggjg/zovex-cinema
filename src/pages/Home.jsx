@@ -566,8 +566,21 @@ export default function Home() {
                     קישור וידאו
                     {videoUrlInput && <span style={{ color: "#0071e3", fontWeight: 400, marginRight: 6, fontSize: 10 }}> - {extractVideoInfo(videoUrlInput).type}</span>}
                   </label>
-                  <input value={videoUrlInput} onChange={e => setVideoUrlInput(e.target.value)} placeholder="YouTube / Drive / Dailymotion / Rumble / mp4..." dir="ltr" style={inp} />
+                  <input value={videoUrlInput} onChange={e => setVideoUrlInput(e.target.value)} placeholder="YouTube / Drive / Dailymotion / Rumble / mp4 / Jellyfin Item ID..." dir="ltr" style={inp} />
                 </div>
+                {extractVideoInfo(videoUrlInput).type === "jellyfin" || form.jellyfinServer ? (
+                  <div style={{ background: "#f0f7ff", borderRadius: 12, padding: 12, marginBottom: 14, border: "1.5px solid #0071e3" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#0071e3", marginBottom: 10 }}>⚙️ הגדרות Jellyfin</div>
+                    <div style={{ marginBottom: 8 }}>
+                      <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>כתובת שרת</label>
+                      <input value={form.jellyfinServer || ""} onChange={e => setForm(p => ({ ...p, jellyfinServer: e.target.value }))} placeholder="http://207.232.37.250:473" dir="ltr" style={inp} />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>API Key</label>
+                      <input value={form.jellyfinApiKey || ""} onChange={e => setForm(p => ({ ...p, jellyfinApiKey: e.target.value }))} placeholder="336fae209e67441a927472812b3d6000" dir="ltr" style={inp} />
+                    </div>
+                  </div>
+                ) : null}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={generateAI} disabled={aiLoading} style={{ flex: 1, background: "#34c759", color: "#fff", border: "none", borderRadius: 12, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                     {aiLoading ? <Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> : "AI תיאור"}
