@@ -236,7 +236,7 @@ export default function Home() {
   };
 
   const resetForm = () => {
-    setForm({ title: "", thumbnail_url: "", category: categories[0] || "", description: "", year: String(new Date().getFullYear()), series_name: "", season_number: "", episode_number: "", episode_title: "" });
+    setForm({ title: "", thumbnail_url: "", category: categories[0] || "", description: "", year: String(new Date().getFullYear()), series_name: "", season_number: "", episode_number: "", episode_title: "", jellyfinServer: "", jellyfinApiKey: "" });
     setVideoUrlInput(""); setIsSeries(false); setEditingMovie(null);
     setFormStatus({ type: "", message: "" }); setPosterPreview("");
     setShowExistingSeries(false);
