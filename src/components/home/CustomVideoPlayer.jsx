@@ -69,9 +69,18 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const vid = (movie.video_id || movie.video_url || "").trim();
   const type = movie.type || "direct";
 
-  // Only treat as direct MP4 if it's a full http URL ending/containing .mp4
-  const isDirectMp4 = !videoError && vid && vid.startsWith("http") &&
-    (vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/"));
+  // Jellyfin: build stream URL from item ID
+  const jellyfinServer = (movie.jellyfin_server || "").replace(/\/$/, "");
+  const jellyfinApiKey = movie.jellyfin_api_key || "";
+  const jellyfinUrl = type === "jellyfin" && vid && jellyfinServer
+    ? `${jellyfinServer}/Videos/${vid}/stream.mp4?Static=true&mediaSourceId=${vid}&ApiKey=${jellyfinApiKey}`
+    : null;
+
+  // Only treat as direct MP4 if it's a full http URL with .mp4, or a Jellyfin stream
+  const isDirectMp4 = !videoError && (
+    jellyfinUrl ||
+    (vid && vid.startsWith("http") && (vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/")))
+  );
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
