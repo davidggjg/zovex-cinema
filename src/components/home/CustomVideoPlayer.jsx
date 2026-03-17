@@ -63,11 +63,11 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const [speedOn, setSpeedOn] = useState(false);
   const [isLongPress, setIsLongPress] = useState(false);
 
-  const vid = movie.video_id || movie.video_url || "";
+  const vid = (movie.video_id || movie.video_url || "").trim();
   const type = movie.type || "direct";
 
   // Determine if direct playable video
-  const isDirectMp4 = type === "direct" || vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/");
+  const isDirectMp4 = type === "direct" || (vid && (vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/")));
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
