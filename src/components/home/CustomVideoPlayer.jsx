@@ -68,8 +68,8 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const vid = (movie.video_id || movie.video_url || "").trim();
   const type = movie.type || "direct";
 
-  // Determine if direct playable video
-  const isDirectMp4 = type === "direct" || (vid && (vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/")));
+  // Determine if direct playable video — only actual mp4 URLs, not embedded sources
+  const isDirectMp4 = vid && vid.startsWith("http") && (vid.includes(".mp4") || vid.includes("stream.mp4") || vid.includes("/Videos/")) && type === "direct";
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
