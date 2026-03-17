@@ -8,106 +8,72 @@ function formatTime(s) {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
-function buildEmbedSrc(movie) {
+function buildIframeSrc(movie) {
   const vid = (movie.video_id || movie.video_url || "").trim();
   const type = movie.type || "direct";
+  if (!vid) return null;
 
-  if (!vid) return "";
-
-  if (type === "youtube") {
-    // vid might be just an ID like "dQw4w9WgXcQ" or a full URL
-    let id = vid;
-    if (vid.includes("youtube.com") || vid.includes("youtu.be")) {
-      id = vid.replace(/.*[?&]v=/, "").replace(/.*youtu\.be\//, "").split(/[?&]/)[0];
-    }
+  if (type === "youtube" || vid.includes("youtube") || vid.includes("youtu.be")) {
+    const id = vid.replace(/.*[?&]v=/, "").replace(/.*youtu\.be\//, "").split("&")[0];
     return `https://www.youtube.com/embed/${id}?autoplay=1`;
   }
-  if (type === "drive") {
-    let id = vid;
-    if (vid.includes("drive.google") || vid.includes("/d/")) {
-      id = vid.replace(/.*\/d\//, "").replace(/\/.*/, "").split("?")[0];
-    }
+  if (type === "drive" || vid.includes("drive.google")) {
+    const id = vid.replace(/.*\/d\//, "").replace(/\/.*/, "").split("?")[0];
     return `https://drive.google.com/file/d/${id}/preview`;
   }
-  if (type === "vimeo") {
-    let id = vid;
-    if (vid.includes("vimeo.com")) {
-      id = vid.replace(/.*vimeo\.com\//, "").split("?")[0];
-    }
+  if (type === "vimeo" || vid.includes("vimeo")) {
+    const id = vid.replace(/.*vimeo\.com\//, "").split("?")[0];
     return `https://player.vimeo.com/video/${id}?autoplay=1`;
   }
-  if (type === "dailymotion") {
-    let id = vid;
-    if (vid.includes("dailymotion")) {
-      id = vid.replace(/.*video\//, "").split(/[?_]/)[0];
-    }
+  if (type === "dailymotion" || vid.includes("dailymotion")) {
+    const id = vid.replace(/.*video\//, "").split(/[?_]/)[0];
     return `https://www.dailymotion.com/embed/video/${id}?autoplay=1`;
   }
-  if (type === "streamable") {
-    let id = vid;
-    if (vid.includes("streamable.com")) {
-      id = vid.replace(/.*streamable\.com\//, "").split("?")[0];
-    }
+  if (type === "streamable" || vid.includes("streamable")) {
+    const id = vid.replace(/.*streamable\.com\//, "").split("?")[0];
     return `https://streamable.com/e/${id}?autoplay=1`;
   }
-  if (type === "rumble") {
-    let id = vid;
-    if (vid.includes("rumble.com")) {
-      id = vid.replace(/.*rumble\.com\/embed\//, "").replace(/.*rumble\.com\/video\//, "").split(/[/?]/)[0];
-    }
+  if (type === "rumble" || vid.includes("rumble")) {
+    const id = vid.replace(/.*rumble\.com\/embed\//, "").replace(/.*rumble\.com\/video\//, "").split(/[/?]/)[0];
     return `https://rumble.com/embed/${id}/`;
   }
-  if (type === "archive") {
-    let id = vid;
-    if (vid.includes("archive.org")) {
-      id = vid.replace(/.*archive\.org\/(?:embed|details)\//, "").split("?")[0];
-    }
+  if (type === "archive" || vid.includes("archive.org")) {
+    const id = vid.replace(/.*archive\.org\/(?:embed|details)\//, "").split("?")[0];
     return `https://archive.org/embed/${id}`;
   }
-  if (type === "kan") {
+  if (type === "kan" || vid.includes("kan.org")) {
     return `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
   }
-  if (type === "okru") {
-    let id = vid;
-    if (vid.includes("ok.ru")) {
-      id = vid.replace(/.*ok\.ru\/video\//, "").split("?")[0];
-    }
+  if (type === "okru" || vid.includes("ok.ru")) {
+    const id = vid.replace(/.*ok\.ru\/video\//, "").split("?")[0];
     return `https://ok.ru/videoembed/${id}`;
   }
-  if (type === "telegram") {
-    return `https://t.me/${vid}`;
+  if (type === "telegram" || vid.includes("t.me")) {
+    const id = vid.replace(/.*t\.me\//, "").split("?")[0];
+    return `https://t.me/${id}?embed=1&mode=tme`;
   }
-
-  // fallback: return vid as-is (could be a direct URL)
-  return vid;
+  // direct URL that's not mp4
+  if (vid.startsWith("http")) return vid;
+  return null;
 }
 
 function IframePlayer({ movie, onClose }) {
-  const src = buildEmbedSrc(movie);
-
+  const src = buildIframeSrc(movie);
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
       <button onClick={onClose} style={{ position: "absolute", top: 15, right: 15, zIndex: 10, background: "rgba(255,255,255,.15)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
         <X size={24} />
       </button>
       <p style={{ color: "#aaa", fontSize: 13, padding: "52px 55px 6px", textAlign: "center", fontFamily: "Arial", flexShrink: 0 }}>{movie.title}</p>
-      {src ? (
-        <iframe
-          src={src}
-          style={{ width: "100%", flex: 1, border: "none" }}
-          allowFullScreen
-          allow="autoplay; encrypted-media"
-        />
-      ) : (
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 14, fontFamily: "Arial" }}>
-          לא נמצא קישור וידאו
-        </div>
-      )}
+      {src
+        ? <iframe src={src} style={{ width: "100%", flex: 1, border: "none" }} allowFullScreen allow="autoplay" />
+        : <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 14 }}>אין קישור וידאו זמין</div>
+      }
     </div>
   );
 }
 
-function DirectVideoPlayer({ movie, onClose }) {
+function DirectVideoPlayer({ movie, onClose, src }) {
   const videoRef = useRef(null);
   const hideTimer = useRef(null);
   const longPressTimer = useRef(null);
@@ -121,15 +87,7 @@ function DirectVideoPlayer({ movie, onClose }) {
   const [skipAnim, setSkipAnim] = useState(null);
   const [speedOn, setSpeedOn] = useState(false);
   const [isLongPress, setIsLongPress] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-
-  const vid = (movie.video_id || movie.video_url || "").trim();
-  const jellyfinServer = (movie.jellyfin_server || "").replace(/\/$/, "");
-  const jellyfinApiKey = movie.jellyfin_api_key || "";
-  const jellyfinUrl = movie.type === "jellyfin" && vid && jellyfinServer
-    ? `${jellyfinServer}/Videos/${vid}/stream.mp4?Static=true&mediaSourceId=${vid}&ApiKey=${jellyfinApiKey}`
-    : null;
-  const videoSrc = jellyfinUrl || vid;
+  const [loadError, setLoadError] = useState(false);
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
@@ -145,8 +103,7 @@ function DirectVideoPlayer({ movie, onClose }) {
     };
   }, []);
 
-  // If video errors, fall back to iframe
-  if (videoError) {
+  if (loadError) {
     return <IframePlayer movie={movie} onClose={onClose} />;
   }
 
@@ -218,17 +175,18 @@ function DirectVideoPlayer({ movie, onClose }) {
 
       <video
         ref={videoRef}
-        src={videoSrc}
+        src={src}
         autoPlay
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
-        onError={() => setVideoError(true)}
+        onError={() => setLoadError(true)}
         onClick={togglePlay}
       />
 
+      {/* Tap zones */}
       <div style={{ position: "absolute", inset: 0, zIndex: 2, display: "flex", pointerEvents: "none" }}>
         <div style={{ width: "40%", height: "100%", pointerEvents: "auto", cursor: "pointer" }} onClick={() => handleTap("left")} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} />
         <div style={{ flex: 1, height: "100%", pointerEvents: "auto" }} onClick={togglePlay} />
@@ -282,14 +240,23 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const type = movie.type || "direct";
   const vid = (movie.video_id || movie.video_url || "").trim();
 
-  // Jellyfin and direct MP4 URLs use the native video player
-  const isDirectVideo =
-    type === "jellyfin" ||
-    (vid && vid.startsWith("http") && /\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(vid));
-
-  if (isDirectVideo) {
-    return <DirectVideoPlayer movie={movie} onClose={onClose} />;
+  // Build Jellyfin URL if needed
+  if (type === "jellyfin") {
+    const server = (movie.jellyfin_server || "").replace(/\/$/, "");
+    const apiKey = movie.jellyfin_api_key || "";
+    if (server && vid) {
+      const jellyfinUrl = `${server}/Videos/${vid}/stream.mp4?Static=true&mediaSourceId=${vid}&ApiKey=${apiKey}`;
+      return <DirectVideoPlayer movie={movie} onClose={onClose} src={jellyfinUrl} />;
+    }
+    // fallback if no server configured
+    return <IframePlayer movie={movie} onClose={onClose} />;
   }
 
+  // Direct MP4 link
+  if (type === "direct" && vid.startsWith("http") && (vid.includes(".mp4") || vid.match(/\.(mp4|mkv|webm|ogg)(\?|$)/i))) {
+    return <DirectVideoPlayer movie={movie} onClose={onClose} src={vid} />;
+  }
+
+  // All other types (youtube, drive, vimeo, etc.) go straight to iframe
   return <IframePlayer movie={movie} onClose={onClose} />;
 }
