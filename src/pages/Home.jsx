@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
-import CustomVideoPlayer from "@/components/home/CustomVideoPlayer";
+import CustomVideoPlayer from "@/components/home/CustomVideoPlayer.jsx";
 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
 const SECRET_TRIGGER = "ZovexAdmin2026";
