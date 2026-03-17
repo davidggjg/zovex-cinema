@@ -1292,73 +1292,73 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
 }
 
 function ExportContentPanel({ movies, cardStyle, dot }) {
+  const getLink = (m) => {
+    const vid = m.video_id || "";
+    const type = m.type || "";
+    if (type === "drive") return `https://drive.google.com/file/d/${vid}/view`;
+    if (type === "youtube") return `https://www.youtube.com/watch?v=${vid}`;
+    if (type === "archive") return `https://archive.org/details/${vid}`;
+    if (type === "vimeo") return `https://vimeo.com/${vid}`;
+    if (type === "dailymotion") return `https://www.dailymotion.com/video/${vid}`;
+    if (type === "streamable") return `https://streamable.com/${vid}`;
+    if (type === "rumble") return `https://rumble.com/embed/${vid}`;
+    return vid;
+  };
+
   const handleExport = () => {
-    if (!movies || movies.length === 0) {
-      alert("אין תוכן לייצוא");
-      return;
-    }
+    if (!movies || movies.length === 0) { alert("אין תוכן לייצוא"); return; }
+
     const lines = [];
     lines.push("=== ייצוא תוכן מאתר ZOVEX ===");
     lines.push(`תאריך: ${new Date().toLocaleDateString("he-IL")}`);
     lines.push(`סה"כ תכנים: ${movies.length}`);
     lines.push("");
 
-    // Group by category
-    const categories = [...new Set(movies.map(m => m.category).filter(Boolean))].sort();
+    const cats = [...new Set(movies.map(m => m.category).filter(Boolean))].sort();
 
-    for (const cat of categories) {
+    for (const cat of cats) {
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push(`📂 קטגוריה: ${cat}`);
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push("");
 
-      // Series in this category
-      const seriesInCat = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
-      for (const serName of seriesInCat) {
+      // סדרות
+      const seriesNames = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
+      for (const serName of seriesNames) {
         lines.push(`📺 סדרה: ${serName}`);
-        const episodes = movies.filter(m => m.series_name === serName && m.category === cat);
+        const episodes = movies.filter(m => m.series_name === serName);
         const seasons = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
         for (const season of seasons) {
           lines.push(`  עונה ${season}:`);
-          const eps = episodes.filter(e => (e.season_number || 1) === season).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+          const eps = episodes
+            .filter(e => (e.season_number || 1) === season)
+            .sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
           for (const ep of eps) {
-            const link = ep.type === "drive"
-              ? `https://drive.google.com/file/d/${ep.video_id}/view`
-              : ep.type === "youtube"
-              ? `https://www.youtube.com/watch?v=${ep.video_id}`
-              : ep.type === "archive"
-              ? `https://archive.org/details/${ep.video_id}`
-              : ep.video_id;
-            lines.push(`    פרק ${ep.episode_number || "?"}${ep.episode_title ? " - " + ep.episode_title : ""} | ${ep.title}`);
-            lines.push(`    🔗 ${link}`);
+            lines.push(`    פרק ${ep.episode_number || "?"}${ep.episode_title ? " - " + ep.episode_title : ""} — ${ep.title || ""}`);
+            lines.push(`    🔗 ${getLink(ep)}`);
           }
         }
         lines.push("");
       }
 
-      // Standalone movies in this category
-      const standaloneMovies = movies.filter(m => !m.series_name && m.category === cat).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-      for (const movie of standaloneMovies) {
-        const link = movie.type === "drive"
-          ? `https://drive.google.com/file/d/${movie.video_id}/view`
-          : movie.type === "youtube"
-          ? `https://www.youtube.com/watch?v=${movie.video_id}`
-          : movie.type === "archive"
-          ? `https://archive.org/details/${movie.video_id}`
-          : movie.video_id;
+      // סרטים עצמאיים
+      const standalones = movies
+        .filter(m => !m.series_name && m.category === cat)
+        .sort((a, b) => (a.title || "").localeCompare(b.title || "", "he"));
+      for (const movie of standalones) {
         lines.push(`🎬 ${movie.title}${movie.year ? ` (${movie.year})` : ""}`);
-        lines.push(`   🔗 ${link}`);
+        lines.push(`   🔗 ${getLink(movie)}`);
         lines.push("");
       }
     }
 
-    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     lines.push(`סה"כ: ${movies.length} תכנים`);
 
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `zovex_content_${new Date().toISOString().slice(0,10)}.txt`;
+    a.download = `zovex_content_${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
   };
 
