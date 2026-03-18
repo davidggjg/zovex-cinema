@@ -582,6 +582,11 @@ export default function Home() {
                       🖼️ עדכן תמונה לכל הסדרה
                     </button>
                   )}
+                  {isSeries && editingMovie && form.description && (
+                    <button type="button" onClick={() => updateSeriesDescription(form.series_name || editingMovie.series_name, form.description)} style={{ marginTop: 6, width: "100%", background: "#5e5ce6", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                      📝 עדכן תיאור לכל הסדרה
+                    </button>
+                  )}
                 </div>
                 <div style={{ marginBottom: 14 }}>
                   <label style={{ display: "block", fontSize: 11, color: "#6e6e73", marginBottom: 5, fontWeight: 700 }}>
