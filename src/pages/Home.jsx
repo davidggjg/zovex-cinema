@@ -733,7 +733,12 @@ export default function Home() {
             <span style={{ background: "#f0f0f0", color: "#555", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{episodes.length} פרקים</span>
             <span style={{ background: "#f0f0f0", color: "#555", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{seasonNums.length} עונות</span>
           </div>
-          {series?.description && <p style={{ fontSize: 14, lineHeight: 1.8, color: "#444", margin: "0 0 20px" }}>{series.description}</p>}
+          {series?.description && (
+            <div style={{ margin: "0 0 20px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 6 }}>תיאור הסדרה 🎬:</div>
+              <p style={{ fontSize: 14, lineHeight: 1.8, color: "#444", margin: 0 }}>{series.description}</p>
+            </div>
+          )}
           <div style={{ position: "relative", marginBottom: 18 }}>
             <button onClick={() => setShowSeasonMenu(s => !s)} style={{ display: "flex", alignItems: "center", gap: 10, background: "#111", color: "#fff", border: "none", borderRadius: 10, padding: "12px 18px", fontSize: 15, fontWeight: 900, cursor: "pointer", fontFamily: "inherit", minWidth: 160 }}>
               <span>עונה {activeSeason}</span>
