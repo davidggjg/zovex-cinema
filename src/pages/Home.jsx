@@ -577,15 +577,19 @@ export default function Home() {
                     </button>
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleUploadPoster} />
-                  {isSeries && editingMovie && form.thumbnail_url && (
-                    <button type="button" onClick={() => updateSeriesThumbnail(form.series_name || editingMovie.series_name, form.thumbnail_url)} style={{ marginTop: 8, width: "100%", background: "#ff9500", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                      🖼️ עדכן תמונה לכל הסדרה
-                    </button>
-                  )}
-                  {isSeries && editingMovie && form.description && (
-                    <button type="button" onClick={() => updateSeriesDescription(form.series_name || editingMovie.series_name, form.description)} style={{ marginTop: 6, width: "100%", background: "#5e5ce6", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                      📝 עדכן תיאור לכל הסדרה
-                    </button>
+                  {isSeries && editingMovie && (
+                    <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                      {form.thumbnail_url && (
+                        <button type="button" onClick={() => updateSeriesThumbnail(form.series_name || editingMovie.series_name, form.thumbnail_url)} style={{ flex: 1, background: "#ff9500", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                          🖼️ תמונה לסדרה
+                        </button>
+                      )}
+                      {form.description && (
+                        <button type="button" onClick={() => updateSeriesDescription(form.series_name || editingMovie.series_name, form.description)} style={{ flex: 1, background: "#5e5ce6", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                          📝 תיאור לסדרה
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div style={{ marginBottom: 14 }}>
