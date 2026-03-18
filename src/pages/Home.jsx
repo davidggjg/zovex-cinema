@@ -323,6 +323,20 @@ export default function Home() {
     setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
   };
 
+  const updateSeriesDescription = async (seriesName, description) => {
+    if (!seriesName || !description) return;
+    const toUpdate = movies.filter(m => m.series_name === seriesName);
+    setSaving(true);
+    let done = 0;
+    for (const ep of toUpdate) {
+      try { await Movie.update(ep.id, { description }); done++; } catch {}
+    }
+    setFormStatus({ type: "success", message: `תיאור עודכן ל-${done} פרקים!` });
+    loadMovies();
+    setSaving(false);
+    setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
+  };
+
   const startEdit = (movie) => {
     setEditingMovie(movie);
     setIsSeries(!!movie.series_name);
