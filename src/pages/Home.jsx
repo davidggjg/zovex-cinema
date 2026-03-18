@@ -578,12 +578,12 @@ export default function Home() {
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleUploadPoster} />
                   {isSeries && editingMovie && (
-                    <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-                      <button type="button" onClick={() => updateSeriesThumbnail(form.series_name || editingMovie.series_name, form.thumbnail_url)} disabled={!form.thumbnail_url} style={{ flex: 1, background: form.thumbnail_url ? "#ff9500" : "#ccc", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: form.thumbnail_url ? "pointer" : "default", fontFamily: "inherit" }}>
-                        🖼️ תמונה לסדרה
-                      </button>
+                    <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center" }}>
                       <button type="button" onClick={() => updateSeriesDescription(form.series_name || editingMovie.series_name, form.description)} disabled={!form.description} style={{ flex: 1, background: form.description ? "#5e5ce6" : "#ccc", color: "#fff", border: "none", borderRadius: 12, padding: "10px 0", fontSize: 12, fontWeight: 700, cursor: form.description ? "pointer" : "default", fontFamily: "inherit" }}>
                         📝 תיאור לסדרה
+                      </button>
+                      <button type="button" onClick={() => updateSeriesThumbnail(form.series_name || editingMovie.series_name, form.thumbnail_url)} disabled={!form.thumbnail_url} title="עדכן תמונה לכל הסדרה" style={{ flexShrink: 0, background: form.thumbnail_url ? "#ff9500" : "#ccc", color: "#fff", border: "none", borderRadius: 12, padding: "10px 12px", fontSize: 16, cursor: form.thumbnail_url ? "pointer" : "default", fontFamily: "inherit" }}>
+                        🖼️
                       </button>
                     </div>
                   )}
