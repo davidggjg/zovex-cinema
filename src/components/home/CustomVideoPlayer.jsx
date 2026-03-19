@@ -51,6 +51,11 @@ function buildSrc(movie) {
   if (type === "telegram" || vid.includes("t.me")) {
     return vid; // telegram doesn't embed well, just show link
   }
+  if (type === "kaltura") {
+    const parts = vid.split("/");
+    const partnerId = parts[0], uiconfId = parts[1], entryId = parts[2];
+    return `https://cdnapisec.kaltura.com/p/${partnerId}/embedPlaykitJs/uiconf_id/${uiconfId}?iframeembed=true&entry_id=${entryId}`;
+  }
   if (type === "jellyfin") {
     const server = (movie.jellyfin_server || "").replace(/\/$/, "");
     const apiKey = movie.jellyfin_api_key || "";
