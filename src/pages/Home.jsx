@@ -110,6 +110,11 @@ function renderPlayer(movie) {
     const id = vid.replace(/.*t\.me\//, "").split("?")[0];
     return <iframe src={`https://t.me/${id}?embed=1&mode=tme`} style={fr} allowFullScreen allow="autoplay" />;
   }
+  if (type === "kaltura" || vid.includes("kaltura")) {
+    const parts = vid.split("/");
+    const partnerId = parts[0], uiconfId = parts[1], entryId = parts[2];
+    return <iframe src={`https://cdnapisec.kaltura.com/p/${partnerId}/embedPlaykitJs/uiconf_id/${uiconfId}?iframeembed=true&entry_id=${entryId}`} style={fr} allowFullScreen allow="autoplay; encrypted-media" />;
+  }
   if (type === "cloudinary") {
     const cloud = movie.cloudinary_cloud_name || "";
     return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={`https://res.cloudinary.com/${cloud}/video/upload/${vid}`} />;
