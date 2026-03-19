@@ -1158,7 +1158,7 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
         {dot} רענון קישורי Kaltura
       </div>
       <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 14, lineHeight: 1.7 }}>
-        מרענן את כל הקישורים כדי שלא יפגו. יש כרגע <strong>32</strong> קישורי Kaltura.<br/>
+        מרענן את כל הקישורים כדי שלא יפגו. יש כרגע <strong>{kalturaCount}</strong> קישורי Kaltura.<br/>
         <span style={{ color: "#aaa" }}>הרענון האוטומטי קורה כל 3 דקות ברקע.</span>
       </div>
       <button onClick={handleRefresh} disabled={refreshing} style={{ width: "100%", background: refreshing ? "#aaa" : "#e50914", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 14, fontWeight: 700, cursor: refreshing ? "default" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
