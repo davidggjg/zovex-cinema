@@ -196,7 +196,7 @@ export default function Home() {
   // רענון אוטומטי של כל קישורי Kaltura כל שעה (כל עוד הטאב פתוח)
   useEffect(() => {
     const refreshAll = async () => {
-      const allMovies = await Movie.list("-created_date");
+      const allMovies = await Movie.list("-created_date", 500);
       const kalturaMovies = allMovies.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com")));
       for (const m of kalturaMovies) {
         try {
