@@ -194,7 +194,7 @@ export default function Home() {
     const refreshKaltura = async () => {
       // טוען מחדש את כל הרשימה כדי לקבל את כל הקישורים העדכניים
       const allMovies = await Movie.list("-created_date");
-      const kalturaMovies = allMovies.filter(m => m.type === "kaltura" && m.video_id);
+      const kalturaMovies = allMovies.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com")));
       for (const m of kalturaMovies) {
         try {
           const { id, created_date, updated_date, created_by, ...data } = m;
