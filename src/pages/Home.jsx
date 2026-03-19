@@ -189,16 +189,20 @@ export default function Home() {
 
   useEffect(() => { loadMovies(); }, []);
 
-  // רענון אוטומטי של קישורי Kaltura כל 3 דקות
+  // רענון אוטומטי של קישורי Kaltura כל 50 דקות (מחיקה + יצירה מחדש)
   useEffect(() => {
     const refreshKaltura = async () => {
       const kalturaMovies = movies.filter(m => m.type === "kaltura" && m.video_id);
       for (const m of kalturaMovies) {
-        try { await Movie.update(m.id, { video_id: m.video_id }); } catch {}
+        try {
+          const { id, created_date, updated_date, created_by, ...data } = m;
+          await Movie.delete(id);
+          await Movie.create(data);
+        } catch {}
       }
     };
     if (movies.length === 0) return;
-    const interval = setInterval(refreshKaltura, 3 * 60 * 1000); // כל 3 דקות
+    const interval = setInterval(refreshKaltura, 50 * 60 * 1000); // כל 50 דקות
     return () => clearInterval(interval);
   }, [movies]);
 
