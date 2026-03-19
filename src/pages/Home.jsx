@@ -1122,7 +1122,7 @@ function KalturaRefreshPanel({ cardStyle, dot, MovieEntity }) {
     setRefreshing(true);
     setStatus("טוען רשימת קישורים...");
     const allMovies = await MovieEntity.list("-created_date");
-    const kalturaMovies = allMovies.filter(m => m.type === "kaltura" && m.video_id);
+    const kalturaMovies = allMovies.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com")));
     if (kalturaMovies.length === 0) { setStatus("אין קישורי Kaltura לרענן"); setRefreshing(false); setTimeout(() => setStatus(""), 3000); return; }
     setKalturaCount(kalturaMovies.length);
     setStatus(`מרענן ${kalturaMovies.length} קישורים...`);
