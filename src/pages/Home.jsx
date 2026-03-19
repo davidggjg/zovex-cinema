@@ -55,6 +55,14 @@ function extractVideoInfo(url) {
     const m = url.match(/t\.me\/([^/]+\/\d+)/);
     return { type: "telegram", video_id: m?.[1] || url };
   }
+  if (url.includes("kaltura.com")) {
+    const entryM = url.match(/entry_id=([^&"'\s]+)/);
+    const uiconfM = url.match(/uiconf_id\/(\d+)/);
+    const partnerM = url.match(/\/p\/(\d+)\//);
+    if (entryM && uiconfM && partnerM) {
+      return { type: "kaltura", video_id: `${partnerM[1]}/${uiconfM[1]}/${entryM[1]}` };
+    }
+  }
   return { type: "direct", video_id: url };
 }
 
