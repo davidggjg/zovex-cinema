@@ -645,7 +645,15 @@ export default function Home() {
                     קישור וידאו
                     {videoUrlInput && <span style={{ color: "#0071e3", fontWeight: 400, marginRight: 6, fontSize: 10 }}> - {extractVideoInfo(videoUrlInput).type}</span>}
                   </label>
-                  <input value={videoUrlInput} onChange={e => setVideoUrlInput(e.target.value)} placeholder="YouTube / Drive / Dailymotion / Rumble / mp4 / Jellyfin Item ID..." dir="ltr" style={inp} />
+                  <input value={videoUrlInput} onChange={e => {
+                    let val = e.target.value;
+                    // אם הדביקו iframe שלם - חלץ את ה-src אוטומטית
+                    if (val.includes("<iframe")) {
+                      const srcMatch = val.match(/src=["']([^"']+)["']/);
+                      if (srcMatch) val = srcMatch[1];
+                    }
+                    setVideoUrlInput(val);
+                  }} placeholder="YouTube / Drive / Dailymotion / Rumble / mp4 / Kaltura iframe..." dir="ltr" style={inp} />
                 </div>
                 {extractVideoInfo(videoUrlInput).type === "jellyfin" || form.jellyfinServer ? (
                   <div style={{ background: "#f0f7ff", borderRadius: 12, padding: 12, marginBottom: 14, border: "1.5px solid #0071e3" }}>
