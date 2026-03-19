@@ -838,7 +838,7 @@ export default function Home() {
             {searchTerm && <span onClick={() => setSearchTerm("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 18 }}>x</span>}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 11 }}>
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 11, WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {allCategories.map(cat => (
             <span key={cat} onClick={() => setSelectedCategory(cat)} style={{
               cursor: "pointer", fontSize: 13, fontWeight: 700,
