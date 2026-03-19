@@ -856,20 +856,22 @@ export default function Home() {
             {searchTerm && <span onClick={() => setSearchTerm("")} style={{ cursor: "pointer", color: "#aaa", fontSize: 18 }}>x</span>}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 11, WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          {allCategories.map(cat => (
-            <span key={cat} onClick={() => setSelectedCategory(cat)} style={{
-              cursor: "pointer", fontSize: 13, fontWeight: 700,
-              color: selectedCategory === cat ? "#fff" : "#444",
-              background: selectedCategory === cat ? "#e50914" : "#f0f0f0",
-              border: selectedCategory === cat ? "none" : "1px solid #ddd",
-              borderRadius: 50, padding: "6px 16px", flexShrink: 0,
-              boxShadow: selectedCategory === cat ? "0 2px 10px rgba(229,9,20,.35)" : "0 1px 4px rgba(0,0,0,.07)",
-              transition: "all .2s",
-            }}>
-              {cat}
-            </span>
-          ))}
+        <div style={{ overflow: "hidden", maxHeight: showCategories ? 60 : 0, opacity: showCategories ? 1 : 0, transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 11 }}>
+            {allCategories.map(cat => (
+              <span key={cat} onClick={() => setSelectedCategory(cat)} style={{
+                cursor: "pointer", fontSize: 13, fontWeight: 700,
+                color: selectedCategory === cat ? "#fff" : "#444",
+                background: selectedCategory === cat ? "#e50914" : "#f0f0f0",
+                border: selectedCategory === cat ? "none" : "1px solid #ddd",
+                borderRadius: 50, padding: "6px 16px", flexShrink: 0,
+                boxShadow: selectedCategory === cat ? "0 2px 10px rgba(229,9,20,.35)" : "0 1px 4px rgba(0,0,0,.07)",
+                transition: "all .2s",
+              }}>
+                {cat}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
       <main style={{ padding: "18px 14px 100px" }}>
