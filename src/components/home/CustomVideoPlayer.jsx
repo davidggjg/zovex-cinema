@@ -74,10 +74,42 @@ function buildSrc(movie) {
   return vid.startsWith("http") ? vid : null;
 }
 
+function HlsPlayer({ src, title }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari — תמיכה מובנית
+      video.src = src;
+      video.play();
+    } else if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      return () => hls.destroy();
+    }
+  }, [src]);
+
+  return (
+    <video
+      ref={videoRef}
+      controls
+      autoPlay
+      controlsList="nodownload"
+      style={{ flex: 1, width: "100%", background: "#000" }}
+    />
+  );
+}
+
 export default function CustomVideoPlayer({ movie, onClose }) {
   const src = buildSrc(movie);
   const isKalturaUrl = (movie.video_id || "").includes("kaltura.com");
-  const useVideoTag = movie.type === "direct" && !isKalturaUrl;
+  const isHls = src && (src.includes(".m3u8") || src.includes("playlist"));
+  const useVideoTag = (movie.type === "direct" && !isKalturaUrl) || isHls;
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
@@ -93,6 +125,8 @@ export default function CustomVideoPlayer({ movie, onClose }) {
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 15, fontFamily: "Arial" }}>
           אין קישור וידאו זמין
         </div>
+      ) : isHls ? (
+        <HlsPlayer src={src} title={movie.title} />
       ) : useVideoTag ? (
         <video
           src={src}
