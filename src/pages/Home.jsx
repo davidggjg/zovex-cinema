@@ -1107,9 +1107,16 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
   );
 }
 
-function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
+function KalturaRefreshPanel({ cardStyle, dot, MovieEntity }) {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState("");
+  const [kalturaCount, setKalturaCount] = useState("...");
+
+  useEffect(() => {
+    MovieEntity.list("-created_date").then(all => {
+      setKalturaCount(all.filter(m => m.type === "kaltura" && m.video_id).length);
+    }).catch(() => setKalturaCount("?"));
+  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -1117,6 +1124,7 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     const allMovies = await MovieEntity.list("-created_date");
     const kalturaMovies = allMovies.filter(m => m.type === "kaltura" && m.video_id);
     if (kalturaMovies.length === 0) { setStatus("אין קישורי Kaltura לרענן"); setRefreshing(false); setTimeout(() => setStatus(""), 3000); return; }
+    setKalturaCount(kalturaMovies.length);
     setStatus(`מרענן ${kalturaMovies.length} קישורים...`);
     let done = 0;
     for (const m of kalturaMovies) {
@@ -1131,8 +1139,6 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     setRefreshing(false);
     setTimeout(() => setStatus(""), 4000);
   };
-
-  const kalturaCount = movies.filter(m => m.type === "kaltura").length;
 
   return (
     <div style={{ ...cardStyle, border: "2px solid #e50914" }}>
