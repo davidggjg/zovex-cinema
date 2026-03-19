@@ -1124,16 +1124,11 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
   );
 }
 
-function KalturaRefreshPanel({ cardStyle, dot, MovieEntity }) {
+function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState("");
-  const [kalturaCount, setKalturaCount] = useState("...");
 
-  useEffect(() => {
-    MovieEntity.list("-created_date").then(all => {
-      setKalturaCount(all.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com"))).length);
-    }).catch(() => setKalturaCount("?"));
-  }, []);
+  const kalturaCount = movies.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com"))).length;
 
   const handleRefresh = async () => {
     setRefreshing(true);
