@@ -1101,6 +1101,45 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
   );
 }
 
+function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [status, setStatus] = useState("");
+
+  const handleRefresh = async () => {
+    const kalturaMovies = movies.filter(m => m.type === "kaltura" && m.video_id);
+    if (kalturaMovies.length === 0) { setStatus("אין קישורי Kaltura לרענן"); setTimeout(() => setStatus(""), 3000); return; }
+    setRefreshing(true);
+    setStatus(`מרענן ${kalturaMovies.length} קישורים...`);
+    let done = 0;
+    for (const m of kalturaMovies) {
+      try { await MovieEntity.update(m.id, { video_id: m.video_id }); done++; } catch {}
+    }
+    setStatus(`✅ רועננו ${done} קישורי Kaltura!`);
+    setRefreshing(false);
+    setTimeout(() => setStatus(""), 4000);
+  };
+
+  const kalturaCount = movies.filter(m => m.type === "kaltura").length;
+
+  return (
+    <div style={{ ...cardStyle, border: "2px solid #e50914" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", color: "#e50914" }}>
+        {dot} רענון קישורי Kaltura
+      </div>
+      <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 14, lineHeight: 1.7 }}>
+        מרענן את כל הקישורים כדי שלא יפגו. יש כרגע <strong>{kalturaCount}</strong> קישורי Kaltura.<br/>
+        <span style={{ color: "#aaa" }}>הרענון האוטומטי קורה כל 3 דקות ברקע.</span>
+      </div>
+      <button onClick={handleRefresh} disabled={refreshing} style={{ width: "100%", background: refreshing ? "#aaa" : "#e50914", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 14, fontWeight: 700, cursor: refreshing ? "default" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        {refreshing ? <><Loader2 size={14} style={{ animation: "spin .6s linear infinite" }} /> מרענן...</> : "🔄 רענן קישורים עכשיו"}
+      </button>
+      {status && !refreshing && (
+        <div style={{ marginTop: 10, borderRadius: 10, padding: "10px 12px", fontSize: 12, background: "#f0fff4", color: "#1a7a3a" }}>{status}</div>
+      )}
+    </div>
+  );
+}
+
 function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [csvText, setCsvText] = useState("");
   const [preview, setPreview] = useState([]);
