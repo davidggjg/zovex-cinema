@@ -189,6 +189,19 @@ export default function Home() {
 
   useEffect(() => { loadMovies(); }, []);
 
+  // רענון אוטומטי של קישורי Kaltura כל 3 דקות
+  useEffect(() => {
+    const refreshKaltura = async () => {
+      const kalturaMovies = movies.filter(m => m.type === "kaltura" && m.video_id);
+      for (const m of kalturaMovies) {
+        try { await Movie.update(m.id, { video_id: m.video_id }); } catch {}
+      }
+    };
+    if (movies.length === 0) return;
+    const interval = setInterval(refreshKaltura, 3 * 60 * 1000); // כל 3 דקות
+    return () => clearInterval(interval);
+  }, [movies]);
+
   const loadMovies = () => {
     setLoading(true);
     Movie.list("-created_date").then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
