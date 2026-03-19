@@ -64,6 +64,10 @@ function buildSrc(movie) {
     }
     return null;
   }
+  // direct URL שהוא בעצם Kaltura embed מלא
+  if (vid.includes("kaltura.com")) {
+    return vid;
+  }
   // direct mp4 or any other URL
   return vid.startsWith("http") ? vid : null;
 }
