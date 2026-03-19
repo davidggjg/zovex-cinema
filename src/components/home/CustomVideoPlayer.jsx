@@ -74,7 +74,8 @@ function buildSrc(movie) {
 
 export default function CustomVideoPlayer({ movie, onClose }) {
   const src = buildSrc(movie);
-  const useVideoTag = movie.type === "direct";
+  const isKalturaUrl = (movie.video_id || "").includes("kaltura.com");
+  const useVideoTag = movie.type === "direct" && !isKalturaUrl;
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
