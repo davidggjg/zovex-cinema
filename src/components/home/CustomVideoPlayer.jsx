@@ -1,4 +1,6 @@
 import { X } from "lucide-react";
+import { useEffect, useRef } from "react";
+import Hls from "hls.js";
 
 function buildSrc(movie) {
   const vid = (movie.video_id || movie.video_url || "").trim();
