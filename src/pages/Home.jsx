@@ -10,6 +10,11 @@ const LETTER_CODE = "ZOVIX";
 
 function extractVideoInfo(url) {
   if (!url) return { type: "direct", video_id: "" };
+  // אם זה iframe שלם - חלץ את ה-src ממנו
+  if (url.includes("<iframe")) {
+    const srcMatch = url.match(/src=["']([^"']+)["']/);
+    if (srcMatch) url = srcMatch[1];
+  }
   if (!url.startsWith("http")) return { type: "direct", video_id: url };
   if (url.includes("youtube.com") || url.includes("youtu.be")) {
     const m = url.match(/(?:v=|youtu\.be\/)([^&/?]+)/);
