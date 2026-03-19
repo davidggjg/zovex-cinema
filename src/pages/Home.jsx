@@ -183,8 +183,14 @@ export default function Home() {
   useEffect(() => {
     if (movies.length === 0) return;
     const saved = (() => { try { return JSON.parse(localStorage.getItem("zovex_cats") || "null"); } catch { return null; } })();
-    if (saved && saved.length > 0) { setCategories(saved); return; }
     const fromMovies = [...new Set(movies.map(m => m.category).filter(Boolean))];
+    if (saved && saved.length > 0) {
+      // מוסיף קטגוריות חדשות שאינן בשמורות, אבל שומר על הסדר הקיים
+      const merged = [...saved, ...fromMovies.filter(c => !saved.includes(c))];
+      setCategories(merged);
+      try { localStorage.setItem("zovex_cats", JSON.stringify(merged)); } catch {}
+      return;
+    }
     setCategories(fromMovies);
     try { localStorage.setItem("zovex_cats", JSON.stringify(fromMovies)); } catch {}
   }, [movies]);
