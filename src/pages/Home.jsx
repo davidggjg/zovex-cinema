@@ -149,7 +149,25 @@ export default function Home() {
   const [editingCatVal, setEditingCatVal] = useState("");
   const [manageQ, setManageQ] = useState("");
   const [showSeasonMenu, setShowSeasonMenu] = useState(false);
+  const [showCategories, setShowCategories] = useState(true);
+  const lastScrollY = useRef(0);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 10) {
+        setShowCategories(true);
+      } else if (currentY > lastScrollY.current) {
+        setShowCategories(false);
+      } else {
+        setShowCategories(true);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => { loadMovies(); }, []);
 
