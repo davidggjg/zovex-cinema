@@ -415,23 +415,33 @@ export default function Home() {
     return ["הכל", ...new Set([...categories, ...fromMovies])];
   }, [movies, categories]);
 
+  const shuffledMovies = useMemo(() => {
+    const arr = [...movies];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [movies.length]);
+
   const filteredItems = useMemo(() => {
     const q = searchTerm.toLowerCase();
     const cat = selectedCategory;
-    const regularMovies = movies.filter(m => {
+    const sourceMovies = cat === "הכל" ? shuffledMovies : movies;
+    const regularMovies = sourceMovies.filter(m => {
       if (m.series_name) return false;
       return (m.title || "").toLowerCase().includes(q) && (cat === "הכל" || m.category === cat);
     });
     const seriesShown = {};
     const seriesList = [];
-    movies.forEach(m => {
+    sourceMovies.forEach(m => {
       if (!m.series_name || seriesShown[m.series_name]) return;
       const matchQ = m.series_name.toLowerCase().includes(q) || (m.title || "").toLowerCase().includes(q);
       const matchC = cat === "הכל" || m.category === cat;
       if (matchQ && matchC) { seriesShown[m.series_name] = true; seriesList.push(seriesMap[m.series_name]); }
     });
     return { movies: regularMovies, series: seriesList };
-  }, [movies, searchTerm, selectedCategory, seriesMap]);
+  }, [movies, shuffledMovies, searchTerm, selectedCategory, seriesMap]);
 
   const allItems = [...filteredItems.series, ...filteredItems.movies];
   const inp = { width: "100%", background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
