@@ -227,7 +227,7 @@ export default function Home() {
 
   const loadMovies = () => {
     setLoading(true);
-    Movie.list("-created_date").then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
+    Movie.list("-created_date", 500).then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
   };
 
   useEffect(() => {
