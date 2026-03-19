@@ -192,7 +192,9 @@ export default function Home() {
   // רענון אוטומטי של קישורי Kaltura כל 50 דקות (מחיקה + יצירה מחדש)
   useEffect(() => {
     const refreshKaltura = async () => {
-      const kalturaMovies = movies.filter(m => m.type === "kaltura" && m.video_id);
+      // טוען מחדש את כל הרשימה כדי לקבל את כל הקישורים העדכניים
+      const allMovies = await Movie.list("-created_date");
+      const kalturaMovies = allMovies.filter(m => m.type === "kaltura" && m.video_id);
       for (const m of kalturaMovies) {
         try {
           const { id, created_date, updated_date, created_by, ...data } = m;
@@ -200,11 +202,11 @@ export default function Home() {
           await Movie.create(data);
         } catch {}
       }
+      loadMovies(); // מרענן את ה-state אחרי הכל
     };
-    if (movies.length === 0) return;
     const interval = setInterval(refreshKaltura, 50 * 60 * 1000); // כל 50 דקות
     return () => clearInterval(interval);
-  }, [movies]);
+  }, []);
 
   const loadMovies = () => {
     setLoading(true);
