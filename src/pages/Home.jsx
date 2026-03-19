@@ -1112,9 +1112,11 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
   const [status, setStatus] = useState("");
 
   const handleRefresh = async () => {
-    const kalturaMovies = movies.filter(m => m.type === "kaltura" && m.video_id);
-    if (kalturaMovies.length === 0) { setStatus("אין קישורי Kaltura לרענן"); setTimeout(() => setStatus(""), 3000); return; }
     setRefreshing(true);
+    setStatus("טוען רשימת קישורים...");
+    const allMovies = await MovieEntity.list("-created_date");
+    const kalturaMovies = allMovies.filter(m => m.type === "kaltura" && m.video_id);
+    if (kalturaMovies.length === 0) { setStatus("אין קישורי Kaltura לרענן"); setRefreshing(false); setTimeout(() => setStatus(""), 3000); return; }
     setStatus(`מרענן ${kalturaMovies.length} קישורים...`);
     let done = 0;
     for (const m of kalturaMovies) {
