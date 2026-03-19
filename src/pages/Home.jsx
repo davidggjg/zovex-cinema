@@ -124,6 +124,10 @@ function renderPlayer(movie) {
     const cloud = movie.cloudinary_cloud_name || "";
     return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={`https://res.cloudinary.com/${cloud}/video/upload/${vid}`} />;
   }
+  // direct URL שהוא בעצם Kaltura embed מלא
+  if (vid.includes("kaltura.com")) {
+    return <iframe src={vid} style={fr} allowFullScreen allow="autoplay; encrypted-media" />;
+  }
   return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={vid} />;
 }
 
