@@ -1116,7 +1116,12 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     setStatus(`מרענן ${kalturaMovies.length} קישורים...`);
     let done = 0;
     for (const m of kalturaMovies) {
-      try { await MovieEntity.update(m.id, { video_id: m.video_id }); done++; } catch {}
+      try {
+        const { id, created_date, updated_date, created_by, ...data } = m;
+        await MovieEntity.delete(id);
+        await MovieEntity.create(data);
+        done++;
+      } catch {}
     }
     setStatus(`✅ רועננו ${done} קישורי Kaltura!`);
     setRefreshing(false);
