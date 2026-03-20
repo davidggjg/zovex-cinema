@@ -211,19 +211,8 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // פונקציה לרענון פרק Kaltura בודד לפני הפעלה (מחיקה + יצירה מחדש)
-  const refreshKalturaEpisode = async (movie) => {
-    const isKaltura = movie.type === "kaltura" || (movie.video_id || "").includes("kaltura.com");
-    if (!isKaltura) return movie;
-    try {
-      const { id, created_date, updated_date, created_by, ...data } = movie;
-      await Movie.delete(id);
-      const newMovie = await Movie.create(data);
-      return newMovie;
-    } catch {
-      return movie;
-    }
-  };
+  // פתיחת סרט ישירה ללא רענון מיותר
+  const refreshKalturaEpisode = async (movie) => movie;
 
   const loadMovies = () => {
     setLoading(true);
