@@ -7,32 +7,46 @@ function buildSrc(movie) {
   const type = movie.type || "direct";
   if (!vid) return null;
 
-  if (type === "youtube" || vid.includes("youtube") || vid.includes("youtu.be")) {
+  // Kaltura URL מלא ב-video_id
+  if (vid.includes("kaltura.com")) {
+    return vid;
+  }
+
+  if (type === "kaltura") {
+    const parts = vid.split("/");
+    if (parts.length >= 3) {
+      const partnerId = parts[0], uiconfId = parts[1], entryId = parts[2];
+      return `https://cdnapisec.kaltura.com/p/${partnerId}/embedPlaykitJs/uiconf_id/${uiconfId}?iframeembed=true&entry_id=${entryId}`;
+    }
+    return null;
+  }
+
+  if (type === "youtube" || vid.includes("youtube.com") || vid.includes("youtu.be")) {
     const m = vid.match(/(?:v=|youtu\.be\/)([^&/?]+)/);
     const id = m ? m[1] : vid;
     return `https://www.youtube.com/embed/${id}?autoplay=1`;
   }
-  if (type === "drive" || vid.includes("drive.google")) {
+  if (type === "drive" || vid.includes("drive.google.com")) {
     const m = vid.match(/\/d\/([^/?]+)/);
     const id = m ? m[1] : vid;
     return `https://drive.google.com/file/d/${id}/preview`;
   }
-  if (type === "vimeo" || vid.includes("vimeo")) {
+  if (type === "vimeo" || vid.includes("vimeo.com")) {
     const m = vid.match(/vimeo\.com\/(\d+)/);
     const id = m ? m[1] : vid;
     return `https://player.vimeo.com/video/${id}?autoplay=1`;
   }
-  if (type === "dailymotion" || vid.includes("dailymotion") || vid.includes("dai.ly")) {
+  if (type === "dailymotion" || vid.includes("dailymotion.com") || vid.includes("dai.ly")) {
     const m = vid.match(/(?:video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
     const id = m ? m[1] : vid;
     return `https://www.dailymotion.com/embed/video/${id}?autoplay=1`;
   }
-  if (type === "streamable" || vid.includes("streamable")) {
+  if (type === "streamable" || vid.includes("streamable.com")) {
     const m = vid.match(/streamable\.com\/([a-zA-Z0-9]+)/);
     const id = m ? m[1] : vid;
     return `https://streamable.com/e/${id}?autoplay=1`;
   }
-  if (type === "rumble" || vid.includes("rumble")) {
+  if (type === "rumble" || vid.includes("rumble.com")) {
     const m = vid.match(/(?:embed\/|video\/)([a-zA-Z0-9]+)/);
     const id = m ? m[1] : vid;
     return `https://rumble.com/embed/${id}/`;
@@ -42,7 +56,8 @@ function buildSrc(movie) {
     const id = m ? m[1] : vid;
     return `https://archive.org/embed/${id}`;
   }
-  if (type === "kan" || vid.includes("kan.org")) {
+  if (type === "kan" || vid.includes("kan.org.il")) {
+    // vid כאן הוא ה-id בלבד
     return `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
   }
   if (type === "okru" || vid.includes("ok.ru")) {
@@ -51,12 +66,8 @@ function buildSrc(movie) {
     return `https://ok.ru/videoembed/${id}`;
   }
   if (type === "telegram" || vid.includes("t.me")) {
-    return vid; // telegram doesn't embed well, just show link
-  }
-  if (type === "kaltura") {
-    const parts = vid.split("/");
-    const partnerId = parts[0], uiconfId = parts[1], entryId = parts[2];
-    return `https://cdnapisec.kaltura.com/p/${partnerId}/embedPlaykitJs/uiconf_id/${uiconfId}?iframeembed=true&entry_id=${entryId}`;
+    const id = vid.replace(/.*t\.me\//, "");
+    return `https://t.me/${id}?embed=1&mode=tme`;
   }
   if (type === "jellyfin") {
     const server = (movie.jellyfin_server || "").replace(/\/$/, "");
@@ -66,15 +77,34 @@ function buildSrc(movie) {
     }
     return null;
   }
-  // direct URL שהוא בעצם Kaltura embed מלא
-  if (vid.includes("kaltura.com")) {
-    return vid;
+  if (type === "cloudinary") {
+    const cloud = movie.cloudinary_cloud_name || "";
+    return cloud ? `https://res.cloudinary.com/${cloud}/video/upload/${vid}` : null;
   }
-  // direct mp4 or any other URL
+
+  // direct — החזר כמו שהוא
   return vid.startsWith("http") ? vid : null;
 }
 
-function HlsPlayer({ src, title }) {
+function isHlsUrl(src) {
+  if (!src) return false;
+  return src.includes(".m3u8") || src.includes("Manifest.ism");
+}
+
+function isIframeUrl(src, type) {
+  if (!src) return false;
+  // אלה תמיד iframe
+  const iframeTypes = ["youtube", "drive", "vimeo", "dailymotion", "streamable", "rumble",
+    "archive", "kan", "okru", "telegram", "kaltura", "jellyfin"];
+  if (iframeTypes.includes(type)) return true;
+  // URL מלאים של שירותים אלה
+  const iframeDomains = ["youtube.com", "youtu.be", "drive.google.com", "vimeo.com",
+    "dailymotion.com", "streamable.com", "rumble.com", "archive.org",
+    "kan.org.il", "ok.ru", "t.me", "kaltura.com"];
+  return iframeDomains.some(d => src.includes(d));
+}
+
+function HlsPlayer({ src }) {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -82,14 +112,13 @@ function HlsPlayer({ src, title }) {
     if (!video || !src) return;
 
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // Safari — תמיכה מובנית
       video.src = src;
-      video.play();
+      video.play().catch(() => {});
     } else if (Hls.isSupported()) {
-      const hls = new Hls();
+      const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
       hls.loadSource(src);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
       return () => hls.destroy();
     }
   }, [src]);
@@ -99,6 +128,7 @@ function HlsPlayer({ src, title }) {
       ref={videoRef}
       controls
       autoPlay
+      playsInline
       controlsList="nodownload"
       style={{ flex: 1, width: "100%", background: "#000" }}
     />
@@ -107,40 +137,49 @@ function HlsPlayer({ src, title }) {
 
 export default function CustomVideoPlayer({ movie, onClose }) {
   const src = buildSrc(movie);
-  const isKalturaUrl = (movie.video_id || "").includes("kaltura.com");
-  const isHls = src && (src.includes(".m3u8") || src.includes("playlist"));
-  const useVideoTag = (movie.type === "direct" && !isKalturaUrl) || isHls;
+  const type = movie.type || "direct";
+  const hlsVideo = isHlsUrl(src);
+  const useIframe = !hlsVideo && isIframeUrl(src, type);
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", flexDirection: "column" }}>
       <button
         onClick={onClose}
-        style={{ position: "absolute", top: 15, right: 15, zIndex: 10, background: "rgba(255,255,255,.2)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 20 }}
+        style={{
+          position: "absolute", top: 15, right: 15, zIndex: 10,
+          background: "rgba(255,255,255,.2)", border: "none", color: "#fff",
+          borderRadius: "50%", width: 44, height: 44,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer"
+        }}
       >
         <X size={24} />
       </button>
-      <p style={{ color: "#aaa", fontSize: 13, padding: "52px 55px 6px", textAlign: "center", fontFamily: "Arial", flexShrink: 0 }}>{movie.title}</p>
+      <p style={{ color: "#aaa", fontSize: 13, padding: "52px 55px 6px", textAlign: "center", fontFamily: "Arial", flexShrink: 0 }}>
+        {movie.title}
+      </p>
 
       {!src ? (
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#666", fontSize: 15, fontFamily: "Arial" }}>
           אין קישור וידאו זמין
         </div>
-      ) : isHls ? (
-        <HlsPlayer src={src} title={movie.title} />
-      ) : useVideoTag ? (
-        <video
-          src={src}
-          controls
-          autoPlay
-          controlsList="nodownload"
-          style={{ flex: 1, width: "100%", background: "#000" }}
-        />
-      ) : (
+      ) : hlsVideo ? (
+        <HlsPlayer src={src} />
+      ) : useIframe ? (
         <iframe
           src={src}
           style={{ flex: 1, width: "100%", border: "none" }}
           allowFullScreen
-          allow="autoplay; encrypted-media"
+          allow="autoplay; encrypted-media; picture-in-picture"
+        />
+      ) : (
+        <video
+          src={src}
+          controls
+          autoPlay
+          playsInline
+          controlsList="nodownload"
+          style={{ flex: 1, width: "100%", background: "#000" }}
         />
       )}
     </div>
