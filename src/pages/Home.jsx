@@ -879,7 +879,7 @@ export default function Home() {
               <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: 0 }}>{selectedMovie.description}</p>
             </div>
           )}
-        <button onClick={async () => { const fresh = await refreshKalturaEpisode(selectedMovie); setPlayerMovie(fresh); loadMovies(); }} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 16, fontSize: 17, fontWeight: "bold", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer" }}>
+        <button onClick={() => setPlayerMovie(selectedMovie)} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 16, fontSize: 17, fontWeight: "bold", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer" }}>
           <Play fill="white" size={20} /> לצפייה עכשיו
         </button>
         {(() => {
