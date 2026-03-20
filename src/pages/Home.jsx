@@ -2,12 +2,12 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 import CustomVideoPlayer from "@/components/home/CustomVideoPlayer.jsx";
-
+ 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
 const SECRET_TRIGGER = "ZovexAdmin2026";
 const PIN_CODE = "123456";
 const LETTER_CODE = "ZOVIX";
-
+ 
 function extractVideoInfo(url) {
   if (!url) return { type: "direct", video_id: "" };
   // אם זה iframe שלם - חלץ את ה-src ממנו
@@ -70,7 +70,7 @@ function extractVideoInfo(url) {
   }
   return { type: "direct", video_id: url };
 }
-
+ 
 function renderPlayer(movie) {
   const vid = movie.video_id || movie.video_url || "";
   const type = movie.type || "direct";
@@ -130,7 +130,7 @@ function renderPlayer(movie) {
   }
   return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={vid} />;
 }
-
+ 
 export default function Home() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -174,7 +174,7 @@ export default function Home() {
   const [showCategories, setShowCategories] = useState(true);
   const lastScrollY = useRef(0);
   const fileInputRef = useRef(null);
-
+ 
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -190,23 +190,44 @@ export default function Home() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
+ 
   useEffect(() => { loadMovies(); }, []);
-
-
-
+ 
+ 
+ 
   // פתיחת סרט ישירה ללא רענון מיותר
   const refreshKalturaEpisode = async (movie) => movie;
-
+ 
+  useEffect(() => {
+    const refreshKaltura = async () => {
+      const allMovies = await Movie.list("-created_date", 500);
+      const kalturaMovies = allMovies.filter(m => m.type === "kaltura");
+      for (const m of kalturaMovies) {
+        try {
+          const { id, created_date, updated_date, created_by, ...data } = m;
+          await Movie.delete(id);
+          await Movie.create(data);
+        } catch {}
+      }
+      loadMovies();
+    };
+    const interval = setInterval(refreshKaltura, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+ 
   const loadMovies = () => {
     setLoading(true);
-    Movie.list("-created_date", 500).then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
+    Movie.list("-created_date", 500).then(d => {
+    const seen = new Set();
+    const unique = d.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+    setMovies(unique); setLoading(false);
+  }).catch(() => setLoading(false));
   };
-
+ 
   useEffect(() => {
     if (searchTerm === SECRET_TRIGGER) { setSearchTerm(""); setShowAdminLogin(true); }
   }, [searchTerm]);
-
+ 
   useEffect(() => {
     if (movies.length === 0) return;
     const saved = (() => { try { return JSON.parse(localStorage.getItem("zovex_cats") || "null"); } catch { return null; } })();
@@ -221,12 +242,12 @@ export default function Home() {
     setCategories(fromMovies);
     try { localStorage.setItem("zovex_cats", JSON.stringify(fromMovies)); } catch {}
   }, [movies]);
-
+ 
   const saveCats = (c) => {
     setCategories(c);
     try { localStorage.setItem("zovex_cats", JSON.stringify(c)); } catch {}
   };
-
+ 
   const renameCat = async (oldName, newName) => {
     if (!newName.trim() || newName === oldName) { setEditingCat(null); return; }
     const updated = categories.map(c => c === oldName ? newName.trim() : c);
@@ -241,7 +262,7 @@ export default function Home() {
     setEditingCat(null);
     setEditingCatVal("");
   };
-
+ 
   useEffect(() => {
     if (!tmdbQuery.trim() || !tmdbKey) { setTmdbResults([]); return; }
     const t = setTimeout(async () => {
@@ -255,7 +276,7 @@ export default function Home() {
     }, 450);
     return () => clearTimeout(t);
   }, [tmdbQuery, tmdbKey]);
-
+ 
   const selectTMDB = (item) => {
     const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "";
     setForm(p => ({
@@ -270,7 +291,7 @@ export default function Home() {
     if (item.media_type === "tv") setIsSeries(true);
     setTmdbResults([]); setTmdbQuery("");
   };
-
+ 
   const handleUploadPoster = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -285,14 +306,14 @@ export default function Home() {
     }
     setUploading(false);
   };
-
+ 
   const resetForm = () => {
     setForm({ title: "", thumbnail_url: "", category: categories[0] || "", description: "", year: String(new Date().getFullYear()), series_name: "", season_number: "", episode_number: "", episode_title: "", jellyfinServer: "", jellyfinApiKey: "" });
     setVideoUrlInput(""); setIsSeries(false); setEditingMovie(null);
     setFormStatus({ type: "", message: "" }); setPosterPreview("");
     setShowExistingSeries(false);
   };
-
+ 
   const generateAI = async () => {
     if (!form.title) { setFormStatus({ type: "error", message: "הכנס שם קודם" }); return; }
     setAiLoading(true);
@@ -303,7 +324,7 @@ export default function Home() {
     } catch {}
     setAiLoading(false);
   };
-
+ 
   const handleSave = async () => {
     if (!form.title || !form.category) { setFormStatus({ type: "error", message: "שם וקטגוריה חובה" }); return; }
     setSaving(true);
@@ -352,14 +373,14 @@ export default function Home() {
     }
     setSaving(false);
   };
-
+ 
   const handleDelete = async (id) => {
     if (!window.confirm("למחוק?")) return;
     setDeleting(id);
     try { await Movie.delete(id); loadMovies(); } catch {}
     setDeleting(null);
   };
-
+ 
   const updateSeriesThumbnail = async (seriesName, thumbnailUrl) => {
     if (!seriesName || !thumbnailUrl) return;
     const toUpdate = movies.filter(m => m.series_name === seriesName);
@@ -373,7 +394,7 @@ export default function Home() {
     setSaving(false);
     setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
   };
-
+ 
   const updateSeriesDescription = async (seriesName, description) => {
     if (!seriesName || !description) return;
     const toUpdate = movies.filter(m => m.series_name === seriesName);
@@ -387,7 +408,7 @@ export default function Home() {
     setSaving(false);
     setTimeout(() => setFormStatus({ type: "", message: "" }), 3000);
   };
-
+ 
   const startEdit = (movie) => {
     setEditingMovie(movie);
     setIsSeries(!!movie.series_name);
@@ -422,7 +443,7 @@ export default function Home() {
     setVideoUrlInput(fullUrl);
     setAdminTab("add");
   };
-
+ 
   const seriesMap = useMemo(() => {
     const map = {};
     movies.forEach(m => {
@@ -434,14 +455,14 @@ export default function Home() {
     });
     return map;
   }, [movies]);
-
+ 
   const existingSeriesNames = useMemo(() => Object.keys(seriesMap), [seriesMap]);
-
+ 
   const allCategories = useMemo(() => {
     const fromMovies = movies.map(m => m.category).filter(Boolean);
     return ["הכל", ...new Set([...categories, ...fromMovies])];
   }, [movies, categories]);
-
+ 
   const shuffledMovies = useMemo(() => {
     const arr = [...movies];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -450,7 +471,7 @@ export default function Home() {
     }
     return arr;
   }, [movies.length]);
-
+ 
   const filteredItems = useMemo(() => {
     const q = searchTerm.toLowerCase();
     const cat = selectedCategory;
@@ -469,12 +490,12 @@ export default function Home() {
     });
     return { movies: regularMovies, series: seriesList };
   }, [movies, shuffledMovies, searchTerm, selectedCategory, seriesMap]);
-
+ 
   const allItems = [...filteredItems.series, ...filteredItems.movies];
   const inp = { width: "100%", background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
   const cardStyle = { background: "#fff", borderRadius: 16, padding: 18, marginBottom: 14, boxShadow: "0 4px 20px rgba(0,0,0,.07)" };
   const dot = <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#0071e3", display: "inline-block", marginLeft: 8, flexShrink: 0 }} />;
-
+ 
   if (loading) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#fff" }}>
       <style>{spinnerStyle}</style>
@@ -484,7 +505,7 @@ export default function Home() {
       </div>
     </div>
   );
-
+ 
   if (showAdminLogin) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#111", fontFamily: "Arial", direction: "rtl" }}>
       <div style={{ background: "#1e1e1e", padding: 40, borderRadius: 20, width: 320, boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
@@ -507,7 +528,7 @@ export default function Home() {
       </div>
     </div>
   );
-
+ 
   if (showAdmin) {
     const grouped = {};
     movies.forEach(m => { const c = m.category || "ללא קטגוריה"; if (!grouped[c]) grouped[c] = []; grouped[c].push(m); });
@@ -607,7 +628,7 @@ export default function Home() {
                         <input type="number" min="1" value={form.episode_number} onChange={e => setForm(p => ({ ...p, episode_number: e.target.value }))} placeholder="1" style={inp} />
                       </div>
                     </div>
-
+ 
                   </div>
                 )}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
@@ -775,11 +796,11 @@ export default function Home() {
       </div>
     );
   }
-
+ 
   if (playerMovie) return (
     <CustomVideoPlayer movie={playerMovie} onClose={() => setPlayerMovie(null)} />
   );
-
+ 
   if (selectedSeries) {
     const series = seriesMap[selectedSeries];
     const episodes = series?.episodes || [];
@@ -841,7 +862,7 @@ export default function Home() {
       </div>
     );
   }
-
+ 
   if (selectedMovie) return (
     <div style={{ background: "#111", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif", color: "#fff" }}>
       <button onClick={() => setSelectedMovie(null)} style={{ position: "fixed", top: 15, right: 15, zIndex: 100, background: "rgba(0,0,0,.7)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
@@ -895,7 +916,7 @@ export default function Home() {
       </div>
     </div>
   );
-
+ 
   return (
     <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif" }}>
       <style>{spinnerStyle}</style>
@@ -967,35 +988,35 @@ export default function Home() {
     </div>
   );
 }
-
-
+ 
+ 
 function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, onEdit }) {
   const [browsecat, setBrowsecat] = useState("הכל");
   const [openAdminSeries, setOpenAdminSeries] = useState(null);
   const [openAdminSeason, setOpenAdminSeason] = useState({});
   const [showAdminSeasonMenu, setShowAdminSeasonMenu] = useState(false);
-
+ 
   const allCats = ["הכל", ...new Set([...categories, ...movies.map(m => m.category).filter(Boolean)])];
-
+ 
   // series visible in this category
   const visibleSeries = existingSeriesNames.filter(name => {
     if (browsecat === "הכל") return true;
     return seriesMap[name]?.category === browsecat;
   });
-
+ 
   // standalone movies visible in this category
   const visibleMovies = movies.filter(m => {
     if (m.series_name) return false;
     return browsecat === "הכל" || m.category === browsecat;
   });
-
+ 
   if (openAdminSeries) {
     const series = seriesMap[openAdminSeries];
     const episodes = series?.episodes || [];
     const seasonNums = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
     const activeSeason = openAdminSeason[openAdminSeries] ?? seasonNums[0];
     const activeEps = episodes.filter(e => (e.season_number || 1) === activeSeason).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-
+ 
     return (
       <div>
         <button onClick={() => setOpenAdminSeries(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "9px 14px", marginBottom: 14, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, color: "#6e6e73" }}>
@@ -1044,7 +1065,7 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
       </div>
     );
   }
-
+ 
   return (
     <div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
@@ -1096,19 +1117,19 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
     </div>
   );
 }
-
+ 
 function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState("");
   const [kalturaCount, setKalturaCount] = useState(null);
-
+ 
   useEffect(() => {
     MovieEntity.list("-created_date", 500).then(allMovies => {
       const count = allMovies.filter(m => m.type === "kaltura" || (m.video_id || "").includes("kaltura.com") || (m.type === "direct" && (m.video_id || "").includes("kaltura"))).length;
       setKalturaCount(count);
     });
   }, []);
-
+ 
   const handleRefresh = async () => {
     setRefreshing(true);
     setStatus("טוען רשימת קישורים...");
@@ -1129,7 +1150,7 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     setRefreshing(false);
     setTimeout(() => setStatus(""), 4000);
   };
-
+ 
   return (
     <div style={{ ...cardStyle, border: "2px solid #e50914" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", color: "#e50914" }}>
@@ -1148,16 +1169,16 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     </div>
   );
 }
-
+ 
 function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [csvText, setCsvText] = useState("");
   const [preview, setPreview] = useState([]);
   const [importing, setImporting] = useState(false);
   const [status, setStatus] = useState({ type: "", message: "" });
   const fileRef = React.useRef(null);
-
+ 
   const COLUMNS = ["title", "video_url", "category", "series_name", "season_number", "episode_number", "thumbnail_url", "description", "year"];
-
+ 
   const parseCSV = (text) => {
     const lines = text.trim().split("\n").filter(l => l.trim());
     if (lines.length < 2) return [];
@@ -1177,14 +1198,14 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
       return row;
     }).filter(r => r.title || r.video_url);
   };
-
+ 
   const handleText = (text) => {
     setCsvText(text);
     const rows = parseCSV(text);
     setPreview(rows.slice(0, 5));
     setStatus({ type: "", message: "" });
   };
-
+ 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1192,7 +1213,7 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     reader.onload = (ev) => handleText(ev.target.result);
     reader.readAsText(file, "UTF-8");
   };
-
+ 
   const handleImport = async () => {
     const rows = parseCSV(csvText);
     if (!rows.length) { setStatus({ type: "error", message: "אין שורות לייבוא" }); return; }
@@ -1221,7 +1242,7 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     setCsvText(""); setPreview([]);
     setTimeout(() => setStatus({ type: "", message: "" }), 5000);
   };
-
+ 
   return (
     <div style={{ ...cardStyle, border: "2px solid #5e5ce6" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", color: "#5e5ce6" }}>
@@ -1268,16 +1289,16 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     </div>
   );
 }
-
+ 
 function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [merging, setMerging] = useState(false);
   const [mergeStatus, setMergeStatus] = useState({ type: "", message: "" });
   const [sourceSeries, setSourceSeries] = useState("");
   const [targetSeries, setTargetSeries] = useState("");
   const [targetSeason, setTargetSeason] = useState("2");
-
+ 
   const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
-
+ 
   const handleMerge = async () => {
     if (!sourceSeries || !targetSeries) { setMergeStatus({ type: "error", message: "בחר סדרת מקור ויעד" }); return; }
     if (sourceSeries === targetSeries) { setMergeStatus({ type: "error", message: "מקור ויעד זהים" }); return; }
@@ -1296,7 +1317,7 @@ function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity
     loadMovies();
     setTimeout(() => setMergeStatus({ type: "", message: "" }), 4000);
   };
-
+ 
   return (
     <div style={{ ...cardStyle, border: "2px solid #ff9500" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#ff9500" }}>
@@ -1332,7 +1353,7 @@ function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity
     </div>
   );
 }
-
+ 
 function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(false);
   const sorted = [...episodes].sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
@@ -1359,7 +1380,7 @@ function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
     </div>
   );
 }
-
+ 
 function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(true);
   const sp = `@keyframes spin { to { transform: rotate(360deg); } }`;
@@ -1388,13 +1409,13 @@ function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
     </div>
   );
 }
-
+ 
 function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
   const [selectedSeries, setSelectedSeries] = useState("הכל");
   const [selectedType, setSelectedType] = useState("drive");
-
+ 
   const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
-
+ 
   const typeLabels = {
     drive: "Google Drive 🔴",
     youtube: "YouTube",
@@ -1407,13 +1428,13 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
     okru: "OK.ru",
     direct: "קישור ישיר",
   };
-
+ 
   const results = movies.filter(m => {
     const typeMatch = m.type === selectedType;
     const seriesMatch = selectedSeries === "הכל" || m.series_name === selectedSeries;
     return typeMatch && seriesMatch;
   }).sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
-
+ 
   return (
     <div style={{ ...cardStyle, border: "2px solid #ff3b30" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#ff3b30" }}>
@@ -1460,7 +1481,7 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
     </div>
   );
 }
-
+ 
 function ExportContentPanel({ movies, cardStyle, dot }) {
   const getLink = (m) => {
     const vid = m.video_id || "";
@@ -1474,24 +1495,24 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
     if (type === "rumble") return `https://rumble.com/embed/${vid}`;
     return vid;
   };
-
+ 
   const handleExport = () => {
     if (!movies || movies.length === 0) { alert("אין תוכן לייצוא"); return; }
-
+ 
     const lines = [];
     lines.push("=== ייצוא תוכן מאתר ZOVEX ===");
     lines.push(`תאריך: ${new Date().toLocaleDateString("he-IL")}`);
     lines.push(`סה"כ תכנים: ${movies.length}`);
     lines.push("");
-
+ 
     const cats = [...new Set(movies.map(m => m.category).filter(Boolean))].sort();
-
+ 
     for (const cat of cats) {
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push(`📂 קטגוריה: ${cat}`);
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push("");
-
+ 
       // סדרות
       const seriesNames = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
       for (const serName of seriesNames) {
@@ -1511,7 +1532,7 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
         }
         lines.push("");
       }
-
+ 
       // סרטים עצמאיים
       const standalones = movies
         .filter(m => !m.series_name && m.category === cat)
@@ -1522,17 +1543,17 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
         lines.push("");
       }
     }
-
+ 
     lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     lines.push(`סה"כ: ${movies.length} תכנים`);
-
+ 
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `zovex_content_${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
   };
-
+ 
   return (
     <div style={{ ...cardStyle, border: "2px solid #30d158" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", color: "#30d158" }}>
@@ -1553,16 +1574,16 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
     </div>
   );
 }
-
+ 
 function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [openSeries, setOpenSeries] = useState(null);
   const [selectedCat, setSelectedCat] = useState("");
   const [newCatName, setNewCatName] = useState("");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState({ type: "", message: "" });
-
+ 
   const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
-
+ 
   const handleApply = async (seriesName) => {
     const catToApply = selectedCat === "__new__" ? newCatName.trim() : selectedCat;
     if (!catToApply) { setStatus({ type: "error", message: "בחר קטגוריה" }); return; }
@@ -1584,7 +1605,7 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
     setNewCatName("");
     setTimeout(() => setStatus({ type: "", message: "" }), 3000);
   };
-
+ 
   return (
     <div style={{ ...cardStyle, border: "2px solid #34c759" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#34c759" }}>
@@ -1631,4 +1652,4 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
       )}
     </div>
   );
-}
+  }
