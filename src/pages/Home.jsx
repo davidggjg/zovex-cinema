@@ -1127,8 +1127,14 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
 function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState("");
+  const [kalturaCount, setKalturaCount] = useState(null);
 
-  const kalturaCount = movies.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com"))).length;
+  useEffect(() => {
+    MovieEntity.list("-created_date", 500).then(allMovies => {
+      const count = allMovies.filter(m => m.video_id && (m.type === "kaltura" || (m.video_id || "").includes("kaltura.com"))).length;
+      setKalturaCount(count);
+    });
+  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
