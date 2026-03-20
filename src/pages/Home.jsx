@@ -842,7 +842,7 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {activeEps.map((ep, i) => (
-              <div key={ep.id} onClick={async () => { const fresh = await refreshKalturaEpisode(ep); setPlayerMovie(fresh); loadMovies(); }} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid #eee", cursor: "pointer", alignItems: "center" }}>
+              <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid #eee", cursor: "pointer", alignItems: "center" }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: "#e50914", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Play size={18} fill="white" color="white" />
                 </div>
