@@ -1131,7 +1131,7 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
 
   useEffect(() => {
     MovieEntity.list("-created_date", 500).then(allMovies => {
-      const count = allMovies.filter(m => m.type === "kaltura" || (m.video_id || "").includes("kaltura.com")).length;
+      const count = allMovies.filter(m => m.type === "kaltura" || (m.video_id || "").includes("kaltura.com") || (m.type === "direct" && (m.video_id || "").includes("kaltura"))).length;
       setKalturaCount(count);
     });
   }, []);
