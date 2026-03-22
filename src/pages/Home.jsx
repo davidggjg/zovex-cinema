@@ -209,9 +209,9 @@ export default function Home() {
           await Movie.create(data);
         } catch {}
       }
-      loadMovies();
+      // לא קוראים loadMovies כדי לא להפריע לצפייה
     };
-    const interval = setInterval(refreshKaltura, 60 * 60 * 1000);
+    const interval = setInterval(refreshKaltura, 2 * 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
  
@@ -921,7 +921,7 @@ export default function Home() {
     <div style={{ background: "#fff", minHeight: "100vh", direction: "rtl", fontFamily: "Arial, sans-serif" }}>
       <style>{spinnerStyle}</style>
       <header style={{ padding: "14px 14px 0", position: "sticky", top: 0, background: "#fff", zIndex: 100, boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
-        <div style={{ overflow: "hidden", maxHeight: showCategories ? 60 : 0, opacity: showCategories ? 1 : 0, transition: "max-height 0.3s ease, opacity 0.3s ease", marginBottom: showCategories ? 12 : 0 }}>
+        <div style={{ overflow: "hidden", maxHeight: 60, opacity: 1, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <h1 style={{ color: "#e50914", fontSize: 26, fontWeight: 900, margin: 0, flexShrink: 0 }}>ZOVEX</h1>
             <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#f5f5f5", padding: "9px 14px", borderRadius: 50, border: "1px solid #eee" }}>
@@ -931,7 +931,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div style={{ overflow: "hidden", maxHeight: showCategories ? 200 : 0, opacity: showCategories ? 1 : 0, transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
+        <div style={{ overflow: "hidden", maxHeight: 200, opacity: 1 }}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 11 }}>
             {allCategories.map(cat => (
               <span key={cat} onClick={() => setSelectedCategory(cat)} style={{
@@ -1652,4 +1652,4 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
       )}
     </div>
   );
-  }
+}
