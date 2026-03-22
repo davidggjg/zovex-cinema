@@ -442,14 +442,7 @@ export default function Home() {
     return ["הכל", ...new Set([...categories, ...fromMovies])];
   }, [movies, categories]);
  
-  const shuffledMovies = useMemo(() => {
-    const arr = [...movies];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }, [movies.length]);
+  const shuffledMovies = movies;
  
   const filteredItems = useMemo(() => {
     const q = searchTerm.toLowerCase();
@@ -461,16 +454,15 @@ export default function Home() {
     });
     const seriesShown = {};
     const seriesList = [];
-    // Use movies (not shuffledMovies) for series detection to avoid duplicates
-    const seriesSource = cat === "הכל" ? movies : movies;
-    seriesSource.forEach(m => {
+ 
+    movies.forEach(m => {
       if (!m.series_name || seriesShown[m.series_name]) return;
       const matchQ = m.series_name.toLowerCase().includes(q) || (m.title || "").toLowerCase().includes(q);
       const matchC = cat === "הכל" || m.category === cat;
       if (matchQ && matchC) { seriesShown[m.series_name] = true; seriesList.push(seriesMap[m.series_name]); }
     });
     return { movies: regularMovies, series: seriesList };
-  }, [movies, shuffledMovies, searchTerm, selectedCategory, seriesMap]);
+  }, [movies, searchTerm, selectedCategory, seriesMap]);
  
   const allItems = [...filteredItems.series, ...filteredItems.movies];
   const inp = { width: "100%", background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
