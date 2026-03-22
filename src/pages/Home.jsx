@@ -926,18 +926,22 @@ export default function Home() {
         {allItems.length === 0
           ? <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}><p style={{ fontSize: 18 }}>לא נמצאו תוצאות</p></div>
           : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, gridAutoRows: "1fr" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 18, gridAutoRows: "1fr" }}>
               {allItems.map((item) => {
                 const isSer = !!item.episodes;
                 const title = isSer ? item.name : item.title;
                 const thumb = item.thumbnail_url;
                 return (
-                  <div key={isSer ? "s-" + item.name : item.id} onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7 }}>
-                    <div style={{ borderRadius: 12, overflow: "hidden", height: 200, boxShadow: "0 4px 12px rgba(0,0,0,.12)", background: "#e8e8e8", position: "relative", flexShrink: 0 }}>
-                      {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => { e.target.style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>?</div>}
+                  <div key={isSer ? "s-" + item.name : item.id} onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7, height: "100%" }}>
+                    <div style={{ borderRadius: 12, overflow: "hidden", height: 200, background: "#e8e8e8", position: "relative", flexShrink: 0 }}>
+                      {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} /> : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, background: "#f0f0f0", color: "#aaa" }}>🎬</div>
+                      )}
                       {isSer && <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.65)", borderRadius: 8, padding: "3px 8px", fontSize: 10, color: "#fff", fontWeight: 700 }}>סדרה</div>}
                     </div>
-                    <h3 style={{ fontSize: 13, fontWeight: "bold", textAlign: "center", margin: 0, color: "#111", lineHeight: 1.3 }}>{title}</h3>
+                    <h3 style={{ fontSize: 13, fontWeight: "bold", textAlign: "center", margin: "8px 0 0 0", color: "#111", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {title}
+                    </h3>
                   </div>
                 );
               })}
