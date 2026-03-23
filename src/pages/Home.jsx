@@ -941,7 +941,7 @@ export default function Home() {
                 const thumb = item.thumbnail_url;
                 return (
                   <div key={isSer ? "s-" + item.name : item.id} onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7, height: "100%" }}>
-                    <div style={{ borderRadius: 12, overflow: "hidden", height: 200, background: "#e8e8e8", position: "relative", flexShrink: 0 }}>
+                    <div style={{ borderRadius: 12, overflow: "hidden", height: 260, background: "#e8e8e8", position: "relative", flexShrink: 0 }}>
                       {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} /> : (
                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, background: "#f0f0f0", color: "#aaa" }}>🎬</div>
                       )}
