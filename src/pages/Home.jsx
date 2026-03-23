@@ -353,11 +353,19 @@ export default function Home() {
     setSaving(false);
   };
  
-  const handleDelete = async (id) => {
-    if (!window.confirm("למחוק?")) return;
+  const handleDelete = async (id, silent = false) => {
+    if (!silent && !window.confirm("למחוק?")) return;
     setDeleting(id);
-    try { await Movie.delete(id); loadMovies(); } catch {}
+    try { await Movie.delete(id); if (!silent) loadMovies(); } catch {}
     setDeleting(null);
+  };
+ 
+  const handleDeleteSeries = async (serName, episodes) => {
+    if (!window.confirm(`למחוק את כל הסדרה "${serName}"? (${episodes.length} פרקים)`)) return;
+    for (const ep of episodes) {
+      try { await Movie.delete(ep.id); } catch {}
+    }
+    loadMovies();
   };
  
   const updateSeriesThumbnail = async (seriesName, thumbnailUrl) => {
@@ -1333,13 +1341,29 @@ function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity
  
 function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(false);
+  const [deletingSeries, setDeletingSeries] = useState(false);
   const sorted = [...episodes].sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
+ 
+  const handleDeleteSeries = async () => {
+    if (!window.confirm(`למחוק את כל הסדרה "${serName}"? (${episodes.length} פרקים)`)) return;
+    setDeletingSeries(true);
+    for (const ep of episodes) {
+      try { await onDelete(ep.id, true); } catch {}
+    }
+    setDeletingSeries(false);
+  };
+ 
   return (
     <div style={{ borderTop: "1px solid #F5F5F7" }}>
-      <button onClick={() => setOpen(!open)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-        <span style={{ fontSize: 13, fontWeight: 700 }}>{serName} <span style={{ color: "#6e6e73", fontWeight: 400, fontSize: 11 }}>({episodes.length} פרקים)</span></span>
-        {open ? <ChevronUp size={15} color="#6e6e73" /> : <ChevronDown size={15} color="#6e6e73" />}
-      </button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
+        <button onClick={() => setOpen(!open)} style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "right" }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{serName} <span style={{ color: "#6e6e73", fontWeight: 400, fontSize: 11 }}>({episodes.length} פרקים)</span></span>
+          {open ? <ChevronUp size={15} color="#6e6e73" /> : <ChevronDown size={15} color="#6e6e73" />}
+        </button>
+        <button onClick={handleDeleteSeries} disabled={deletingSeries} style={{ background: "#ff3b30", color: "#fff", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontSize: 11, fontWeight: 700, flexShrink: 0, marginRight: 8, fontFamily: "inherit" }}>
+          {deletingSeries ? "מוחק..." : "🗑️ מחק סדרה"}
+        </button>
+      </div>
       {open && sorted.map(ep => (
         <div key={ep.id} style={{ display: "flex", gap: 10, padding: "10px 16px", alignItems: "center", borderTop: "1px solid #F5F5F7", background: "#fafafa" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1629,4 +1653,4 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
       )}
     </div>
   );
-}ù
+}
