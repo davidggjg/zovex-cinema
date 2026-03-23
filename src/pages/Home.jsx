@@ -425,6 +425,7 @@ export default function Home() {
       else if (type === "okru") fullUrl = `https://ok.ru/video/${vid}`;
       else if (type === "telegram") fullUrl = `https://t.me/${vid}`;
       else if (type === "jellyfin") fullUrl = vid; // store raw item ID
+      else if (type === "kaltura") { const parts = vid.split("/"); fullUrl = `https://cdnapisec.kaltura.com//p/${parts[0]}/embedPlaykitJs/uiconf_id/${parts[1]}?iframeembed=true&entry_id=${parts[2]}`; }
       else fullUrl = vid;
     }
     setVideoUrlInput(fullUrl);
