@@ -1629,4 +1629,4 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
       )}
     </div>
   );
-}
+}ù
