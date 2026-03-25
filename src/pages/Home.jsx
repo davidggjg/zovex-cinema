@@ -10,7 +10,6 @@ const LETTER_CODE = "ZOVIX";
  
 function extractVideoInfo(url) {
   if (!url) return { type: "direct", video_id: "" };
-  // אם זה iframe שלם - חלץ את ה-src ממנו
   if (url.includes("<iframe")) {
     const srcMatch = url.match(/src=["']([^"']+)["']/);
     if (srcMatch) url = srcMatch[1];
@@ -124,7 +123,6 @@ function renderPlayer(movie) {
     const cloud = movie.cloudinary_cloud_name || "";
     return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={`https://res.cloudinary.com/${cloud}/video/upload/${vid}`} />;
   }
-  // direct URL שהוא בעצם Kaltura embed מלא
   if (vid.includes("kaltura.com")) {
     return <iframe src={vid} style={fr} allowFullScreen allow="autoplay; encrypted-media" />;
   }
@@ -193,14 +191,11 @@ export default function Home() {
  
   useEffect(() => { loadMovies(); }, []);
  
- 
- 
-  // פתיחת סרט ישירה ללא רענון מיותר
   const refreshKalturaEpisode = async (movie) => movie;
  
   const loadMovies = () => {
     setLoading(true);
-    Movie.list("-created_date", 500).then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
+    Movie.list("-created_date", 15000).then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
   };
  
   useEffect(() => {
@@ -212,7 +207,6 @@ export default function Home() {
     const saved = (() => { try { return JSON.parse(localStorage.getItem("zovex_cats") || "null"); } catch { return null; } })();
     const fromMovies = [...new Set(movies.map(m => m.category).filter(Boolean))];
     if (saved && saved.length > 0) {
-      // מוסיף קטגוריות חדשות שאינן בשמורות, אבל שומר על הסדר הקיים
       const merged = [...saved, ...fromMovies.filter(c => !saved.includes(c))];
       setCategories(merged);
       try { localStorage.setItem("zovex_cats", JSON.stringify(merged)); } catch {}
@@ -308,7 +302,6 @@ export default function Home() {
     if (!form.title || !form.category) { setFormStatus({ type: "error", message: "שם וקטגוריה חובה" }); return; }
     setSaving(true);
     const info = extractVideoInfo(videoUrlInput);
-    // auto episode number: find next available in series+season
     let autoEpNum = Number(form.episode_number) || null;
     if (isSeries && !editingMovie && !autoEpNum) {
       const serName = form.series_name || form.title;
@@ -331,7 +324,6 @@ export default function Home() {
     try {
       if (editingMovie) {
         await Movie.update(editingMovie.id, payload);
-        // if category changed on a series episode, update all episodes in that series
         if (payload.series_name && editingMovie.category !== payload.category) {
           const seriesEps = movies.filter(m => m.series_name === payload.series_name && m.id !== editingMovie.id);
           for (const ep of seriesEps) {
@@ -424,7 +416,7 @@ export default function Home() {
       else if (type === "kan") fullUrl = `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
       else if (type === "okru") fullUrl = `https://ok.ru/video/${vid}`;
       else if (type === "telegram") fullUrl = `https://t.me/${vid}`;
-      else if (type === "jellyfin") fullUrl = vid; // store raw item ID
+      else if (type === "jellyfin") fullUrl = vid;
       else if (type === "kaltura") { const parts = vid.split("/"); fullUrl = `https://cdnapisec.kaltura.com//p/${parts[0]}/embedPlaykitJs/uiconf_id/${parts[1]}?iframeembed=true&entry_id=${parts[2]}`; }
       else fullUrl = vid;
     }
@@ -463,7 +455,6 @@ export default function Home() {
     });
     const seriesShown = {};
     const seriesList = [];
- 
     movies.forEach(m => {
       if (!m.series_name || seriesShown[m.series_name]) return;
       const matchQ = m.series_name.toLowerCase().includes(q) || (m.title || "").toLowerCase().includes(q);
@@ -610,7 +601,6 @@ export default function Home() {
                         <input type="number" min="1" value={form.episode_number} onChange={e => setForm(p => ({ ...p, episode_number: e.target.value }))} placeholder="1" style={inp} />
                       </div>
                     </div>
- 
                   </div>
                 )}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
@@ -659,7 +649,6 @@ export default function Home() {
                   </label>
                   <input value={videoUrlInput} onChange={e => {
                     let val = e.target.value;
-                    // אם הדביקו iframe שלם - חלץ את ה-src אוטומטית
                     if (val.includes("<iframe")) {
                       const srcMatch = val.match(/src=["']([^"']+)["']/);
                       if (srcMatch) val = srcMatch[1];
@@ -861,11 +850,11 @@ export default function Home() {
           {selectedMovie.year && <span style={{ background: "#222", color: "#888", padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{selectedMovie.year}</span>}
         </div>
         {selectedMovie.description && (
-            <div style={{ margin: "0 0 20px" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#ddd", marginBottom: 6 }}>תיאור הסרט 🎬:</div>
-              <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: 0 }}>{selectedMovie.description}</p>
-            </div>
-          )}
+          <div style={{ margin: "0 0 20px" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#ddd", marginBottom: 6 }}>תיאור הסרט 🎬:</div>
+            <p style={{ fontSize: 14, lineHeight: 1.8, color: "#bbb", margin: 0 }}>{selectedMovie.description}</p>
+          </div>
+        )}
         <button onClick={() => setPlayerMovie(selectedMovie)} style={{ width: "100%", background: "#e50914", color: "#fff", border: "none", padding: 16, fontSize: 17, fontWeight: "bold", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer" }}>
           <Play fill="white" size={20} /> לצפייה עכשיו
         </button>
@@ -959,14 +948,11 @@ export default function Home() {
         }
       </main>
       <div style={{ position: "fixed", bottom: 24, left: 16, zIndex: 1000, display: "flex", alignItems: "flex-end", gap: 10 }}>
-        {/* Speech bubble */}
         <div style={{ background: "#fff", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", boxShadow: "0 4px 18px rgba(0,0,0,.13)", border: "1px solid #eee", maxWidth: 170, direction: "rtl" }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#111", fontFamily: "Arial, sans-serif", marginBottom: 2 }}>רוצה להוסיף סרט? 🎬</div>
           <div style={{ fontSize: 11, color: "#666", fontFamily: "Arial, sans-serif", lineHeight: 1.4 }}>יש בעיה באתר?<br/>דברו איתנו בטלגרם</div>
-          {/* bubble tail */}
           <div style={{ position: "absolute", bottom: -8, left: 14, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid #fff", filter: "drop-shadow(0 2px 2px rgba(0,0,0,.08))" }} />
         </div>
-        {/* Telegram button */}
         <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ background: "#24A1DE", width: 50, height: 50, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(36,161,222,.5)", textDecoration: "none", flexShrink: 0 }}>
           <Send size={22} fill="white" />
         </a>
@@ -974,35 +960,33 @@ export default function Home() {
     </div>
   );
 }
- 
- 
+
+
 function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, onEdit }) {
   const [browsecat, setBrowsecat] = useState("הכל");
   const [openAdminSeries, setOpenAdminSeries] = useState(null);
   const [openAdminSeason, setOpenAdminSeason] = useState({});
   const [showAdminSeasonMenu, setShowAdminSeasonMenu] = useState(false);
- 
+
   const allCats = ["הכל", ...new Set([...categories, ...movies.map(m => m.category).filter(Boolean)])];
- 
-  // series visible in this category
+
   const visibleSeries = existingSeriesNames.filter(name => {
     if (browsecat === "הכל") return true;
     return seriesMap[name]?.category === browsecat;
   });
- 
-  // standalone movies visible in this category
+
   const visibleMovies = movies.filter(m => {
     if (m.series_name) return false;
     return browsecat === "הכל" || m.category === browsecat;
   });
- 
+
   if (openAdminSeries) {
     const series = seriesMap[openAdminSeries];
     const episodes = series?.episodes || [];
     const seasonNums = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
     const activeSeason = openAdminSeason[openAdminSeries] ?? seasonNums[0];
     const activeEps = episodes.filter(e => (e.season_number || 1) === activeSeason).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
- 
+
     return (
       <div>
         <button onClick={() => setOpenAdminSeries(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 12, padding: "9px 14px", marginBottom: 14, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 700, color: "#6e6e73" }}>
@@ -1015,7 +999,6 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
             <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 2 }}>{episodes.length} פרקים · {seasonNums.length} עונות</div>
           </div>
         </div>
-        {/* Season selector */}
         {seasonNums.length > 1 && (
           <div style={{ position: "relative", marginBottom: 14 }}>
             <button onClick={() => setShowAdminSeasonMenu(s => !s)} style={{ display: "flex", alignItems: "center", gap: 8, background: "#111", color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit" }}>
@@ -1051,7 +1034,7 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
       </div>
     );
   }
- 
+
   return (
     <div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
@@ -1103,23 +1086,23 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
     </div>
   );
 }
- 
+
 function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState("");
   const [kalturaCount, setKalturaCount] = useState(null);
- 
+
   useEffect(() => {
-    MovieEntity.list("-created_date", 500).then(allMovies => {
+    MovieEntity.list("-created_date", 15000).then(allMovies => {
       const count = allMovies.filter(m => m.type === "kaltura" || (m.video_id || "").includes("kaltura.com") || (m.type === "direct" && (m.video_id || "").includes("kaltura"))).length;
       setKalturaCount(count);
     });
   }, []);
- 
+
   const handleRefresh = async () => {
     setRefreshing(true);
     setStatus("טוען רשימת קישורים...");
-    const allMovies = await MovieEntity.list("-created_date", 500);
+    const allMovies = await MovieEntity.list("-created_date", 15000);
     const kalturaMovies = allMovies.filter(m => m.type === "kaltura" || (m.video_id || "").includes("kaltura.com"));
     if (kalturaMovies.length === 0) { setStatus("אין קישורי Kaltura לרענן"); setRefreshing(false); setTimeout(() => setStatus(""), 3000); return; }
     setStatus(`מרענן ${kalturaMovies.length} קישורים...`);
@@ -1136,7 +1119,7 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     setRefreshing(false);
     setTimeout(() => setStatus(""), 4000);
   };
- 
+
   return (
     <div style={{ ...cardStyle, border: "2px solid #e50914" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", color: "#e50914" }}>
@@ -1155,22 +1138,19 @@ function KalturaRefreshPanel({ movies, cardStyle, dot, MovieEntity }) {
     </div>
   );
 }
- 
+
 function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [csvText, setCsvText] = useState("");
   const [preview, setPreview] = useState([]);
   const [importing, setImporting] = useState(false);
   const [status, setStatus] = useState({ type: "", message: "" });
   const fileRef = React.useRef(null);
- 
-  const COLUMNS = ["title", "video_url", "category", "series_name", "season_number", "episode_number", "thumbnail_url", "description", "year"];
- 
+
   const parseCSV = (text) => {
     const lines = text.trim().split("\n").filter(l => l.trim());
     if (lines.length < 2) return [];
     const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
     return lines.slice(1).map(line => {
-      // Handle quoted commas
       const cols = [];
       let cur = "", inQ = false;
       for (let c of line) {
@@ -1184,14 +1164,14 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
       return row;
     }).filter(r => r.title || r.video_url);
   };
- 
+
   const handleText = (text) => {
     setCsvText(text);
     const rows = parseCSV(text);
     setPreview(rows.slice(0, 5));
     setStatus({ type: "", message: "" });
   };
- 
+
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1199,7 +1179,7 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     reader.onload = (ev) => handleText(ev.target.result);
     reader.readAsText(file, "UTF-8");
   };
- 
+
   const handleImport = async () => {
     const rows = parseCSV(csvText);
     if (!rows.length) { setStatus({ type: "error", message: "אין שורות לייבוא" }); return; }
@@ -1228,7 +1208,7 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     setCsvText(""); setPreview([]);
     setTimeout(() => setStatus({ type: "", message: "" }), 5000);
   };
- 
+
   return (
     <div style={{ ...cardStyle, border: "2px solid #5e5ce6" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", color: "#5e5ce6" }}>
@@ -1275,16 +1255,16 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     </div>
   );
 }
- 
+
 function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [merging, setMerging] = useState(false);
   const [mergeStatus, setMergeStatus] = useState({ type: "", message: "" });
   const [sourceSeries, setSourceSeries] = useState("");
   const [targetSeries, setTargetSeries] = useState("");
   const [targetSeason, setTargetSeason] = useState("2");
- 
+
   const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
- 
+
   const handleMerge = async () => {
     if (!sourceSeries || !targetSeries) { setMergeStatus({ type: "error", message: "בחר סדרת מקור ויעד" }); return; }
     if (sourceSeries === targetSeries) { setMergeStatus({ type: "error", message: "מקור ויעד זהים" }); return; }
@@ -1303,7 +1283,7 @@ function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity
     loadMovies();
     setTimeout(() => setMergeStatus({ type: "", message: "" }), 4000);
   };
- 
+
   return (
     <div style={{ ...cardStyle, border: "2px solid #ff9500" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#ff9500" }}>
@@ -1339,12 +1319,12 @@ function MergeSeriesPanel({ movies, loadMovies, cardStyle, inp, dot, MovieEntity
     </div>
   );
 }
- 
+
 function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(false);
   const [deletingSeries, setDeletingSeries] = useState(false);
   const sorted = [...episodes].sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
- 
+
   const handleDeleteSeries = async () => {
     if (!window.confirm(`למחוק את כל הסדרה "${serName}"? (${episodes.length} פרקים)`)) return;
     setDeletingSeries(true);
@@ -1353,7 +1333,7 @@ function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
     }
     setDeletingSeries(false);
   };
- 
+
   return (
     <div style={{ borderTop: "1px solid #F5F5F7" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px" }}>
@@ -1382,7 +1362,7 @@ function AdminSeriesSection({ serName, episodes, onEdit, onDelete, deleting }) {
     </div>
   );
 }
- 
+
 function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
   const [open, setOpen] = useState(true);
   const sp = `@keyframes spin { to { transform: rotate(360deg); } }`;
@@ -1411,13 +1391,13 @@ function AdminCategorySection({ catName, items, onEdit, onDelete, deleting }) {
     </div>
   );
 }
- 
+
 function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
   const [selectedSeries, setSelectedSeries] = useState("הכל");
   const [selectedType, setSelectedType] = useState("drive");
- 
+
   const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
- 
+
   const typeLabels = {
     drive: "Google Drive 🔴",
     youtube: "YouTube",
@@ -1430,13 +1410,13 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
     okru: "OK.ru",
     direct: "קישור ישיר",
   };
- 
+
   const results = movies.filter(m => {
     const typeMatch = m.type === selectedType;
     const seriesMatch = selectedSeries === "הכל" || m.series_name === selectedSeries;
     return typeMatch && seriesMatch;
   }).sort((a, b) => (a.season_number || 1) - (b.season_number || 1) || (a.episode_number || 0) - (b.episode_number || 0));
- 
+
   return (
     <div style={{ ...cardStyle, border: "2px solid #ff3b30" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#ff3b30" }}>
@@ -1483,7 +1463,7 @@ function FindByTypePanel({ movies, cardStyle, inp, dot, onEdit }) {
     </div>
   );
 }
- 
+
 function ExportContentPanel({ movies, cardStyle, dot }) {
   const getLink = (m) => {
     const vid = m.video_id || "";
@@ -1497,25 +1477,20 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
     if (type === "rumble") return `https://rumble.com/embed/${vid}`;
     return vid;
   };
- 
+
   const handleExport = () => {
     if (!movies || movies.length === 0) { alert("אין תוכן לייצוא"); return; }
- 
     const lines = [];
     lines.push("=== ייצוא תוכן מאתר ZOVEX ===");
     lines.push(`תאריך: ${new Date().toLocaleDateString("he-IL")}`);
     lines.push(`סה"כ תכנים: ${movies.length}`);
     lines.push("");
- 
     const cats = [...new Set(movies.map(m => m.category).filter(Boolean))].sort();
- 
     for (const cat of cats) {
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push(`📂 קטגוריה: ${cat}`);
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push("");
- 
-      // סדרות
       const seriesNames = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
       for (const serName of seriesNames) {
         lines.push(`📺 סדרה: ${serName}`);
@@ -1523,9 +1498,7 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
         const seasons = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
         for (const season of seasons) {
           lines.push(`  עונה ${season}:`);
-          const eps = episodes
-            .filter(e => (e.season_number || 1) === season)
-            .sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+          const eps = episodes.filter(e => (e.season_number || 1) === season).sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
           for (const ep of eps) {
             const epName = ep.episode_title || ep.title || "";
             lines.push(`    פרק ${ep.episode_number || "?"} — ${epName}`);
@@ -1534,28 +1507,22 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
         }
         lines.push("");
       }
- 
-      // סרטים עצמאיים
-      const standalones = movies
-        .filter(m => !m.series_name && m.category === cat)
-        .sort((a, b) => (a.title || "").localeCompare(b.title || "", "he"));
+      const standalones = movies.filter(m => !m.series_name && m.category === cat).sort((a, b) => (a.title || "").localeCompare(b.title || "", "he"));
       for (const movie of standalones) {
         lines.push(`🎬 ${movie.title}${movie.year ? ` (${movie.year})` : ""}`);
         lines.push(`   🔗 ${getLink(movie)}`);
         lines.push("");
       }
     }
- 
     lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     lines.push(`סה"כ: ${movies.length} תכנים`);
- 
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `zovex_content_${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
   };
- 
+
   return (
     <div style={{ ...cardStyle, border: "2px solid #30d158" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", color: "#30d158" }}>
@@ -1564,10 +1531,7 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
       <div style={{ fontSize: 11, color: "#6e6e73", marginBottom: 14, lineHeight: 1.7 }}>
         מוריד קובץ טקסט מסודר עם כל הסדרות, פרקים, סרטים וקישורים — מחולק לפי קטגוריות ועונות.
       </div>
-      <button
-        onClick={handleExport}
-        style={{ width: "100%", background: "#30d158", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-      >
+      <button onClick={handleExport} style={{ width: "100%", background: "#30d158", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
         📥 הורד קובץ קישורים
       </button>
       <div style={{ marginTop: 8, fontSize: 10, color: "#aaa", textAlign: "center" }}>
@@ -1576,21 +1540,20 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
     </div>
   );
 }
- 
+
 function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardStyle, inp, dot, MovieEntity }) {
   const [openSeries, setOpenSeries] = useState(null);
   const [selectedCat, setSelectedCat] = useState("");
   const [newCatName, setNewCatName] = useState("");
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState({ type: "", message: "" });
- 
+
   const seriesNames = [...new Set(movies.filter(m => m.series_name).map(m => m.series_name))].sort();
- 
+
   const handleApply = async (seriesName) => {
     const catToApply = selectedCat === "__new__" ? newCatName.trim() : selectedCat;
     if (!catToApply) { setStatus({ type: "error", message: "בחר קטגוריה" }); return; }
     setSaving(true);
-    // add new category if needed
     if (selectedCat === "__new__" && !categories.includes(catToApply)) {
       saveCats([...categories, catToApply]);
     }
@@ -1607,7 +1570,7 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
     setNewCatName("");
     setTimeout(() => setStatus({ type: "", message: "" }), 3000);
   };
- 
+
   return (
     <div style={{ ...cardStyle, border: "2px solid #34c759" }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center", color: "#34c759" }}>
