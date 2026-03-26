@@ -10,7 +10,6 @@ const LETTER_CODE = "ZOVIX";
 
 function extractVideoInfo(url) {
   if (!url) return { type: "direct", video_id: "" };
-  // אם זה iframe שלם - חלץ את ה-src ממנו
   if (url.includes("<iframe")) {
     const srcMatch = url.match(/src=["']([^"']+)["']/);
     if (srcMatch) url = srcMatch[1];
@@ -124,7 +123,6 @@ function renderPlayer(movie) {
     const cloud = movie.cloudinary_cloud_name || "";
     return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={`https://res.cloudinary.com/${cloud}/video/upload/${vid}`} />;
   }
-  // direct URL שהוא בעצם Kaltura embed מלא
   if (vid.includes("kaltura.com")) {
     return <iframe src={vid} style={fr} allowFullScreen allow="autoplay; encrypted-media" />;
   }
@@ -191,17 +189,35 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // 🔁 טעינת כל הפריטים (ללא מגבלת 500)
+  const loadMovies = async () => {
+    setLoading(true);
+    let allMovies = [];
+    let skip = 0;
+    const limit = 500;
+    let hasMore = true;
+    while (hasMore) {
+      try {
+        const batch = await Movie.list("-created_date", limit, skip);
+        if (batch && batch.length) {
+          allMovies = [...allMovies, ...batch];
+          skip += limit;
+          if (batch.length < limit) hasMore = false;
+        } else {
+          hasMore = false;
+        }
+      } catch (err) {
+        console.error("Error loading movies:", err);
+        hasMore = false;
+      }
+    }
+    setMovies(allMovies);
+    setLoading(false);
+  };
+
   useEffect(() => { loadMovies(); }, []);
 
-
-
-  // פתיחת סרט ישירה ללא רענון מיותר
   const refreshKalturaEpisode = async (movie) => movie;
-
-  const loadMovies = () => {
-    setLoading(true);
-    Movie.list("-created_date", 500).then(d => { setMovies(d); setLoading(false); }).catch(() => setLoading(false));
-  };
 
   useEffect(() => {
     if (searchTerm === SECRET_TRIGGER) { setSearchTerm(""); setShowAdminLogin(true); }
@@ -212,7 +228,6 @@ export default function Home() {
     const saved = (() => { try { return JSON.parse(localStorage.getItem("zovex_cats") || "null"); } catch { return null; } })();
     const fromMovies = [...new Set(movies.map(m => m.category).filter(Boolean))];
     if (saved && saved.length > 0) {
-      // מוסיף קטגוריות חדשות שאינן בשמורות, אבל שומר על הסדר הקיים
       const merged = [...saved, ...fromMovies.filter(c => !saved.includes(c))];
       setCategories(merged);
       try { localStorage.setItem("zovex_cats", JSON.stringify(merged)); } catch {}
@@ -308,7 +323,6 @@ export default function Home() {
     if (!form.title || !form.category) { setFormStatus({ type: "error", message: "שם וקטגוריה חובה" }); return; }
     setSaving(true);
     const info = extractVideoInfo(videoUrlInput);
-    // auto episode number: find next available in series+season
     let autoEpNum = Number(form.episode_number) || null;
     if (isSeries && !editingMovie && !autoEpNum) {
       const serName = form.series_name || form.title;
@@ -331,7 +345,6 @@ export default function Home() {
     try {
       if (editingMovie) {
         await Movie.update(editingMovie.id, payload);
-        // if category changed on a series episode, update all episodes in that series
         if (payload.series_name && editingMovie.category !== payload.category) {
           const seriesEps = movies.filter(m => m.series_name === payload.series_name && m.id !== editingMovie.id);
           for (const ep of seriesEps) {
@@ -424,7 +437,7 @@ export default function Home() {
       else if (type === "kan") fullUrl = `https://www.kan.org.il/General/Embed.aspx?id=${vid}`;
       else if (type === "okru") fullUrl = `https://ok.ru/video/${vid}`;
       else if (type === "telegram") fullUrl = `https://t.me/${vid}`;
-      else if (type === "jellyfin") fullUrl = vid; // store raw item ID
+      else if (type === "jellyfin") fullUrl = vid;
       else if (type === "kaltura") { const parts = vid.split("/"); fullUrl = `https://cdnapisec.kaltura.com//p/${parts[0]}/embedPlaykitJs/uiconf_id/${parts[1]}?iframeembed=true&entry_id=${parts[2]}`; }
       else fullUrl = vid;
     }
@@ -659,7 +672,6 @@ export default function Home() {
                   </label>
                   <input value={videoUrlInput} onChange={e => {
                     let val = e.target.value;
-                    // אם הדביקו iframe שלם - חלץ את ה-src אוטומטית
                     if (val.includes("<iframe")) {
                       const srcMatch = val.match(/src=["']([^"']+)["']/);
                       if (srcMatch) val = srcMatch[1];
@@ -779,9 +791,7 @@ export default function Home() {
     );
   }
 
-  if (playerMovie) return (
-    <CustomVideoPlayer movie={playerMovie} onClose={() => setPlayerMovie(null)} />
-  );
+  if (playerMovie) return <CustomVideoPlayer movie={playerMovie} onClose={() => setPlayerMovie(null)} />;
 
   if (selectedSeries) {
     const series = seriesMap[selectedSeries];
@@ -959,14 +969,11 @@ export default function Home() {
         }
       </main>
       <div style={{ position: "fixed", bottom: 24, left: 16, zIndex: 1000, display: "flex", alignItems: "flex-end", gap: 10 }}>
-        {/* Speech bubble */}
         <div style={{ background: "#fff", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", boxShadow: "0 4px 18px rgba(0,0,0,.13)", border: "1px solid #eee", maxWidth: 170, direction: "rtl" }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#111", fontFamily: "Arial, sans-serif", marginBottom: 2 }}>רוצה להוסיף סרט? 🎬</div>
           <div style={{ fontSize: 11, color: "#666", fontFamily: "Arial, sans-serif", lineHeight: 1.4 }}>יש בעיה באתר?<br/>דברו איתנו בטלגרם</div>
-          {/* bubble tail */}
           <div style={{ position: "absolute", bottom: -8, left: 14, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid #fff", filter: "drop-shadow(0 2px 2px rgba(0,0,0,.08))" }} />
         </div>
-        {/* Telegram button */}
         <a href="https://t.me/ZOVE8" target="_blank" rel="noreferrer" style={{ background: "#24A1DE", width: 50, height: 50, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 15px rgba(36,161,222,.5)", textDecoration: "none", flexShrink: 0 }}>
           <Send size={22} fill="white" />
         </a>
@@ -984,13 +991,11 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
 
   const allCats = ["הכל", ...new Set([...categories, ...movies.map(m => m.category).filter(Boolean)])];
 
-  // series visible in this category
   const visibleSeries = existingSeriesNames.filter(name => {
     if (browsecat === "הכל") return true;
     return seriesMap[name]?.category === browsecat;
   });
 
-  // standalone movies visible in this category
   const visibleMovies = movies.filter(m => {
     if (m.series_name) return false;
     return browsecat === "הכל" || m.category === browsecat;
@@ -1015,7 +1020,6 @@ function AdminBrowseTab({ movies, seriesMap, existingSeriesNames, categories, on
             <div style={{ fontSize: 11, color: "#6e6e73", marginTop: 2 }}>{episodes.length} פרקים · {seasonNums.length} עונות</div>
           </div>
         </div>
-        {/* Season selector */}
         {seasonNums.length > 1 && (
           <div style={{ position: "relative", marginBottom: 14 }}>
             <button onClick={() => setShowAdminSeasonMenu(s => !s)} style={{ display: "flex", alignItems: "center", gap: 8, background: "#111", color: "#fff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 900, cursor: "pointer", fontFamily: "inherit" }}>
@@ -1170,7 +1174,6 @@ function BulkImportPanel({ loadMovies, cardStyle, inp, dot, MovieEntity }) {
     if (lines.length < 2) return [];
     const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
     return lines.slice(1).map(line => {
-      // Handle quoted commas
       const cols = [];
       let cur = "", inQ = false;
       for (let c of line) {
@@ -1515,7 +1518,6 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
       lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       lines.push("");
 
-      // סדרות
       const seriesNames = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
       for (const serName of seriesNames) {
         lines.push(`📺 סדרה: ${serName}`);
@@ -1535,7 +1537,6 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
         lines.push("");
       }
 
-      // סרטים עצמאיים
       const standalones = movies
         .filter(m => !m.series_name && m.category === cat)
         .sort((a, b) => (a.title || "").localeCompare(b.title || "", "he"));
@@ -1590,7 +1591,6 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
     const catToApply = selectedCat === "__new__" ? newCatName.trim() : selectedCat;
     if (!catToApply) { setStatus({ type: "error", message: "בחר קטגוריה" }); return; }
     setSaving(true);
-    // add new category if needed
     if (selectedCat === "__new__" && !categories.includes(catToApply)) {
       saveCats([...categories, catToApply]);
     }
