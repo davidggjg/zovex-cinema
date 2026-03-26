@@ -75,6 +75,7 @@ function renderPlayer(movie) {
   const type = movie.type || "direct";
   if (!vid) return <p style={{ color: "#aaa", textAlign: "center", padding: 20 }}>אין וידאו זמין</p>;
   const fr = { width: "100%", height: "56vw", maxHeight: "82vh", border: "none" };
+  const fsAttrs = { allowFullScreen: true, webkitAllowFullScreen: true, mozAllowFullScreen: true };
   if (type === "youtube" || vid.includes("youtube") || vid.includes("youtu.be")) {
     const id = vid.replace(/.*[?&]v=/, "").replace(/.*youtu\.be\//, "").split("&")[0];
     return <iframe src={`https://www.youtube.com/embed/${id}?autoplay=1`} style={fr} allowFullScreen allow="autoplay" />;
@@ -216,6 +217,17 @@ export default function Home() {
   };
 
   useEffect(() => { loadMovies(); }, []);
+
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      // לא לרענן בסיבוב מסך
+    };
+    window.addEventListener('orientationchange', handleOrientationChange);
+    document.addEventListener('visibilitychange', () => {});
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
 
   const refreshKalturaEpisode = async (movie) => movie;
 
