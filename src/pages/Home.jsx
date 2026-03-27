@@ -136,15 +136,15 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("הכל");
   const [selectedMovie, setSelectedMovie] = useState(() => {
-    try { const s = sessionStorage.getItem('zovex_movie'); return s ? JSON.parse(s) : null; } catch { return null; }
+    try { const s = localStorage.getItem('zovex_movie'); return s ? JSON.parse(s) : null; } catch { return null; }
   });
   const [selectedSeries, setSelectedSeries] = useState(() => {
-    try { return sessionStorage.getItem('zovex_series') || null; } catch { return null; }
+    try { return localStorage.getItem('zovex_series') || null; } catch { return null; }
   });
   const [openSeasons, setOpenSeasons] = useState({});
   const [playerMovie, setPlayerMovie] = useState(() => {
     try {
-      const saved = sessionStorage.getItem('zovex_player');
+      const saved = localStorage.getItem('zovex_player');
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   });
@@ -214,25 +214,25 @@ export default function Home() {
 
   useEffect(() => {
     if (playerMovie) {
-      try { sessionStorage.setItem('zovex_player', JSON.stringify(playerMovie)); } catch {}
+      try { localStorage.setItem('zovex_player', JSON.stringify(playerMovie)); } catch {}
     } else {
-      try { sessionStorage.removeItem('zovex_player'); } catch {}
+      try { localStorage.removeItem('zovex_player'); } catch {}
     }
   }, [playerMovie]);
 
   useEffect(() => {
     if (selectedMovie) {
-      try { sessionStorage.setItem('zovex_movie', JSON.stringify(selectedMovie)); } catch {}
+      try { localStorage.setItem('zovex_movie', JSON.stringify(selectedMovie)); } catch {}
     } else {
-      try { sessionStorage.removeItem('zovex_movie'); } catch {}
+      try { localStorage.removeItem('zovex_movie'); } catch {}
     }
   }, [selectedMovie]);
 
   useEffect(() => {
     if (selectedSeries) {
-      try { sessionStorage.setItem('zovex_series', selectedSeries); } catch {}
+      try { localStorage.setItem('zovex_series', selectedSeries); } catch {}
     } else {
-      try { sessionStorage.removeItem('zovex_series'); } catch {}
+      try { localStorage.removeItem('zovex_series'); } catch {}
     }
   }, [selectedSeries]);
 
