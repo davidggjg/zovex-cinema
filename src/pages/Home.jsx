@@ -135,8 +135,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("הכל");
-  const [selectedMovie, setSelectedMovie] = useState(null);
-  const [selectedSeries, setSelectedSeries] = useState(null);
+  const [selectedMovie, setSelectedMovie] = useState(() => {
+    try { const s = sessionStorage.getItem('zovex_movie'); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [selectedSeries, setSelectedSeries] = useState(() => {
+    try { return sessionStorage.getItem('zovex_series') || null; } catch { return null; }
+  });
   const [openSeasons, setOpenSeasons] = useState({});
   const [playerMovie, setPlayerMovie] = useState(() => {
     try {
@@ -215,6 +219,22 @@ export default function Home() {
       try { sessionStorage.removeItem('zovex_player'); } catch {}
     }
   }, [playerMovie]);
+
+  useEffect(() => {
+    if (selectedMovie) {
+      try { sessionStorage.setItem('zovex_movie', JSON.stringify(selectedMovie)); } catch {}
+    } else {
+      try { sessionStorage.removeItem('zovex_movie'); } catch {}
+    }
+  }, [selectedMovie]);
+
+  useEffect(() => {
+    if (selectedSeries) {
+      try { sessionStorage.setItem('zovex_series', selectedSeries); } catch {}
+    } else {
+      try { sessionStorage.removeItem('zovex_series'); } catch {}
+    }
+  }, [selectedSeries]);
 
   const refreshKalturaEpisode = async (movie) => movie;
 
