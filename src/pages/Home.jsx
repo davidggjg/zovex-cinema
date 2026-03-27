@@ -138,7 +138,12 @@ export default function Home() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [selectedSeries, setSelectedSeries] = useState(null);
   const [openSeasons, setOpenSeasons] = useState({});
-  const [playerMovie, setPlayerMovie] = useState(null);
+  const [playerMovie, setPlayerMovie] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('zovex_player');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -203,7 +208,6 @@ export default function Home() {
 
   useEffect(() => { loadMovies(); }, []);
 
-  // שמירת playerMovie ב-sessionStorage למניעת אובדן בסיבוב מסך
   useEffect(() => {
     if (playerMovie) {
       try { sessionStorage.setItem('zovex_player', JSON.stringify(playerMovie)); } catch {}
@@ -211,13 +215,6 @@ export default function Home() {
       try { sessionStorage.removeItem('zovex_player'); } catch {}
     }
   }, [playerMovie]);
-
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem('zovex_player');
-      if (saved) { setPlayerMovie(JSON.parse(saved)); }
-    } catch {}
-  }, []);
 
   const refreshKalturaEpisode = async (movie) => movie;
 
@@ -492,6 +489,8 @@ export default function Home() {
   const inp = { width: "100%", background: "#F0F0F5", border: "1.5px solid #d2d2d7", borderRadius: 10, padding: "10px 12px", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
   const cardStyle = { background: "#fff", borderRadius: 16, padding: 18, marginBottom: 14, boxShadow: "0 4px 20px rgba(0,0,0,.07)" };
   const dot = <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#0071e3", display: "inline-block", marginLeft: 8, flexShrink: 0 }} />;
+
+  if (playerMovie) return <CustomVideoPlayer movie={playerMovie} onClose={() => setPlayerMovie(null)} />;
 
   if (loading) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#fff" }}>
@@ -792,8 +791,6 @@ export default function Home() {
       </div>
     );
   }
-
-  if (playerMovie) return <CustomVideoPlayer movie={playerMovie} onClose={() => setPlayerMovie(null)} />;
 
   if (selectedSeries) {
     const series = seriesMap[selectedSeries];
