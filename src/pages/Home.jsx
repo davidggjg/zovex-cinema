@@ -190,43 +190,33 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 🔁 טעינת כל הפריטים (ללא מגבלת 500)
   const loadMovies = async () => {
     setLoading(true);
-    let allMovies = [];
-    let skip = 0;
-    const limit = 500;
-    let hasMore = true;
-    while (hasMore) {
-      try {
-        const batch = await Movie.list("-created_date", limit, skip);
-        if (batch && batch.length) {
-          allMovies = [...allMovies, ...batch];
-          skip += limit;
-          if (batch.length < limit) hasMore = false;
-        } else {
-          hasMore = false;
-        }
-      } catch (err) {
-        console.error("Error loading movies:", err);
-        hasMore = false;
-      }
+    try {
+      const all = await Movie.list("-created_date", 2000);
+      setMovies(all || []);
+    } catch (err) {
+      console.error("Error loading movies:", err);
     }
-    setMovies(allMovies);
     setLoading(false);
   };
 
   useEffect(() => { loadMovies(); }, []);
 
+  // שמירת playerMovie ב-sessionStorage למניעת אובדן בסיבוב מסך
   useEffect(() => {
-    const handleOrientationChange = () => {
-      // לא לרענן בסיבוב מסך
-    };
-    window.addEventListener('orientationchange', handleOrientationChange);
-    document.addEventListener('visibilitychange', () => {});
-    return () => {
-      window.removeEventListener('orientationchange', handleOrientationChange);
-    };
+    if (playerMovie) {
+      try { sessionStorage.setItem('zovex_player', JSON.stringify(playerMovie)); } catch {}
+    } else {
+      try { sessionStorage.removeItem('zovex_player'); } catch {}
+    }
+  }, [playerMovie]);
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('zovex_player');
+      if (saved) { setPlayerMovie(JSON.parse(saved)); }
+    } catch {}
   }, []);
 
   const refreshKalturaEpisode = async (movie) => movie;
