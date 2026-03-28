@@ -1520,59 +1520,31 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
     return vid;
   };
 
-  const handleExport = () => {
+  const handleExportCSV = () => {
     if (!movies || movies.length === 0) { alert("אין תוכן לייצוא"); return; }
-
-    const lines = [];
-    lines.push("=== ייצוא תוכן מאתר ZOVEX ===");
-    lines.push(`תאריך: ${new Date().toLocaleDateString("he-IL")}`);
-    lines.push(`סה"כ תכנים: ${movies.length}`);
-    lines.push("");
-
-    const cats = [...new Set(movies.map(m => m.category).filter(Boolean))].sort();
-
-    for (const cat of cats) {
-      lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      lines.push(`📂 קטגוריה: ${cat}`);
-      lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      lines.push("");
-
-      const seriesNames = [...new Set(movies.filter(m => m.series_name && m.category === cat).map(m => m.series_name))].sort();
-      for (const serName of seriesNames) {
-        lines.push(`📺 סדרה: ${serName}`);
-        const episodes = movies.filter(m => m.series_name === serName);
-        const seasons = [...new Set(episodes.map(e => e.season_number || 1))].sort((a, b) => a - b);
-        for (const season of seasons) {
-          lines.push(`  עונה ${season}:`);
-          const eps = episodes
-            .filter(e => (e.season_number || 1) === season)
-            .sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-          for (const ep of eps) {
-            const epName = ep.episode_title || ep.title || "";
-            lines.push(`    פרק ${ep.episode_number || "?"} — ${epName}`);
-            lines.push(`    🔗 ${getLink(ep)}`);
-          }
-        }
-        lines.push("");
-      }
-
-      const standalones = movies
-        .filter(m => !m.series_name && m.category === cat)
-        .sort((a, b) => (a.title || "").localeCompare(b.title || "", "he"));
-      for (const movie of standalones) {
-        lines.push(`🎬 ${movie.title}${movie.year ? ` (${movie.year})` : ""}`);
-        lines.push(`   🔗 ${getLink(movie)}`);
-        lines.push("");
-      }
-    }
-
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`סה"כ: ${movies.length} תכנים`);
-
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const headers = ["title", "video_url", "category", "series_name", "season_number", "episode_number", "thumbnail_url", "description", "year"];
+    const escape = (v) => {
+      if (v == null) return "";
+      const s = String(v);
+      if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
+    const rows = movies.map(m => [
+      m.title || "",
+      m.video_url || getLink(m),
+      m.category || "",
+      m.series_name || "",
+      m.season_number || "",
+      m.episode_number || "",
+      m.thumbnail_url || "",
+      m.description || "",
+      m.year || "",
+    ].map(escape).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `zovex_content_${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `zovex_content_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
   };
 
@@ -1585,13 +1557,13 @@ function ExportContentPanel({ movies, cardStyle, dot }) {
         מוריד קובץ טקסט מסודר עם כל הסדרות, פרקים, סרטים וקישורים — מחולק לפי קטגוריות ועונות.
       </div>
       <button
-        onClick={handleExport}
+        onClick={handleExportCSV}
         style={{ width: "100%", background: "#30d158", color: "#fff", border: "none", borderRadius: 12, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
       >
-        📥 הורד קובץ קישורים
+        📥 הורד CSV (לייבוא חזרה)
       </button>
       <div style={{ marginTop: 8, fontSize: 10, color: "#aaa", textAlign: "center" }}>
-        {movies.length} תכנים · לא משנה כלום באתר
+        {movies.length} תכנים · אפשר לייבוא חזרה דרך הכפתור CSV
       </div>
     </div>
   );
