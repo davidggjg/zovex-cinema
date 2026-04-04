@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 import CustomVideoPlayer from "@/components/home/CustomVideoPlayer.jsx";
 
-const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
+const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } } html,body{overscroll-behavior:none;}`;
 const SECRET_TRIGGER = "ZovexAdmin2026";
 const PIN_CODE = "123456";
 const LETTER_CODE = "ZOVIX";
@@ -131,6 +132,8 @@ function renderPlayer(movie) {
 }
 
 export default function Home() {
+  const { movieTitle } = useParams();
+  const navigate = useNavigate();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -211,6 +214,36 @@ export default function Home() {
   };
 
   useEffect(() => { loadMovies(); }, []);
+
+  // מניעת יציאה מהאתר בלחיצת חזרה
+  useEffect(() => {
+    const handlePopState = () => {
+      if (playerMovie) { setPlayerMovie(null); window.history.pushState(null, "", window.location.href); return; }
+      if (selectedSeries) { setSelectedSeries(null); window.history.pushState(null, "", window.location.href); return; }
+      if (selectedMovie) { setSelectedMovie(null); window.history.pushState(null, "", window.location.href); return; }
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [playerMovie, selectedSeries, selectedMovie]);
+
+  useEffect(() => {
+    if (selectedMovie) document.title = `${selectedMovie.title} | ZOVEX`;
+    else if (selectedSeries) document.title = `${selectedSeries} | ZOVEX`;
+    else document.title = "ZOVEX - סדרות וסרטים לצפייה ישירה";
+  }, [selectedMovie, selectedSeries]);
+
+  useEffect(() => {
+    if (movieTitle && movies.length > 0) {
+      const name = decodeURIComponent(movieTitle).replace(/-/g, " ");
+      const movie = movies.find(m => m.title === name && !m.series_name);
+      if (movie) setSelectedMovie(movie);
+      else {
+        const serName = Object.keys(seriesMap || {}).find(s => s === name);
+        if (serName) setSelectedSeries(serName);
+      }
+    }
+  }, [movieTitle, movies]);
 
   useEffect(() => {
     if (playerMovie) {
@@ -462,6 +495,13 @@ export default function Home() {
     }
     setVideoUrlInput(fullUrl);
     setAdminTab("add");
+  };
+
+  const handleItemClick = (item, isSer) => {
+    const safeName = (isSer ? item.name : item.title || "").replace(/\s+/g, "-");
+    navigate(`/watch/${encodeURIComponent(safeName)}`);
+    if (isSer) setSelectedSeries(item.name);
+    else setSelectedMovie(item);
   };
 
   const seriesMap = useMemo(() => {
@@ -970,7 +1010,7 @@ export default function Home() {
                 const title = isSer ? item.name : item.title;
                 const thumb = item.thumbnail_url;
                 return (
-                  <div key={isSer ? "s-" + item.name : item.id} onClick={() => isSer ? setSelectedSeries(item.name) : setSelectedMovie(item)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7, height: "100%" }}>
+                  <div key={isSer ? "s-" + item.name : item.id} onClick={() => handleItemClick(item, isSer)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 7, height: "100%" }}>
                     <div style={{ borderRadius: 12, overflow: "hidden", height: 260, background: "#e8e8e8", position: "relative", flexShrink: 0 }}>
                       {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={e => e.target.style.display = "none"} /> : (
                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, background: "#f0f0f0", color: "#aaa" }}>🎬</div>
@@ -1645,4 +1685,4 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
       )}
     </div>
   );
-                               }
+}
