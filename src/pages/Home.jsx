@@ -215,14 +215,13 @@ export default function Home() {
 
   useEffect(() => { loadMovies(); }, []);
 
-  // מניעת יציאה מהאתר בלחיצת חזרה
   useEffect(() => {
     const handlePopState = () => {
-      if (playerMovie) { setPlayerMovie(null); window.history.pushState(null, "", window.location.href); return; }
-      if (selectedSeries) { setSelectedSeries(null); window.history.pushState(null, "", window.location.href); return; }
-      if (selectedMovie) { setSelectedMovie(null); window.history.pushState(null, "", window.location.href); return; }
+      if (playerMovie) { setPlayerMovie(null); window.history.pushState(null,"",window.location.href); return; }
+      if (selectedSeries) { setSelectedSeries(null); window.history.pushState(null,"",window.location.href); return; }
+      if (selectedMovie) { setSelectedMovie(null); window.history.pushState(null,"",window.location.href); return; }
     };
-    window.history.pushState(null, "", window.location.href);
+    window.history.pushState(null,"",window.location.href);
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [playerMovie, selectedSeries, selectedMovie]);
@@ -235,12 +234,10 @@ export default function Home() {
 
   useEffect(() => {
     if (movieTitle && movies.length > 0) {
-      const name = decodeURIComponent(movieTitle).replace(/-/g, " ");
-      const movie = movies.find(m => m.title === name && !m.series_name);
-      if (movie) setSelectedMovie(movie);
-      else {
-        const serName = Object.keys(seriesMap || {}).find(s => s === name);
-        if (serName) setSelectedSeries(serName);
+      const movie = movies.find(m => m.id === movieTitle);
+      if (movie) {
+        if (movie.series_name) setSelectedSeries(movie.series_name);
+        else setSelectedMovie(movie);
       }
     }
   }, [movieTitle, movies]);
@@ -498,10 +495,14 @@ export default function Home() {
   };
 
   const handleItemClick = (item, isSer) => {
-    const safeName = (isSer ? item.name : item.title || "").replace(/\s+/g, "-");
-    navigate(`/watch/${encodeURIComponent(safeName)}`);
-    if (isSer) setSelectedSeries(item.name);
-    else setSelectedMovie(item);
+    if (isSer) {
+      const firstId = item.episodes?.[0]?.id || "";
+      navigate(`/watch/${firstId}`);
+      setSelectedSeries(item.name);
+    } else {
+      navigate(`/watch/${item.id}`);
+      setSelectedMovie(item);
+    }
   };
 
   const seriesMap = useMemo(() => {
