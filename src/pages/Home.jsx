@@ -5,6 +5,50 @@ import { Movie } from "@/entities/Movie";
 import CustomVideoPlayer from "@/components/home/CustomVideoPlayer.jsx";
 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } } html,body{overscroll-behavior:none;}`;
+
+// נגן HLS עם תמיכה ב-AC3 לכרום
+const HlsPlayer = ({ src }) => {
+  const ref = React.useRef();
+  React.useEffect(() => {
+    let hls;
+    const initPlayer = () => {
+      if (!ref.current) return;
+      if (window.Hls && window.Hls.isSupported()) {
+        hls = new window.Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          backBufferLength: 90,
+        });
+        hls.loadSource(src);
+        hls.attachMedia(ref.current);
+        hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+          ref.current?.play?.().catch(() => {});
+        });
+      } else if (ref.current.canPlayType('application/vnd.apple.mpegurl')) {
+        ref.current.src = src;
+        ref.current.play?.().catch(() => {});
+      }
+    };
+    if (window.Hls) {
+      initPlayer();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js';
+      script.onload = initPlayer;
+      document.head.appendChild(script);
+    }
+    return () => hls?.destroy?.();
+  }, [src]);
+  return (
+    <video
+      ref={ref}
+      controls
+      autoPlay
+      playsInline
+      style={{ width: "100%", maxHeight: "82vh", background: "#000" }}
+    />
+  );
+};
 const SECRET_TRIGGER = "ZovexAdmin2026";
 const PIN_CODE = "123456";
 const LETTER_CODE = "ZOVIX";
@@ -128,6 +172,7 @@ function renderPlayer(movie) {
   if (vid.includes("kaltura.com")) {
     return <iframe src={vid} style={fr} allowFullScreen allow="autoplay; encrypted-media" />;
   }
+  if (vid.includes('.m3u8') || vid.includes('manifest') || vid.includes('playlist')) return <HlsPlayer src={vid} />;
   return <video controls autoPlay style={{ width: "100%", maxHeight: "82vh" }} src={vid} />;
 }
 
@@ -1719,4 +1764,4 @@ function SeriesCategoryPanel({ movies, categories, saveCats, loadMovies, cardSty
       )}
     </div>
   );
-}
+                                }
