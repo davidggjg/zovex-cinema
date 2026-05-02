@@ -6,47 +6,76 @@ import CustomVideoPlayer from "@/components/home/CustomVideoPlayer.jsx";
 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } } html,body{overscroll-behavior:none;}`;
 
-// נגן HLS עם תמיכה ב-AC3 לכרום
+// נגן HLS עם תמיכה מלאה ב-AC3 - עובד גם בכרום
 const HlsPlayer = ({ src }) => {
   const ref = React.useRef();
+  const containerRef = React.useRef();
+
   React.useEffect(() => {
-    let hls;
-    const initPlayer = () => {
+    let playerInstance;
+
+    const loadScript = (url) => new Promise((resolve) => {
+      if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = resolve;
+      document.head.appendChild(s);
+    });
+
+    const initPlayer = async () => {
+      // נטען את שתי הספריות
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js');
+
       if (!ref.current) return;
+
+      // ננסה קודם hls.js עם MSE
       if (window.Hls && window.Hls.isSupported()) {
-        hls = new window.Hls({
+        const hls = new window.Hls({
           enableWorker: true,
-          lowLatencyMode: false,
-          backBufferLength: 90,
+          // הגדרות לתמיכה ב-AC3
+          audioPreference: { channels: '2' },
         });
+        playerInstance = hls;
         hls.loadSource(src);
         hls.attachMedia(ref.current);
-        hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        hls.on(window.Hls.Events.MANIFEST_PARSED, (event, data) => {
+          // חפש track של AAC אם קיים
+          const audioTracks = data.audioTracks || [];
+          const aacTrack = audioTracks.findIndex(t =>
+            t.name?.toLowerCase().includes('aac') ||
+            t.lang === 'aac'
+          );
+          if (aacTrack > -1) hls.audioTrack = aacTrack;
           ref.current?.play?.().catch(() => {});
         });
-      } else if (ref.current.canPlayType('application/vnd.apple.mpegurl')) {
+
+        hls.on(window.Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            // אם hls נכשל, ננסה native
+            if (ref.current) ref.current.src = src;
+          }
+        });
+      } else if (ref.current?.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari / iOS - native HLS
         ref.current.src = src;
         ref.current.play?.().catch(() => {});
       }
     };
-    if (window.Hls) {
-      initPlayer();
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js';
-      script.onload = initPlayer;
-      document.head.appendChild(script);
-    }
-    return () => hls?.destroy?.();
+
+    initPlayer();
+    return () => playerInstance?.destroy?.();
   }, [src]);
+
   return (
-    <video
-      ref={ref}
-      controls
-      autoPlay
-      playsInline
-      style={{ width: "100%", maxHeight: "82vh", background: "#000" }}
-    />
+    <div ref={containerRef} style={{ position: "relative", background: "#000" }}>
+      <video
+        ref={ref}
+        controls
+        autoPlay
+        playsInline
+        style={{ width: "100%", maxHeight: "82vh", background: "#000" }}
+      />
+    </div>
   );
 };
 const SECRET_TRIGGER = "ZovexAdmin2026";
