@@ -118,13 +118,34 @@ function HlsPlayer({ src }) {
     const video = videoRef.current;
     if (!video || !src) return;
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari / iOS - native HLS
       video.src = src;
       video.play().catch(() => {});
     } else if (Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: false,
+        audioPreference: { channels: '2' }, // מעדיף AAC על AC3
+      });
       hls.loadSource(src);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        // חפש track AAC אם קיים (לתמיכה בכאן 11 וקישורי AC3)
+        const audioTracks = data.audioTracks || [];
+        const aacTrack = audioTracks.findIndex(t =>
+          (t.name || "").toLowerCase().includes('aac') ||
+          (t.lang || "") === 'aac' ||
+          (t.audioCodec || "").includes('mp4a')
+        );
+        if (aacTrack > -1) hls.audioTrack = aacTrack;
+        video.play().catch(() => {});
+      });
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          // fallback - ננסה native
+          video.src = src;
+        }
+      });
       return () => hls.destroy();
     }
   }, [src]);
