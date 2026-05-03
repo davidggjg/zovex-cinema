@@ -1,8 +1,5 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import Hls from "hls.js";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
 const spinStyle = `@keyframes spin { to { transform: rotate(360deg); } }`;
 
@@ -114,108 +111,82 @@ function isArchive(src) {
   return src && src.includes("archive.org");
 }
 
-// בודק אם הסטרים משתמש ב-AC3 (כרום לא תומך)
-async function streamHasOnlyAC3(src) {
-  try {
-    const res = await fetch(src);
-    const text = await res.text();
-    const hasAC3 = text.includes('ac-3') || text.includes('ac3') || text.includes('EC-3') || text.includes('ec-3');
-    const hasAAC = text.includes('mp4a') || text.includes('aac') || text.includes('AAC');
-    return hasAC3 && !hasAAC;
-  } catch {
-    return false;
-  }
+function loadShakaScript() {
+  return new Promise((resolve) => {
+    if (window.shaka) { resolve(); return; }
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js";
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
 }
 
 function HlsPlayer({ src }) {
   const videoRef = useRef(null);
-  const [status, setStatus] = useState("loading"); // loading | playing | converting | error
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !src) return;
-    let hls;
+    let player;
     let destroyed = false;
 
-    const tryNativeOrHls = () => {
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    const init = async () => {
+      await loadShakaScript();
+      if (destroyed) return;
+
+      window.shaka.polyfill.installAll();
+
+      if (!window.shaka.Player.isBrowserSupported()) {
+        // fallback לנגן native
         video.src = src;
         video.play().catch(() => {});
-        setStatus("playing");
+        setLoading(false);
         return;
       }
-      if (!Hls.isSupported()) { setStatus("error"); return; }
 
-      hls = new Hls({ enableWorker: true, lowLatencyMode: false });
-      hls.loadSource(src);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (!destroyed) { video.play().catch(() => {}); setStatus("playing"); }
-      });
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal && !destroyed) setStatus("error");
-      });
-    };
+      player = new window.shaka.Player();
+      await player.attach(video);
 
-    const tryWithFFmpeg = async () => {
-      setStatus("converting");
+      // הגדרות לתמיכה ב-AC3 בכרום
+      player.configure({
+        preferredAudioChannelCount: 2,
+        streaming: { bufferingGoal: 30, rebufferingGoal: 2 },
+      });
+
       try {
-        const ffmpeg = new FFmpeg();
-        const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-        await ffmpeg.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
-        });
-
-        // הורד segment ראשון מה-manifest
-        const manifestRes = await fetch(src);
-        const manifestText = await manifestRes.text();
-        const lines = manifestText.split('\n').filter(l => l.trim() && !l.startsWith('#'));
-        if (!lines.length) { tryNativeOrHls(); return; }
-
-        const segUrl = new URL(lines[0].trim(), src).href;
-        await ffmpeg.writeFile("input.ts", await fetchFile(segUrl));
-        await ffmpeg.exec(["-i", "input.ts", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "output.mp4"]);
-        const data = await ffmpeg.readFile("output.mp4");
-        const blob = new Blob([data.buffer], { type: "video/mp4" });
+        await player.load(src);
         if (!destroyed) {
-          video.src = URL.createObjectURL(blob);
           video.play().catch(() => {});
-          setStatus("playing");
+          setLoading(false);
         }
-      } catch {
-        if (!destroyed) tryNativeOrHls();
+      } catch (e) {
+        if (!destroyed) {
+          // fallback
+          video.src = src;
+          video.play().catch(() => {});
+          setLoading(false);
+        }
       }
     };
 
-    // בדוק אם יש רק AC3 ובכרום - השתמש ב-FFmpeg
-    const isChrome = !!(window.chrome) && !navigator.userAgent.includes("Firefox") && !navigator.userAgent.includes("Safari");
-    if (isChrome) {
-      streamHasOnlyAC3(src).then(onlyAC3 => {
-        if (!destroyed) {
-          onlyAC3 ? tryWithFFmpeg() : tryNativeOrHls();
-        }
-      });
-    } else {
-      tryNativeOrHls();
-    }
+    init();
 
     return () => {
       destroyed = true;
-      hls?.destroy();
+      player?.destroy();
     };
   }, [src]);
 
   return (
-    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {status === "converting" && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#000", color: "#fff", gap: 12 }}>
+    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex" }}>
+      {loading && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
           <div style={{ width: 44, height: 44, border: "4px solid rgba(255,255,255,0.2)", borderTop: "4px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-          <p style={{ fontSize: 13, color: "#aaa", fontFamily: "Arial", margin: 0 }}>ממיר אודיו לכרום...</p>
         </div>
       )}
       <video ref={videoRef} controls autoPlay playsInline controlsList="nodownload"
-        style={{ width: "100%", height: "100%", background: "#000" }} />
+        style={{ width: "100%", background: "#000" }} />
     </div>
   );
 }
