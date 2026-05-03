@@ -111,60 +111,87 @@ function isArchive(src) {
   return src && src.includes("archive.org");
 }
 
-function loadShakaScript() {
-  return new Promise((resolve) => {
-    if (window.shaka) { resolve(); return; }
+function loadScripts(urls) {
+  return Promise.all(urls.map(url => new Promise(resolve => {
+    if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
     const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js";
-    s.onload = resolve;
+    s.src = url; s.onload = resolve;
     document.head.appendChild(s);
+  })));
+}
+
+function loadStyles(urls) {
+  urls.forEach(url => {
+    if (!document.querySelector(`link[href="${url}"]`)) {
+      const l = document.createElement("link");
+      l.rel = "stylesheet"; l.href = url;
+      document.head.appendChild(l);
+    }
   });
 }
 
 function HlsPlayer({ src }) {
-  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+  const playerRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !src) return;
-    let player;
+    if (!src || !containerRef.current) return;
     let destroyed = false;
 
     const init = async () => {
-      await loadShakaScript();
+      // טען Video.js CSS + Shaka Player
+      loadStyles([
+        "https://unpkg.com/video.js@8.21.0/dist/video-js.min.css",
+      ]);
+      await loadScripts([
+        "https://unpkg.com/video.js@8.21.0/dist/video.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js",
+      ]);
       if (destroyed) return;
 
+      // התקן polyfills של Shaka
       window.shaka.polyfill.installAll();
 
-      if (!window.shaka.Player.isBrowserSupported()) {
-        // fallback לנגן native
-        video.src = src;
-        video.play().catch(() => {});
-        setLoading(false);
-        return;
-      }
+      // צור אלמנט video בתוך הcontainer
+      const videoEl = document.createElement("video");
+      videoEl.className = "video-js vjs-default-skin vjs-big-play-centered";
+      videoEl.setAttribute("playsinline", "");
+      videoEl.setAttribute("autoplay", "");
+      videoEl.style.width = "100%";
+      videoEl.style.height = "100%";
+      containerRef.current.appendChild(videoEl);
 
-      player = new window.shaka.Player();
-      await player.attach(video);
+      // אתחל Video.js
+      const vjs = window.videojs(videoEl, {
+        controls: true,
+        autoplay: true,
+        fluid: true,
+        techOrder: ["html5"],
+        html5: { nativeAudioTracks: false, nativeVideoTracks: false },
+      });
 
-      // הגדרות לתמיכה ב-AC3 בכרום
-      player.configure({
+      // אתחל Shaka Player על אותו וידאו
+      const shaka = new window.shaka.Player();
+      await shaka.attach(videoEl);
+      shaka.configure({
         preferredAudioChannelCount: 2,
         streaming: { bufferingGoal: 30, rebufferingGoal: 2 },
       });
 
+      playerRef.current = { vjs, shaka };
+
       try {
-        await player.load(src);
+        await shaka.load(src);
         if (!destroyed) {
-          video.play().catch(() => {});
+          videoEl.play().catch(() => {});
           setLoading(false);
         }
-      } catch (e) {
+      } catch {
         if (!destroyed) {
-          // fallback
-          video.src = src;
-          video.play().catch(() => {});
+          // fallback — Video.js native
+          vjs.src({ src, type: "application/x-mpegURL" });
+          vjs.play().catch(() => {});
           setLoading(false);
         }
       }
@@ -174,19 +201,20 @@ function HlsPlayer({ src }) {
 
     return () => {
       destroyed = true;
-      player?.destroy();
+      playerRef.current?.shaka?.destroy();
+      playerRef.current?.vjs?.dispose();
+      playerRef.current = null;
     };
   }, [src]);
 
   return (
-    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex" }}>
+    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative" }}>
       {loading && (
         <div style={{ position: "absolute", inset: 0, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
           <div style={{ width: 44, height: 44, border: "4px solid rgba(255,255,255,0.2)", borderTop: "4px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
         </div>
       )}
-      <video ref={videoRef} controls autoPlay playsInline controlsList="nodownload"
-        style={{ width: "100%", background: "#000" }} />
+      <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
     </div>
   );
 }
