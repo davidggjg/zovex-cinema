@@ -1105,7 +1105,7 @@ export default function Home() {
       </main>
       <div style={{ position: "fixed", bottom: 24, left: 16, zIndex: 1000, display: "flex", alignItems: "flex-end", gap: 10 }}>
         <div style={{ background: "#fff", borderRadius: "16px 16px 16px 4px", padding: "10px 14px", boxShadow: "0 4px 18px rgba(0,0,0,.13)", border: "1px solid #eee", maxWidth: 170, direction: "rtl" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#111", fontFamily: "Arial, sans-serif", marginBottom: 2 }} className="\u05E8\u05D5\u05E6\u05D9\u05DD \u05E9\u05E0\u05D5\u05E1\u05D9\u05E3 \u05DE\u05E9\u05D5 \u05DC\u05D0\u05EA\u05E8 \u05D3\u05D1\u05E8\u05D5 \u05D9\u05D9\u05EA\u05E0\u05D5">רוצה להוסיף סרט? 🎬</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#111", fontFamily: "Arial, sans-serif", marginBottom: 2 }} className="\u05E8\u05D5\u05E6\u05D9\u05DD \u05E9\u05E0\u05D5\u05E1\u05D9\u05E3 \u05DE\u05E9\u05D5 \u05DC\u05D0\u05EA\u05E8">רוצה להוסיף סרט? 🎬</div>
           <div style={{ fontSize: 11, color: "#666", fontFamily: "Arial, sans-serif", lineHeight: 1.4 }}>יש בעיה באתר?<br />דברו איתנו בטלגרם</div>
           <div style={{ position: "absolute", bottom: -8, left: 14, width: 0, height: 0, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid #fff", filter: "drop-shadow(0 2px 2px rgba(0,0,0,.08))" }} />
         </div>
