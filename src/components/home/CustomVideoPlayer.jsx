@@ -130,37 +130,30 @@ function loadStyles(urls) {
   });
 }
 
-function SkipButton({ onClick, direction }) {
-  // direction: "back" | "forward"
-  const isBack = direction === "back";
+function DirectVideoPlayer({ src, videoRef }) {
+  const [skipAnim, setSkipAnim] = useState(null);
+
+  const handleDoubleClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const secs = x < rect.width / 2 ? -10 : 10;
+    const v = videoRef.current;
+    if (v) v.currentTime = Math.max(0, v.currentTime + secs);
+    setSkipAnim(secs > 0 ? "forward" : "back");
+    setTimeout(() => setSkipAnim(null), 600);
+  };
+
   return (
-    <button
-      onClick={onClick}
-      style={{
-        background: "rgba(0,0,0,0.5)",
-        border: "2px solid rgba(255,255,255,0.4)",
-        borderRadius: "50%",
-        width: 52, height: 52,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", color: "#fff",
-        flexShrink: 0,
-      }}
-    >
-      <svg viewBox="0 0 36 36" width="28" height="28" fill="white">
-        {isBack ? (
-          <>
-            <polygon points="18,6 6,18 18,30 18,22 30,22 30,14 18,14" />
-            <rect x="4" y="6" width="4" height="24" rx="1"/>
-          </>
-        ) : (
-          <>
-            <polygon points="18,6 30,18 18,30 18,22 6,22 6,14 18,14" />
-            <rect x="28" y="6" width="4" height="24" rx="1"/>
-          </>
-        )}
-        <text x="18" y="44" textAnchor="middle" fontSize="9" fontWeight="bold" fontFamily="Arial" fill="white">10</text>
-      </svg>
-    </button>
+    <div onDoubleClick={handleDoubleClick} style={{ flex: 1, position: "relative" }}>
+      <video ref={videoRef} src={src} controls autoPlay playsInline controlsList="nodownload"
+        style={{ width: "100%", height: "100%", background: "#000", display: "block" }} />
+      {skipAnim && (
+        <div style={{ position: "absolute", top: "50%", [skipAnim === "forward" ? "right" : "left"]: "15%", transform: "translateY(-50%)", zIndex: 10, pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "fadeInOut 0.6s ease" }}>
+          <span style={{ fontSize: 40, color: "#fff" }}>{skipAnim === "forward" ? "⏩" : "⏪"}</span>
+          <span style={{ fontSize: 14, color: "#fff", fontWeight: "bold", fontFamily: "Arial" }}>10 שניות</span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -169,10 +162,20 @@ function HlsPlayer({ src }) {
   const videoElRef = useRef(null);
   const playerRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [skipAnim, setSkipAnim] = useState(null); // "back" | "forward" | null
 
   const skip = (secs) => {
     const el = videoElRef.current;
     if (el) el.currentTime = Math.max(0, el.currentTime + secs);
+    setSkipAnim(secs > 0 ? "forward" : "back");
+    setTimeout(() => setSkipAnim(null), 600);
+  };
+
+  const handleDoubleClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    if (x < rect.width / 2) skip(-10);
+    else skip(10);
   };
 
   useEffect(() => {
@@ -242,17 +245,18 @@ function HlsPlayer({ src }) {
   }, [src]);
 
   return (
-    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex", flexDirection: "column" }}>
+    <div onDoubleClick={handleDoubleClick} style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex", flexDirection: "column" }}>
       {loading && (
         <div style={{ position: "absolute", inset: 0, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
           <div style={{ width: 44, height: 44, border: "4px solid rgba(255,255,255,0.2)", borderTop: "4px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
         </div>
       )}
-      {/* כפתורי דילוג */}
-      {!loading && (
-        <div style={{ position: "absolute", bottom: 70, left: "50%", transform: "translateX(-50%)", zIndex: 10, display: "flex", gap: 24, alignItems: "center" }}>
-          <SkipButton onClick={() => skip(-10)} direction="back" />
-          <SkipButton onClick={() => skip(10)} direction="forward" />
+      {/* אנימציית דילוג */}
+      {skipAnim && (
+        <div style={{ position: "absolute", top: "50%", [skipAnim === "forward" ? "right" : "left"]: "15%", transform: "translateY(-50%)", zIndex: 10, pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "fadeInOut 0.6s ease" }}>
+          <style>{`@keyframes fadeInOut { 0%{opacity:0;transform:translateY(-50%) scale(0.8)} 30%{opacity:1;transform:translateY(-50%) scale(1)} 80%{opacity:1} 100%{opacity:0} }`}</style>
+          <span style={{ fontSize: 40, color: "#fff" }}>{skipAnim === "forward" ? "⏩" : "⏪"}</span>
+          <span style={{ fontSize: 14, color: "#fff", fontWeight: "bold", fontFamily: "Arial" }}>10 שניות</span>
         </div>
       )}
       <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
@@ -287,6 +291,7 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const iframeRef = useRef(null);
   const directVideoRef = useRef(null);
   const hideTimerRef = useRef(null);
+
   const [controlsVisible, setControlsVisible] = useState(true);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
@@ -381,15 +386,7 @@ export default function CustomVideoPlayer({ movie, onClose }) {
           />
         </>
       ) : (
-        <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
-          <video ref={directVideoRef} src={src} controls autoPlay playsInline controlsList="nodownload"
-            style={{ flex: 1, width: "100%", height: "100%", background: "#000" }} />
-          {/* כפתורי דילוג לנגן רגיל */}
-          <div style={{ position: "absolute", bottom: 70, left: "50%", transform: "translateX(-50%)", zIndex: 10, display: "flex", gap: 24 }}>
-            <SkipButton onClick={() => { const v = directVideoRef.current; if (v) v.currentTime = Math.max(0, v.currentTime - 10); }} direction="back" />
-            <SkipButton onClick={() => { const v = directVideoRef.current; if (v) v.currentTime = v.currentTime + 10; }} direction="forward" />
-          </div>
-        </div>
+        <DirectVideoPlayer src={src} videoRef={directVideoRef} />
       )}
 
       {/* כפתור קדימה 10 (רק ל-Archive) */}
