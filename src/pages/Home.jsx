@@ -212,19 +212,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("הכל");
-  const [selectedMovie, setSelectedMovie] = useState(() => {
-    try { const s = localStorage.getItem('zovex_movie'); return s ? JSON.parse(s) : null; } catch { return null; }
-  });
-  const [selectedSeries, setSelectedSeries] = useState(() => {
-    try { return localStorage.getItem('zovex_series') || null; } catch { return null; }
-  });
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedSeries, setSelectedSeries] = useState(null);
   const [openSeasons, setOpenSeasons] = useState({});
-  const [playerMovie, setPlayerMovie] = useState(() => {
-    try {
-      const saved = localStorage.getItem('zovex_player');
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
+  const [playerMovie, setPlayerMovie] = useState(null);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [pinInput, setPinInput] = useState("");
@@ -324,29 +315,7 @@ export default function Home() {
     }
   }, [movieTitle, movies]);
 
-  useEffect(() => {
-    if (playerMovie) {
-      try { localStorage.setItem('zovex_player', JSON.stringify(playerMovie)); } catch {}
-    } else {
-      try { localStorage.removeItem('zovex_player'); } catch {}
-    }
-  }, [playerMovie]);
 
-  useEffect(() => {
-    if (selectedMovie) {
-      try { localStorage.setItem('zovex_movie', JSON.stringify(selectedMovie)); } catch {}
-    } else {
-      try { localStorage.removeItem('zovex_movie'); } catch {}
-    }
-  }, [selectedMovie]);
-
-  useEffect(() => {
-    if (selectedSeries) {
-      try { localStorage.setItem('zovex_series', selectedSeries); } catch {}
-    } else {
-      try { localStorage.removeItem('zovex_series'); } catch {}
-    }
-  }, [selectedSeries]);
 
   const refreshKalturaEpisode = async (movie) => movie;
 
@@ -576,13 +545,14 @@ export default function Home() {
     setAdminTab("add");
   };
 
+  const slugify = (str) => encodeURIComponent((str || "").trim().replace(/\s+/g, "-").slice(0, 40));
+
   const handleItemClick = (item, isSer) => {
     if (isSer) {
-      const firstId = item.episodes?.[0]?.id || "";
-      navigate(`/watch/${firstId}`);
+      navigate(`/watch/${slugify(item.name)}`);
       setSelectedSeries(item.name);
     } else {
-      navigate(`/watch/${item.id}`);
+      navigate(`/watch/${slugify(item.title)}`);
       setSelectedMovie(item);
     }
   };
@@ -981,7 +951,7 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {activeEps.map((ep, i) => (
-              <div key={ep.id} onClick={() => setPlayerMovie(ep)} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid #eee", cursor: "pointer", alignItems: "center" }}>
+              <div key={ep.id} onClick={() => { navigate(`/watch/${slugify(selectedSeries)}-e${ep.episode_number || ""}`); setPlayerMovie(ep); }} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid #eee", cursor: "pointer", alignItems: "center" }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: "#e50914", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <Play size={18} fill="white" color="white" />
                 </div>

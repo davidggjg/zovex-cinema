@@ -130,7 +130,7 @@ function loadStyles(urls) {
   });
 }
 
-function DirectVideoPlayer({ src, videoRef }) {
+function SkipOverlay({ videoRef }) {
   const [skipAnim, setSkipAnim] = useState(null);
 
   const handleDoubleClick = (e) => {
@@ -140,19 +140,41 @@ function DirectVideoPlayer({ src, videoRef }) {
     const v = videoRef.current;
     if (v) v.currentTime = Math.max(0, v.currentTime + secs);
     setSkipAnim(secs > 0 ? "forward" : "back");
-    setTimeout(() => setSkipAnim(null), 600);
+    setTimeout(() => setSkipAnim(null), 700);
   };
 
   return (
-    <div onDoubleClick={handleDoubleClick} style={{ flex: 1, position: "relative" }}>
-      <video ref={videoRef} src={src} controls autoPlay playsInline controlsList="nodownload"
-        style={{ width: "100%", height: "100%", background: "#000", display: "block" }} />
+    <div
+      onDoubleClick={handleDoubleClick}
+      style={{ position: "absolute", inset: 0, zIndex: 5, background: "transparent" }}
+    >
       {skipAnim && (
-        <div style={{ position: "absolute", top: "50%", [skipAnim === "forward" ? "right" : "left"]: "15%", transform: "translateY(-50%)", zIndex: 10, pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "fadeInOut 0.6s ease" }}>
-          <span style={{ fontSize: 40, color: "#fff" }}>{skipAnim === "forward" ? "⏩" : "⏪"}</span>
-          <span style={{ fontSize: 14, color: "#fff", fontWeight: "bold", fontFamily: "Arial" }}>10 שניות</span>
+        <div style={{
+          position: "absolute", top: "50%",
+          [skipAnim === "forward" ? "right" : "left"]: "15%",
+          transform: "translateY(-50%)", pointerEvents: "none",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+          animation: "fadeInOut 0.7s ease"
+        }}>
+          <style>{`@keyframes fadeInOut { 0%{opacity:0;transform:translateY(-50%) scale(0.7)} 25%{opacity:1;transform:translateY(-50%) scale(1.1)} 70%{opacity:1} 100%{opacity:0} }`}</style>
+          <span style={{ fontSize: 44, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,.7)" }}>
+            {skipAnim === "forward" ? "⏩" : "⏪"}
+          </span>
+          <span style={{ fontSize: 13, color: "#fff", fontWeight: "bold", fontFamily: "Arial", textShadow: "0 1px 4px rgba(0,0,0,.7)", background: "rgba(0,0,0,.35)", padding: "2px 8px", borderRadius: 8 }}>
+            10 שניות
+          </span>
         </div>
       )}
+    </div>
+  );
+}
+
+function DirectVideoPlayer({ src, videoRef }) {
+  return (
+    <div style={{ flex: 1, position: "relative" }}>
+      <video ref={videoRef} src={src} controls autoPlay playsInline controlsList="nodownload"
+        style={{ width: "100%", height: "100%", background: "#000", display: "block" }} />
+      <SkipOverlay videoRef={videoRef} />
     </div>
   );
 }
@@ -162,21 +184,6 @@ function HlsPlayer({ src }) {
   const videoElRef = useRef(null);
   const playerRef = useRef(null);
   const [loading, setLoading] = useState(true);
-  const [skipAnim, setSkipAnim] = useState(null); // "back" | "forward" | null
-
-  const skip = (secs) => {
-    const el = videoElRef.current;
-    if (el) el.currentTime = Math.max(0, el.currentTime + secs);
-    setSkipAnim(secs > 0 ? "forward" : "back");
-    setTimeout(() => setSkipAnim(null), 600);
-  };
-
-  const handleDoubleClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    if (x < rect.width / 2) skip(-10);
-    else skip(10);
-  };
 
   useEffect(() => {
     if (!src || !containerRef.current) return;
@@ -245,21 +252,14 @@ function HlsPlayer({ src }) {
   }, [src]);
 
   return (
-    <div onDoubleClick={handleDoubleClick} style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative" }}>
       {loading && (
         <div style={{ position: "absolute", inset: 0, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
           <div style={{ width: 44, height: 44, border: "4px solid rgba(255,255,255,0.2)", borderTop: "4px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
         </div>
       )}
-      {/* אנימציית דילוג */}
-      {skipAnim && (
-        <div style={{ position: "absolute", top: "50%", [skipAnim === "forward" ? "right" : "left"]: "15%", transform: "translateY(-50%)", zIndex: 10, pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "fadeInOut 0.6s ease" }}>
-          <style>{`@keyframes fadeInOut { 0%{opacity:0;transform:translateY(-50%) scale(0.8)} 30%{opacity:1;transform:translateY(-50%) scale(1)} 80%{opacity:1} 100%{opacity:0} }`}</style>
-          <span style={{ fontSize: 40, color: "#fff" }}>{skipAnim === "forward" ? "⏩" : "⏪"}</span>
-          <span style={{ fontSize: 14, color: "#fff", fontWeight: "bold", fontFamily: "Arial" }}>10 שניות</span>
-        </div>
-      )}
       <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+      <SkipOverlay videoRef={videoElRef} />
     </div>
   );
 }
