@@ -130,48 +130,85 @@ function loadStyles(urls) {
   });
 }
 
+function SkipButton({ onClick, direction }) {
+  // direction: "back" | "forward"
+  const isBack = direction === "back";
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "rgba(0,0,0,0.5)",
+        border: "2px solid rgba(255,255,255,0.4)",
+        borderRadius: "50%",
+        width: 52, height: 52,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#fff",
+        flexShrink: 0,
+      }}
+    >
+      <svg viewBox="0 0 36 36" width="28" height="28" fill="white">
+        {isBack ? (
+          <>
+            <polygon points="18,6 6,18 18,30 18,22 30,22 30,14 18,14" />
+            <rect x="4" y="6" width="4" height="24" rx="1"/>
+          </>
+        ) : (
+          <>
+            <polygon points="18,6 30,18 18,30 18,22 6,22 6,14 18,14" />
+            <rect x="28" y="6" width="4" height="24" rx="1"/>
+          </>
+        )}
+        <text x="18" y="44" textAnchor="middle" fontSize="9" fontWeight="bold" fontFamily="Arial" fill="white">10</text>
+      </svg>
+    </button>
+  );
+}
+
 function HlsPlayer({ src }) {
   const containerRef = useRef(null);
+  const videoElRef = useRef(null);
   const playerRef = useRef(null);
   const [loading, setLoading] = useState(true);
+
+  const skip = (secs) => {
+    const el = videoElRef.current;
+    if (el) el.currentTime = Math.max(0, el.currentTime + secs);
+  };
 
   useEffect(() => {
     if (!src || !containerRef.current) return;
     let destroyed = false;
 
     const init = async () => {
-      // טען Video.js CSS + Shaka Player
-      loadStyles([
-        "https://unpkg.com/video.js@8.21.0/dist/video-js.min.css",
-      ]);
+      loadStyles(["https://unpkg.com/video.js@8.21.0/dist/video-js.min.css"]);
       await loadScripts([
         "https://unpkg.com/video.js@8.21.0/dist/video.min.js",
         "https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js",
       ]);
       if (destroyed) return;
 
-      // התקן polyfills של Shaka
       window.shaka.polyfill.installAll();
 
-      // צור אלמנט video בתוך הcontainer
       const videoEl = document.createElement("video");
       videoEl.className = "video-js vjs-default-skin vjs-big-play-centered";
       videoEl.setAttribute("playsinline", "");
       videoEl.setAttribute("autoplay", "");
+      // כיסוי מלא של המכל
       videoEl.style.width = "100%";
       videoEl.style.height = "100%";
+      videoEl.style.position = "absolute";
+      videoEl.style.inset = "0";
       containerRef.current.appendChild(videoEl);
+      videoElRef.current = videoEl;
 
-      // אתחל Video.js
       const vjs = window.videojs(videoEl, {
         controls: true,
         autoplay: true,
-        fluid: true,
+        fill: true,          // ← מילוי מלא במקום fluid
         techOrder: ["html5"],
         html5: { nativeAudioTracks: false, nativeVideoTracks: false },
       });
 
-      // אתחל Shaka Player על אותו וידאו
       const shaka = new window.shaka.Player();
       await shaka.attach(videoEl);
       shaka.configure({
@@ -183,13 +220,9 @@ function HlsPlayer({ src }) {
 
       try {
         await shaka.load(src);
-        if (!destroyed) {
-          videoEl.play().catch(() => {});
-          setLoading(false);
-        }
+        if (!destroyed) { videoEl.play().catch(() => {}); setLoading(false); }
       } catch {
         if (!destroyed) {
-          // fallback — Video.js native
           vjs.src({ src, type: "application/x-mpegURL" });
           vjs.play().catch(() => {});
           setLoading(false);
@@ -204,17 +237,25 @@ function HlsPlayer({ src }) {
       playerRef.current?.shaka?.destroy();
       playerRef.current?.vjs?.dispose();
       playerRef.current = null;
+      videoElRef.current = null;
     };
   }, [src]);
 
   return (
-    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative" }}>
+    <div style={{ flex: 1, width: "100%", background: "#000", position: "relative", display: "flex", flexDirection: "column" }}>
       {loading && (
         <div style={{ position: "absolute", inset: 0, zIndex: 5, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
           <div style={{ width: 44, height: 44, border: "4px solid rgba(255,255,255,0.2)", borderTop: "4px solid #e50914", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
         </div>
       )}
-      <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+      {/* כפתורי דילוג */}
+      {!loading && (
+        <div style={{ position: "absolute", bottom: 70, left: "50%", transform: "translateX(-50%)", zIndex: 10, display: "flex", gap: 24, alignItems: "center" }}>
+          <SkipButton onClick={() => skip(-10)} direction="back" />
+          <SkipButton onClick={() => skip(10)} direction="forward" />
+        </div>
+      )}
+      <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
     </div>
   );
 }
@@ -244,6 +285,7 @@ export default function CustomVideoPlayer({ movie, onClose }) {
   const showSkipButton = isArchive(src);
 
   const iframeRef = useRef(null);
+  const directVideoRef = useRef(null);
   const hideTimerRef = useRef(null);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -339,8 +381,15 @@ export default function CustomVideoPlayer({ movie, onClose }) {
           />
         </>
       ) : (
-        <video src={src} controls autoPlay playsInline controlsList="nodownload"
-          style={{ flex: 1, width: "100%", background: "#000" }} />
+        <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
+          <video ref={directVideoRef} src={src} controls autoPlay playsInline controlsList="nodownload"
+            style={{ flex: 1, width: "100%", height: "100%", background: "#000" }} />
+          {/* כפתורי דילוג לנגן רגיל */}
+          <div style={{ position: "absolute", bottom: 70, left: "50%", transform: "translateX(-50%)", zIndex: 10, display: "flex", gap: 24 }}>
+            <SkipButton onClick={() => { const v = directVideoRef.current; if (v) v.currentTime = Math.max(0, v.currentTime - 10); }} direction="back" />
+            <SkipButton onClick={() => { const v = directVideoRef.current; if (v) v.currentTime = v.currentTime + 10; }} direction="forward" />
+          </div>
+        </div>
       )}
 
       {/* כפתור קדימה 10 (רק ל-Archive) */}
