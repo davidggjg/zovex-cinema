@@ -133,39 +133,49 @@ function loadStyles(urls) {
 function SkipOverlay({ videoRef }) {
   const [skipAnim, setSkipAnim] = useState(null);
 
-  const handleDoubleClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const secs = x < rect.width / 2 ? -10 : 10;
+  const handleDoubleTap = (side) => {
+    const secs = side === "forward" ? 10 : -10;
     const v = videoRef.current;
     if (v) v.currentTime = Math.max(0, v.currentTime + secs);
-    setSkipAnim(secs > 0 ? "forward" : "back");
+    setSkipAnim(side);
     setTimeout(() => setSkipAnim(null), 700);
   };
 
+  const anim = `@keyframes fadeInOut { 0%{opacity:0;transform:translateY(-50%) scale(0.7)} 25%{opacity:1;transform:translateY(-50%) scale(1.1)} 70%{opacity:1} 100%{opacity:0} }`;
+
   return (
-    <div
-      onDoubleClick={handleDoubleClick}
-      style={{ position: "absolute", inset: 0, zIndex: 5, background: "transparent" }}
-    >
+    <>
+      <style>{anim}</style>
+      {/* אזור שמאל — חזרה 10 שניות */}
+      <div
+        onDoubleClick={() => handleDoubleTap("back")}
+        style={{ position: "absolute", top: 0, left: 0, width: "30%", height: "100%", zIndex: 5, background: "transparent" }}
+      />
+      {/* אזור ימין — קדימה 10 שניות */}
+      <div
+        onDoubleClick={() => handleDoubleTap("forward")}
+        style={{ position: "absolute", top: 0, right: 0, width: "30%", height: "100%", zIndex: 5, background: "transparent" }}
+      />
       {skipAnim && (
         <div style={{
           position: "absolute", top: "50%",
-          [skipAnim === "forward" ? "right" : "left"]: "15%",
-          transform: "translateY(-50%)", pointerEvents: "none",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+          [skipAnim === "forward" ? "right" : "left"]: "8%",
+          transform: "translateY(-50%)", pointerEvents: "none", zIndex: 6,
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
           animation: "fadeInOut 0.7s ease"
         }}>
-          <style>{`@keyframes fadeInOut { 0%{opacity:0;transform:translateY(-50%) scale(0.7)} 25%{opacity:1;transform:translateY(-50%) scale(1.1)} 70%{opacity:1} 100%{opacity:0} }`}</style>
-          <span style={{ fontSize: 44, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,.7)" }}>
-            {skipAnim === "forward" ? "⏩" : "⏪"}
-          </span>
-          <span style={{ fontSize: 13, color: "#fff", fontWeight: "bold", fontFamily: "Arial", textShadow: "0 1px 4px rgba(0,0,0,.7)", background: "rgba(0,0,0,.35)", padding: "2px 8px", borderRadius: 8 }}>
-            10 שניות
-          </span>
+          <div style={{
+            background: "rgba(0,0,0,0.55)", borderRadius: 14, padding: "10px 18px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 4
+          }}>
+            <span style={{ fontSize: 28, color: "#fff" }}>{skipAnim === "forward" ? "►►" : "◄◄"}</span>
+            <span style={{ fontSize: 13, color: "#fff", fontWeight: "bold", fontFamily: "Arial" }}>
+              {skipAnim === "forward" ? "+10" : "-10"} שניות
+            </span>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

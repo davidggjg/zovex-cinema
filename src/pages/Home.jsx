@@ -1062,21 +1062,19 @@ export default function Home() {
           display: "grid",
           gridTemplateColumns: isDesktop ? "repeat(3, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))",
           gap: isDesktop ? 24 : 18,
-          gridAutoRows: "1fr"
         }}>
               {allItems.map((item) => {
             const isSer = !!item.episodes;
             const title = isSer ? item.name : item.title;
             const thumb = item.thumbnail_url;
             return (
-              <div key={isSer ? "s-" + item.name : item.id} onClick={() => handleItemClick(item, isSer)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: isDesktop ? 10 : 7, height: "100%" }}>
+              <div key={isSer ? "s-" + item.name : item.id} onClick={() => handleItemClick(item, isSer)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: isDesktop ? 10 : 7 }}>
                     <div style={{
                   borderRadius: 12,
                   overflow: "hidden",
-                  height: isDesktop ? "360px" : "260px",
+                  aspectRatio: "2/3",
                   background: "#e8e8e8",
                   position: "relative",
-                  flexShrink: 0
                 }}>
                       {thumb ? <img src={thumb} alt={title} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={(e) => e.target.style.display = "none"} className="rounded-[5px]" /> :
                   <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, background: "#f0f0f0", color: "#aaa" }}>🎬</div>
