@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Movie } from "@/entities/Movie";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import ApiKeysPanel from "@/components/admin/ApiKeysPanel.jsx";
 import {
   Film, Plus, List, Settings, ArrowRight, Sparkles,
   Save, Upload, ImageIcon, Loader2, Pencil, X,
@@ -376,6 +377,7 @@ function ManageList({ items, onEdit, onDelete }) {
 function SettingsPanel({ tmdbKey, setTmdbKey, onSaveKeys, onRunChecks, checks, checkingSystem, onEnrich, enriching, enrichStatus, onExport }) {
   return (
     <div dir="rtl">
+      <ApiKeysPanel cardStyle={card} inp={inp} dot={dot} />
       <div style={card}>
         <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: "flex", alignItems: "center" }}>{dot}מפתחות API</div>
         <Field label="TMDB API Key (v3)">
