@@ -1,0 +1,88 @@
+{
+  "name": "Movie",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05e1\u05e8\u05d8"
+    },
+    "description": {
+      "type": "string",
+      "description": "\u05ea\u05d9\u05d0\u05d5\u05e8 \u05d4\u05e1\u05e8\u05d8 (\u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9)"
+    },
+    "video_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05d5\u05d9\u05d3\u05d0\u05d5"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "youtube",
+        "drive",
+        "cloudinary",
+        "vimeo",
+        "dailymotion",
+        "streamable",
+        "archive",
+        "rumble",
+        "jellyfin"
+      ],
+      "default": "youtube",
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05de\u05e7\u05d5\u05e8"
+    },
+    "category": {
+      "type": "string",
+      "description": "\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4 \u05e9\u05dc \u05d4\u05e1\u05e8\u05d8"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "URL \u05e9\u05dc \u05ea\u05de\u05d5\u05e0\u05ea \u05ea\u05e6\u05d5\u05d2\u05d4 \u05de\u05e7\u05d3\u05d9\u05de\u05d4 (\u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9)"
+    },
+    "series_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05e1\u05d3\u05e8\u05d4 (\u05e8\u05e7 \u05d0\u05dd \u05d6\u05d4 \u05e4\u05e8\u05e7 \u05d1\u05e1\u05d3\u05e8\u05d4)"
+    },
+    "season_number": {
+      "type": "number",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d4\u05e2\u05d5\u05e0\u05d4 (\u05e8\u05e7 \u05d0\u05dd \u05d6\u05d4 \u05e4\u05e8\u05e7 \u05d1\u05e1\u05d3\u05e8\u05d4)"
+    },
+    "episode_number": {
+      "type": "number",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05d4\u05e4\u05e8\u05e7 (\u05e8\u05e7 \u05d0\u05dd \u05d6\u05d4 \u05e4\u05e8\u05e7 \u05d1\u05e1\u05d3\u05e8\u05d4)"
+    },
+    "cloudinary_cloud_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4-cloud \u05e9\u05dc Cloudinary (\u05e0\u05d3\u05e8\u05e9 \u05e8\u05e7 \u05d0\u05dd type=cloudinary)"
+    },
+    "jellyfin_server": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea \u05e9\u05e8\u05ea Jellyfin (\u05dc\u05d3\u05d5\u05d2\u05de\u05d4: http://207.232.37.250:473)"
+    },
+    "jellyfin_api_key": {
+      "type": "string",
+      "description": "\u05de\u05e4\u05ea\u05d7 API \u05e9\u05dc Jellyfin"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u05ea\u05d2\u05d9\u05d5\u05ea \u05dc\u05e1\u05e8\u05d8"
+    },
+    "year": {
+      "type": "number",
+      "description": "\u05e9\u05e0\u05ea \u05d9\u05e6\u05d9\u05d0\u05d4"
+    },
+    "views": {
+      "type": "number",
+      "default": 0,
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05e6\u05e4\u05d9\u05d5\u05ea"
+    }
+  },
+  "required": [
+    "title",
+    "video_id",
+    "type",
+    "category"
+  ]
+}

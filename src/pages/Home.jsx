@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Search, Send, Play, ArrowRight, X, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import { Movie } from "@/entities/Movie";
 import CustomVideoPlayer from "@/components/home/CustomVideoPlayer.jsx";
+import ApiKeysPanel from "@/components/admin/ApiKeysPanel.jsx";
 
 const spinnerStyle = `@keyframes spin { to { transform: rotate(360deg); } } html,body{overscroll-behavior:none;}`;
 
@@ -881,6 +882,7 @@ export default function Home() {
           }
           {adminTab === "settings" &&
           <div>
+              <ApiKeysPanel cardStyle={cardStyle} inp={inp} dot={dot} />
               <div style={cardStyle}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>הגדרות</div>
                 <div style={{ marginBottom: 12 }}>
