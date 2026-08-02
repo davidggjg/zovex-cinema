@@ -32,33 +32,47 @@ const styles = `
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(-6px); }
 }
+@keyframes driftCard {
+  0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+  12% { opacity: .7; }
+  88% { opacity: .7; }
+  100% { transform: translateY(-15vh) rotate(12deg); opacity: 0; }
+}
 `;
 
 function FloatingParticles() {
-  // Few, lightweight particles — no rotation, smaller count
-  const particles = Array.from({ length: 8 }, (_, i) => ({
+  // Lightweight drifting "memory" tiles — movie/series themed
+  const tiles = Array.from({ length: 6 }, (_, i) => ({
     id: i,
-    left: Math.random() * 100,
-    size: Math.random() * 10 + 6,
-    duration: Math.random() * 6 + 8,
-    delay: Math.random() * 6,
-    emoji: ["🎬", "🍿", "✨", "🔥"][i % 4],
+    left: 8 + Math.random() * 84,
+    size: Math.random() * 18 + 34,
+    duration: Math.random() * 8 + 14,
+    delay: Math.random() * 10,
+    emoji: ["🎬", "🍿", "📺", "🎥", "⭐", "🎭"][i % 6],
   }));
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 1 }}>
-      {particles.map((p) => (
-        <span
-          key={p.id}
+      {tiles.map((t) => (
+        <div
+          key={t.id}
           style={{
             position: "absolute",
-            left: `${p.left}%`,
-            bottom: "-40px",
-            fontSize: p.size,
-            animation: `floatUp ${p.duration}s linear ${p.delay}s infinite`,
+            left: `${t.left}%`,
+            bottom: "-60px",
+            width: t.size,
+            height: t.size * 1.4,
+            borderRadius: 10,
+            background: "linear-gradient(135deg, rgba(229,9,20,.18), rgba(0,0,0,.5))",
+            border: "1px solid rgba(229,9,20,.25)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: t.size * 0.5,
+            animation: `driftCard ${t.duration}s linear ${t.delay}s infinite`,
           }}
         >
-          {p.emoji}
-        </span>
+          {t.emoji}
+        </div>
       ))}
     </div>
   );
@@ -110,6 +124,20 @@ export default function RedirectScreen() {
       }}
     >
       <style>{styles}</style>
+
+      {/* Static dot grid — modern texture */}
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,.06) 1px, transparent 1px)",
+        backgroundSize: "32px 32px",
+      }} />
+
+      {/* Cinematic vignette */}
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none",
+        background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.6) 100%)",
+      }} />
+
       <FloatingParticles />
 
       {/* Main content */}
@@ -142,6 +170,12 @@ export default function RedirectScreen() {
           >
             ZOVEX
           </h1>
+          {/* Modern neon accent bar */}
+          <div style={{
+            width: 80, height: 3, margin: "6px auto 0",
+            borderRadius: 3,
+            background: "linear-gradient(90deg, transparent, #e50914, #ff4d4d, transparent)",
+          }} />
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             marginTop: 6, color: "#bbb", fontSize: 13, fontWeight: 600,
