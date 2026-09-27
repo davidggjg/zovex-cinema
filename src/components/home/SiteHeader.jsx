@@ -48,19 +48,21 @@ export default function SiteHeader({ searchTerm, onSearchChange, categories, onC
         </div>
       </div>
 
-      <button
-        onClick={() => setOpenCats(!openCats)}
-        style={{
-          marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8,
-          background: "rgba(255,255,255,.08)",
-          border: "1px solid rgba(255,255,255,.14)",
-          color: "#fff", padding: "7px 14px", borderRadius: 12,
-          fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-        }}
-      >
-        {openCats ? <X size={14} /> : <Menu size={14} />}
-        קטגוריות
-      </button>
+      {categories.length > 0 && (
+        <button
+          onClick={() => setOpenCats(!openCats)}
+          style={{
+            marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(255,255,255,.08)",
+            border: "1px solid rgba(255,255,255,.14)",
+            color: "#fff", padding: "7px 14px", borderRadius: 12,
+            fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+          }}
+        >
+          {openCats ? <X size={14} /> : <Menu size={14} />}
+          קטגוריות
+        </button>
+      )}
 
       {openCats && (
         <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>

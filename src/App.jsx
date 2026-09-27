@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import AdminPanel from './pages/AdminPanel';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -50,6 +51,11 @@ const AuthenticatedApp = () => {
       <Route path="/watch/:movieTitle" element={
         <LayoutWrapper currentPageName="watch">
           <MainPage />
+        </LayoutWrapper>
+      } />
+      <Route path="/admin" element={
+        <LayoutWrapper currentPageName="admin">
+          <AdminPanel />
         </LayoutWrapper>
       } />
       {Object.entries(Pages).map(([path, Page]) => (

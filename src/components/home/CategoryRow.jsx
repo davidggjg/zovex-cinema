@@ -1,8 +1,8 @@
 import React from "react";
 
-// שורת גלילה אופקית — שלד כרטיסים ריקים
-export default function CategoryRow({ title }) {
-  const cards = Array.from({ length: 8 });
+// שורת גלילה אופקית — מציגה כרטיסים אמיתיים; אם אין תוכן השורה לא מופיעה
+export default function CategoryRow({ title, items, onPlay }) {
+  if (!items || items.length === 0) return null;
 
   return (
     <section id={`row-${title}`} style={{ marginBottom: 22, scrollMarginTop: 130 }}>
@@ -20,22 +20,38 @@ export default function CategoryRow({ title }) {
         overflowX: "auto", padding: "0 14px 4px",
         scrollSnapType: "x mandatory",
       }}>
-        {cards.map((_, i) => (
-          <div key={i} style={{ flexShrink: 0, width: 110, scrollSnapAlign: "start" }}>
+        {items.map((m) => (
+          <div
+            key={m.id}
+            onClick={() => onPlay(m)}
+            style={{ flexShrink: 0, width: 110, cursor: "pointer", scrollSnapAlign: "start" }}
+          >
             <div style={{
               aspectRatio: "2/3", borderRadius: 12, overflow: "hidden",
-              position: "relative", border: "1px solid rgba(255,255,255,.08)",
+              position: "relative", border: "1px solid rgba(255,255,255,.1)",
+              background: "rgba(255,255,255,.06)",
             }}>
-              <div style={{
-                position: "absolute", inset: 0,
-                background: "linear-gradient(100deg, rgba(255,255,255,.04) 25%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.04) 75%)",
-                backgroundSize: "200% 100%",
-                animation: `shimmerSlide ${1.4 + (i % 3) * 0.3}s linear infinite`,
-              }} />
-              {i % 3 === 0 && (
+              {m.thumbnail_url ? (
+                <img
+                  src={m.thumbnail_url}
+                  alt={m.title}
+                  loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              ) : (
+                <div style={{
+                  position: "absolute", inset: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 26,
+                }}>
+                  🎬
+                </div>
+              )}
+              {m.series_name && (
                 <div style={{
                   position: "absolute", top: 6, right: 6,
-                  background: "rgba(0,0,0,.55)", borderRadius: 6,
+                  background: "rgba(0,0,0,.6)", borderRadius: 6,
                   padding: "2px 7px", fontSize: 9, color: "#fff", fontWeight: 700,
                 }}>
                   סדרה
@@ -43,9 +59,14 @@ export default function CategoryRow({ title }) {
               )}
             </div>
             <div style={{
-              height: 8, width: "70%", borderRadius: 5,
-              background: "rgba(255,255,255,.09)", margin: "8px auto 0",
-            }} />
+              marginTop: 6, fontSize: 12, fontWeight: 700, color: "#fff",
+              textAlign: "center", overflow: "hidden",
+              textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {m.series_name
+                ? `${m.series_name} · ע${m.season_number || 1}${m.episode_number ? ` פ${m.episode_number}` : ""}`
+                : m.title}
+            </div>
           </div>
         ))}
       </div>
