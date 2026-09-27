@@ -7,7 +7,6 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import RedirectScreen from '@/components/RedirectScreen';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -39,9 +38,6 @@ const AuthenticatedApp = () => {
       return null;
     }
   }
-
-  // Hard redirect to new site — unbypassable
-  return <RedirectScreen />;
 
   // Render the main app
   return (
