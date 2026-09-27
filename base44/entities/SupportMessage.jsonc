@@ -1,0 +1,31 @@
+{
+  "name": "SupportMessage",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05e9\u05d9\u05d7\u05d4"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05e9\u05e4\u05e0\u05d4 \u05dc\u05ea\u05de\u05d9\u05db\u05d4"
+    },
+    "content": {
+      "type": "string",
+      "description": "\u05ea\u05d5\u05db\u05df \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4"
+    },
+    "sender": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ],
+      "description": "\u05de\u05d9 \u05e9\u05dc\u05d7 \u05d0\u05ea \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "content",
+    "sender"
+  ]
+}
